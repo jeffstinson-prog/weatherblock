@@ -21,7 +21,11 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       result = await getByToken(body.token);
     } else if (body.action === 'reschedule' && typeof body.slotId === 'string' && /^[0-9a-f-]{36}$/.test(body.slotId)) {
       result = await rescheduleByToken(body.token, body.slotId);
-      if (result.ok) await bookingChanged(result.booking, 'rescheduled').catch((e) => console.error('notify failed', e));
+      if (result.ok) {
+        await bookingChanged(result.booking, 'rescheduled', { previousStartsAt: result.previousStartsAt }).catch((e) =>
+          console.error('notify failed', e),
+        );
+      }
     } else if (body.action === 'cancel') {
       result = await cancelByToken(body.token, typeof body.reason === 'string' ? body.reason : '');
       if (result.ok) await bookingChanged(result.booking, 'cancelled').catch((e) => console.error('notify failed', e));
