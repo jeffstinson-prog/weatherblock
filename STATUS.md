@@ -4,13 +4,14 @@ Updated 2026-11-19.
 
 ## Done
 
-- **Site and help center.** All public pages, built only from `facts.yaml`. 26 help answers, searchable. Three more wait on blank facts and stay hidden: visit length, license, warranty.
+- **Site and help center.** All public pages, built only from `facts.yaml`. 29 help answers, searchable. Three more wait on blank facts and stay hidden: visit length, license, warranty.
 - **Verified at the source** (links on each answer):
   - June 1, 2027 NC homeowners changes: NC Rate Bureau circulars P-25-3, P-25-5, P-26-2 and P-26-4. Roof payment schedule, cosmetic damage exclusion and matching exclusion, each with a buyback.
   - Roof grants: NCIUA runs two programs. Island homes, like the island part of Ocean Isle Beach, use Strengthen Your Roof (up to $10,000). Mainland Brunswick County uses Strengthen Your Coastal Roof (up to $6,000). Since November 1, 2025 only Certified FORTIFIED Roofing Contractors can install grant-funded roofs, so the site says we can't do those yet.
   - Public adjuster law: N.C. Gen. Stat. Article 33A.
   - Deductibles: no NC statute bans waivers. The site states our policy (never) and quotes NCDOI's general warning.
   - Acorn Finance: marketplace, not a lender; soft credit check to see offers. Wording from Acorn's own pages.
+- **Checked against the best sites** (November 19): the biggest US roofing companies' sites (Roofing Contractor's Top 100), 11 local competitors, and published research on booking forms (Baymard, Nielsen Norman Group, GOV.UK). Only one local competitor lets people pick a time online. Changes that came from it: the soonest times show without scrolling, a change made from the review goes straight back to it, the review says "You're not booked yet", the mobile and email fields say what they're for, "Check us yourself" on the about page (state registration and reviews, each linked), and three answers (vacation homes, hurricane deductibles, door-to-door roofers, sourced from NCDOI).
 - **Online booking.** Five steps: address (suggestions as you type, service area checked), roof (material, age, reason, notes, up to 6 photos), a two-hour window, contact and text consent, then review with the satellite image. Saved on the phone as you go for 24 hours. Confirmation with a reference, Apple and Google calendar buttons, and a private link to reschedule or cancel. No passwords, nothing personal in any URL (the link's secret sits after `#`).
 - **Capacity in the database.** Booking locks the window's row, then counts. Tested with eight bookings racing for one spot (exactly one wins) and in the browser with two phones (the loser is offered the nearest open times).
 - **Texts and email.** Confirmation, a reminder the evening before (6 to 9 pm) and the morning of (from 7:30 am), changes and cancellations, owner alerts by text and email, replies to our number forwarded to the owners, STOP and START honored. Without keys everything is logged, not sent. Retries and clean-up run every 15 minutes.
