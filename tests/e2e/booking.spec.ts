@@ -99,11 +99,13 @@ test('books an inspection start to finish on a 320px phone', async ({ page }) =>
     select m.audience, m.channel, m.kind, m.status from wb.messages m join wb.bookings b on b.id = m.booking_id
     where b.ref = ${ref} order by m.audience, m.channel`;
   await sql.end();
-  expect(sent.map((r) => `${r.audience}:${r.channel}:${r.kind}:${r.status}`)).toEqual([
+  const lines = sent.map((r) => `${r.audience}:${r.channel}:${r.kind}:${r.status}`);
+  expect(lines.filter((l) => l.startsWith('customer'))).toEqual([
     'customer:email:confirmation:logged',
     'customer:sms:confirmation:logged',
-    'owner:email:owner_new:logged',
   ]);
+  // The business hears about it too (by email, plus a text once an owner has a mobile on file).
+  expect(lines).toContain('owner:email:owner_new:logged');
   await expect(page.getByText(/We emailed|We texted/)).toHaveCount(0);
   expect(errors).toEqual([]);
 });

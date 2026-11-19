@@ -3,6 +3,7 @@ import { asService } from './db';
 import { config } from './env';
 import { retryFailed } from './messaging/send';
 import { runReminders } from './reminders';
+import { syncCalendar } from './calendar';
 
 async function removeOrphanPhotos(): Promise<number> {
   const rows = await asService(
@@ -42,5 +43,6 @@ export async function runJobs(now = new Date()): Promise<Record<string, unknown>
   await step('cleanup', async () => (await asService((tx) => tx`select wb.cleanup() as r`))[0]?.r);
   await step('orphanPhotos', () => removeOrphanPhotos());
   await step('slots', () => asService((tx) => tx`select wb.refresh_slots()`).then(() => 'refreshed'));
+  await step('calendar', () => syncCalendar(now));
   return out;
 }
