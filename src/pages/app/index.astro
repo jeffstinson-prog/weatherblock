@@ -1,0 +1,16 @@
+---
+import Base from '../../layouts/Base.astro';
+import OwnerApp from '../../owner/OwnerApp';
+import '../../styles/booking.css';
+import '../../styles/owner.css';
+import { facts } from '../../facts';
+---
+
+<Base title="Owner app" description="For the owners: today's inspections, availability and bookings." noindex bare>
+  <link slot="head" rel="manifest" href="/app/manifest.webmanifest" />
+  <meta slot="head" name="apple-mobile-web-app-capable" content="yes" />
+  <meta slot="head" name="apple-mobile-web-app-title" content="Owner app" />
+  <OwnerApp client:only="preact" businessName={facts.business.name} domain={facts.web.domain} phone={facts.contact.phone} />
+  <noscript><p>The owner app needs JavaScript.</p></noscript>
+  <script src="../../scripts/owner-sw.ts"></script>
+</Base>
