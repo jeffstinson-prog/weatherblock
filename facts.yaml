@@ -71,10 +71,15 @@ inspection:
   duration: "" # how long the visit takes, e.g. "about 30 minutes". Blank: hidden.
 
 credentials:
+  # The state's record of the company. Shown under "Check us yourself" on the about page.
+  registration:
+    id: "2997840" # NC Secretary of State ID (SOSID), from the state's record. Blank: not shown.
+    lookupUrl: https://www.sosnc.gov/online_services/search/by_title/_Business_Registration
   license:
     holder: Justin Coffey
     kind: NC general contractor
     number: "" # Blank: the site makes no license claim anywhere.
+    lookupUrl: "" # The licensing board's public search, once the number is in.
   insurance:
     liability: "" # e.g. "General liability, $1,000,000 per occurrence". Blank: no "insured" claim.
     workersComp: "" # "Yes" or "No". Blank: not mentioned.

@@ -116,6 +116,9 @@ test('sign in, then work a booking from a phone', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Pick a new time' }).click();
   // The last open day: the booking tests use the first days, so the two never compete.
+  // Only the first six days show at first; the rest are one tap away, and focus lands on the next day.
+  await page.getByRole('button', { name: 'Show more days' }).click();
+  await expect(page.locator('.days .day').nth(6)).toBeFocused();
   await page.locator('.days .day').last().click();
   await page.locator('input[name="slot"]').first().check();
   await page.getByRole('button', { name: 'Move it' }).click();

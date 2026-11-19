@@ -72,8 +72,21 @@ test('books an inspection start to finish on a 320px phone', async ({ page }) =>
   await expectAccessible(page);
   await stepTime(page);
   await expectAccessible(page);
+  // The contact fields say what they're for.
+  await expect(page.getByLabel('Mobile number')).toHaveAccessibleDescription(/Only used to reach you about this inspection/);
+  await expect(page.getByLabel('Email')).toHaveAccessibleDescription(/confirmation and your link to change or cancel/);
   await stepYou(page);
   await expectAccessible(page);
+  // Nothing is booked until the button is tapped, and the page says so.
+  await expect(page.getByText("You're not booked yet.")).toBeVisible();
+  // A change made from the review comes straight back to it, without walking every step again.
+  await page.getByRole('button', { name: 'Change roof details' }).click();
+  await expect(page.getByRole('heading', { name: 'Your roof' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Back', exact: true })).toHaveCount(0);
+  await page.getByRole('radio', { name: 'Metal', exact: true }).check();
+  await page.getByRole('button', { name: 'Back to review' }).click();
+  await expect(page.getByRole('heading', { name: 'Check and book' })).toBeFocused();
+  await expect(page.locator('.summary')).toContainText('Metal, 10 to 15 years.');
   await expect(page.getByText('101 Test Beach Dr W')).toBeVisible();
   await expect(page.getByText('Texts: yes')).toBeVisible();
   await expectNoSideScroll(page);

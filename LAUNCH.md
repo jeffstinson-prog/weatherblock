@@ -100,6 +100,11 @@ is on (the MX and SPF records). Keep the email forwarding.
 | Google Maps and Calendar | $0 under the free caps |
 | Claude API | about 10 cents a conversation on Opus 5.5 |
 
+## Reviews, from day one
+
+- Ask every customer for a Google review, the same way, whether the job went perfectly or not. Never offer anything for one. Google's rules forbid both incentives and asking only the happy customers.
+- Answer each review yourself, in your own words.
+
 ## After launch (from the brief)
 
 - Inspection report: the inspector uploads photos and findings from a phone, and the customer gets a private link.
