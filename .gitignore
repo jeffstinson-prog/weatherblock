@@ -1,0 +1,27 @@
+# build output
+dist/
+.netlify/
+.astro/
+
+# dependencies
+node_modules/
+
+# test output
+test-results/
+playwright-report/
+.lighthouseci/
+coverage/
+
+# local data (photos uploaded in local test mode)
+.local-storage/
+
+# environment: keys live in environment variables, never in the repo
+.env
+.env.*
+!.env.example
+
+# editors and OS
+.DS_Store
+.vscode/
+.idea/
+*.log
