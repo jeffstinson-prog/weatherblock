@@ -18,7 +18,9 @@
     "test:all": "npm run test && npm run test:db && npm run build:node && npm run test:e2e",
     "lhci": "lhci autorun",
     "db:local": "bash scripts/db-local.sh",
-    "build:test": "E2E_ADAPTER=node PUBLIC_SUPABASE_URL=https://test-project.supabase.co PUBLIC_SUPABASE_ANON_KEY=test-anon-key astro build"
+    "build:test": "E2E_ADAPTER=node PUBLIC_SUPABASE_URL=https://test-project.supabase.co PUBLIC_SUPABASE_ANON_KEY=test-anon-key astro build",
+    "test:content": "vitest run --project content",
+    "test:assistant": "vitest run --project assistant"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.11.0",

@@ -59,6 +59,7 @@ export default function More(props: { businessName: string }) {
       {error && <p class="error-box" role="alert">{error}</p>}
 
       <p><a class="btn secondary block" href="#/referrals">Referral codes</a></p>
+      <p><a class="btn secondary block" href="#/questions">Questions people asked the assistant</a></p>
 
       <h2>Export bookings</h2>
       <form onSubmit={exportCsv} noValidate class="export">
