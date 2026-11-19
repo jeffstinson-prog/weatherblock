@@ -24,7 +24,7 @@ Updated 2026-11-19.
 ## Next
 
 1. Review the pull requests and merge them in order, starting with the site.
-2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase: the WeatherBlock Roofing project has its tables (loaded November 19, with 76 windows open). Next there: the sign-in settings.
+2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase: tables loaded and sign-ups off (November 19). The sign-in code email waits for Resend, since Supabase only allows template edits with custom SMTP.
 3. Run the live assistant tests once there's an Anthropic key: `npm run test:assistant` (top 30 questions and 15 attempts to break the rules). Not run yet; no key in this environment.
 
 ## Waiting on JT and Justin
