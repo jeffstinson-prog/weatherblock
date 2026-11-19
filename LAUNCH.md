@@ -12,10 +12,11 @@ The full list of settings is in `.env.example`.
 
 - [ ] **GitHub**: the empty private repo, with the Claude GitHub app allowed on it.
 - [ ] **Netlify**: add the site from the repo (Add new site, Import from GitHub). It goes in your existing Pro team, no new plan. Deploy previews then appear on every pull request.
-- [ ] **Supabase**: a WeatherBlock organization on Pro ($25 a month). Your current Supabase account already has its two free projects.
-  - One project for the live site, in us-east-1. A second small project for deploy previews keeps test bookings out of the real calendar (about $10 a month more).
-  - Run the migrations in `supabase/migrations/` in order (Supabase CLI `supabase db push`, or paste each into the SQL editor).
-  - Authentication: email sign-in on, sign-ups off, and the "Magic link" email template changed to show the 6-digit code (`{{ .Token }}`). Send auth email through Resend (Authentication, SMTP settings); Supabase's built-in email is only for testing.
+- [ ] **Supabase**: the project is WeatherBlock Roofing (`fsyrlkpzxljwhqpfxofh`). It signs owner logins with published keys (ES256), which the site checks, so no JWT secret is needed.
+  - [ ] Load the tables: `npm run --silent db:setup-sql` prints every migration as one file. Paste it into the SQL Editor and click Run. It runs as one transaction and ends with a summary line to check. Later changes are new files in `supabase/migrations/`, applied with `supabase db push`.
+  - [ ] Authentication: email sign-in on, sign-ups off, and the "Magic link" email template changed to show the 6-digit code (`{{ .Token }}`). Send auth email through Resend (Authentication, SMTP settings); Supabase's built-in email is only for testing.
+  - [ ] If it's on the free plan, move it to Pro ($25 a month) before real bookings. Free projects have no daily backups and pause after a quiet week.
+  - Deploy previews share this project until launch, so their test bookings land here too (cleared on launch day).
 - [ ] **Resend** (free up to 100 emails a day): verify the domain (DNS, step 4), create an API key.
 - [ ] **Twilio**: buy a local 910 number, create a Messaging Service, and point incoming messages at `https://weatherblockroofingnc.com/api/twilio/sms`. Then 10DLC (step 2).
 - [ ] **Google Cloud** (needs a card on file; this traffic stays inside the free monthly caps):
@@ -81,6 +82,7 @@ is on (the MX and SPF records). Keep the email forwarding.
 
 ## 5. Launch day
 
+- [ ] Clear the test bookings out of the database.
 - [ ] Set `web.launched: true` in `facts.yaml`. Search engines are kept out until then.
 - [ ] On your phone, book a real inspection. Get the text and the email, see it in the owner app and on Justin's calendar, then reschedule and cancel from the link.
 - [ ] Run `npm run test:assistant`, read the answers, and fix any help answer it stumbles on.
@@ -91,7 +93,7 @@ is on (the MX and SPF records). Keep the email forwarding.
 | | |
 | --- | --- |
 | Netlify | in your Pro team, no new plan |
-| Supabase | $25, plus about $10 for a preview project |
+| Supabase | $0 on the free plan while testing; $25 on Pro from launch |
 | Twilio | about $12 at 100 bookings a month |
 | Resend | $0 (free up to 100 a day; $20 if a storm rush goes past that) |
 | Google Maps and Calendar | $0 under the free caps |

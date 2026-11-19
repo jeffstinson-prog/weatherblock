@@ -24,7 +24,7 @@ Updated 2026-11-19.
 ## Next
 
 1. Review the pull requests and merge them in order, starting with the site.
-2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. The first decision is Supabase: a WeatherBlock org on Pro ($25 a month), or pausing one of the two free projects on the current account. Deploy previews can't take bookings until then.
+2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase first: the WeatherBlock Roofing project exists; load the tables (`npm run --silent db:setup-sql`, pasted into its SQL Editor), then the sign-in settings.
 3. Run the live assistant tests once there's an Anthropic key: `npm run test:assistant` (top 30 questions and 15 attempts to break the rules). Not run yet; no key in this environment.
 
 ## Waiting on JT and Justin
