@@ -1,0 +1,27 @@
+---
+import Base from '../layouts/Base.astro';
+import BookCall from '../components/BookCall.astro';
+import { facts } from '../facts';
+const { financing } = facts;
+if (!financing.url) return Astro.redirect('/');
+---
+
+<Base title="Financing" description={`Check roof financing options through ${financing.provider}.`}>
+  <section class="section">
+    <div class="wrap prose">
+      <h1>Financing</h1>
+      <p class="lede">You can check financing options for a roof through {financing.provider}.</p>
+      <p><a class="btn" href={financing.url} rel="noopener">Check offers with {financing.provider}</a></p>
+      <div class="notice">
+        <p>{financing.disclosure}</p>
+      </div>
+      <h2>Good to know</h2>
+      <ul>
+        {financing.notes.map((note) => <li>{note}</li>)}
+        <li>{financing.provider} is a separate company. Its terms and privacy policy apply on its site.</li>
+        <li>You don't need financing to book {facts.derived.anInspection}.</li>
+      </ul>
+    </div>
+  </section>
+  <BookCall />
+</Base>

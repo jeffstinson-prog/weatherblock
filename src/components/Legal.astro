@@ -1,0 +1,34 @@
+---
+import Base from '../layouts/Base.astro';
+import { formatDate } from '../facts';
+
+interface Props {
+  title: string;
+  description: string;
+  updated: string; // YYYY-MM-DD
+}
+const { title, description, updated } = Astro.props;
+---
+
+<Base title={title} description={description}>
+  <article class="section">
+    <div class="wrap prose legal">
+      <h1>{title}</h1>
+      <p class="muted small">Last updated {formatDate(updated)}</p>
+      <slot />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .legal :global(h2) {
+    font-size: 1.3rem;
+    margin-top: 2rem;
+  }
+  .legal :global(ul) {
+    padding-left: 1.25rem;
+  }
+  .legal :global(li) {
+    margin-bottom: 0.35rem;
+  }
+</style>

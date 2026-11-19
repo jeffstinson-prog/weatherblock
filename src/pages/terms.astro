@@ -1,0 +1,41 @@
+---
+import Legal from '../components/Legal.astro';
+import { facts } from '../facts';
+const { business, contact, insuranceClaims, inspection } = facts;
+const who = business.legalName || business.name;
+---
+
+<Legal title="Terms" description={`The terms for using the ${business.name} website.`} updated="2026-11-19">
+  <p>These terms cover this website and booking an inspection on it. The website is run by {who}, {business.city}, {business.state}.</p>
+
+  <h2>Inspections</h2>
+  <ul>
+    {inspection.free && <li>The roof inspection is free. Booking one doesn't commit you to any work.</li>}
+    <li>You pick a {inspection.windowHours} hour window. Weather or safety can make us reschedule. If that happens, we'll tell you and help you pick a new time.</li>
+    <li>Please give us accurate information about the home and how to reach it safely.</li>
+  </ul>
+
+  <h2>Estimates and prices</h2>
+  <p>This website doesn't list prices. Prices come in a written estimate after we've seen the roof. Any work happens under a separate written agreement.</p>
+
+  <h2>Insurance</h2>
+  <p>{insuranceClaims.weDo} {insuranceClaims.youDo} We don't file, handle or negotiate insurance claims. We can't promise what insurance will pay. We never cover or waive a deductible.</p>
+
+  <h2>Financing</h2>
+  <p>{facts.financing.disclosure}</p>
+
+  <h2>The automated assistant</h2>
+  <p>The assistant is a computer program, not a person. It answers from our help center and can be wrong. For anything important, call us at {contact.phone}.</p>
+
+  <h2>General information only</h2>
+  <p>The help center gives general information. It isn't legal or insurance advice. For questions about your policy, ask your insurance company or agent.</p>
+
+  <h2>Text messages</h2>
+  <p>See <a href="/text-messages/">text message terms</a>.</p>
+
+  <h2>Changes and law</h2>
+  <p>We may update these terms and will change the date at the top when we do. North Carolina law applies.</p>
+
+  <h2>Contact</h2>
+  <p><a href={`mailto:${contact.email}`}>{contact.email}</a> or {contact.phone}.</p>
+</Legal>

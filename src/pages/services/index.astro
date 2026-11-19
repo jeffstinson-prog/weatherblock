@@ -1,0 +1,32 @@
+---
+import Base from '../../layouts/Base.astro';
+import BookCall from '../../components/BookCall.astro';
+import { facts } from '../../facts';
+---
+
+<Base title="Services" description={`Roof replacement, repairs, storm damage and drone inspections in ${facts.serviceArea.short}.`}>
+  <section class="section">
+    <div class="wrap prose">
+      <h1>Services</h1>
+      <p class="lede">Everything starts with {facts.derived.anInspection}.</p>
+      <ul class="cards">
+        {facts.services.map((s) => (
+          <li class="card"><h2 class="h3"><a href={s.path}>{s.name}</a></h2></li>
+        ))}
+      </ul>
+    </div>
+  </section>
+  <BookCall />
+</Base>
+
+<style>
+  .h3 {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+  .card a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+</style>
