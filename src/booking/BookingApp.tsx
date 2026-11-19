@@ -118,6 +118,7 @@ export default function BookingApp(props: BookingProps) {
   const [slotsError, setSlotsError] = useState('');
   const [alternatives, setAlternatives] = useState<Slot[]>([]);
   const [busy, setBusy] = useState(false);
+  const [fromReview, setFromReview] = useState(false);
   const [photoStatus, setPhotoStatus] = useState('');
   const [done, setDone] = useState<DoneInfo | null>(null);
   const [honeypot, setHoneypot] = useState('');
@@ -191,6 +192,12 @@ export default function BookingApp(props: BookingProps) {
     setStep(i);
   }
 
+  /** Open a step from the review screen; Continue then comes straight back. */
+  function edit(i: number) {
+    setFromReview(true);
+    goTo(i);
+  }
+
   function next() {
     const name = STEPS[step]!;
     const found = validateStep(name, draft);
@@ -200,6 +207,11 @@ export default function BookingApp(props: BookingProps) {
     setErrors(found);
     setFormError(undefined);
     if (Object.keys(found).length > 0) return;
+    if (fromReview) {
+      setFromReview(false);
+      setStep(STEPS.length - 1);
+      return;
+    }
     setStep(step + 1);
   }
 
@@ -233,6 +245,7 @@ export default function BookingApp(props: BookingProps) {
     const firstBad = firstStepWithErrors(draft);
     if (firstBad) {
       const i = STEPS.indexOf(firstBad);
+      setFromReview(true);
       setStep(i);
       setErrors(validateStep(firstBad, draft));
       return;
@@ -274,6 +287,7 @@ export default function BookingApp(props: BookingProps) {
         const fieldStep = (key: string) =>
           key === 'address' || key === 'relationship' ? 0 : ['material', 'age', 'reason'].includes(key) ? 1 : ['slot', 'someoneHome'].includes(key) ? 2 : 3;
         const target = Math.min(...Object.keys(body.fields).map(fieldStep));
+        setFromReview(true);
         setStep(target);
         setErrors(body.fields);
         setFormError(body.message);
@@ -292,6 +306,7 @@ export default function BookingApp(props: BookingProps) {
 
   const name = STEPS[step]!;
   const total = STEPS.length;
+  const bookLabel = props.free ? 'Book my free inspection' : 'Book my inspection';
 
   return (
     <div class="booking">
@@ -540,6 +555,7 @@ export default function BookingApp(props: BookingProps) {
             <TextField
               id="mobile"
               label="Mobile number"
+              hint="Only used to reach you about this inspection."
               type="tel"
               inputMode="tel"
               autocomplete="tel"
@@ -554,6 +570,7 @@ export default function BookingApp(props: BookingProps) {
             <TextField
               id="email"
               label="Email"
+              hint="We send your confirmation and your link to change or cancel here."
               type="email"
               inputMode="email"
               autocomplete="email"
@@ -650,11 +667,14 @@ export default function BookingApp(props: BookingProps) {
                     </label>
                   ))}
                 </div>
-                <button type="button" class="link-btn" onClick={() => goTo(2)}>
+                <button type="button" class="link-btn" onClick={() => edit(2)}>
                   See all open times
                 </button>
               </fieldset>
             )}
+            <p class="not-yet">
+              You're not booked yet. Check the details, then tap <strong>{bookLabel}</strong>.
+            </p>
             {satellite && draft.address.placeId ? (
               <figure class="satellite">
                 <img src={satellite} alt={`Satellite view of ${draft.address.text}`} width={640} height={360} />
@@ -670,7 +690,7 @@ export default function BookingApp(props: BookingProps) {
                   <span class="muted">{labelOf(RELATIONSHIPS, draft.relationship)}</span>
                 </dd>
                 <dd>
-                  <button type="button" class="link-btn" onClick={() => goTo(0)}>
+                  <button type="button" class="link-btn" onClick={() => edit(0)}>
                     Change the address
                   </button>
                 </dd>
@@ -683,7 +703,7 @@ export default function BookingApp(props: BookingProps) {
                   {draft.photos.length > 0 && ` ${draft.photos.length} ${draft.photos.length === 1 ? 'photo' : 'photos'}.`}
                 </dd>
                 <dd>
-                  <button type="button" class="link-btn" onClick={() => goTo(1)}>
+                  <button type="button" class="link-btn" onClick={() => edit(1)}>
                     Change roof details
                   </button>
                 </dd>
@@ -696,7 +716,7 @@ export default function BookingApp(props: BookingProps) {
                   <span class="muted">Someone home: {labelOf(SOMEONE_HOME, draft.visit.someoneHome).toLowerCase()}</span>
                 </dd>
                 <dd>
-                  <button type="button" class="link-btn" onClick={() => goTo(2)}>
+                  <button type="button" class="link-btn" onClick={() => edit(2)}>
                     Change the time
                   </button>
                 </dd>
@@ -713,7 +733,7 @@ export default function BookingApp(props: BookingProps) {
                   <span class="muted">{draft.contact.smsConsent ? 'Texts: yes' : 'Texts: no'}</span>
                 </dd>
                 <dd>
-                  <button type="button" class="link-btn" onClick={() => goTo(3)}>
+                  <button type="button" class="link-btn" onClick={() => edit(3)}>
                     Change your details
                   </button>
                 </dd>
@@ -723,18 +743,18 @@ export default function BookingApp(props: BookingProps) {
         )}
 
         <div class="step-actions">
-          {step > 0 && (
+          {step > 0 && !(fromReview && name !== 'review') && (
             <button type="button" class="btn secondary" onClick={() => goTo(step - 1)}>
               Back
             </button>
           )}
           {name === 'review' ? (
             <button type="submit" class="btn" disabled={busy || !draft.slot}>
-              {busy ? 'Booking...' : props.free ? 'Book my free inspection' : 'Book my inspection'}
+              {busy ? 'Booking...' : bookLabel}
             </button>
           ) : (
             <button type="submit" class="btn">
-              Continue
+              {fromReview ? 'Back to review' : 'Continue'}
             </button>
           )}
         </div>
