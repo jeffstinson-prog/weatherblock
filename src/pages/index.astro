@@ -1,0 +1,154 @@
+---
+import Base from '../layouts/Base.astro';
+import BookCall from '../components/BookCall.astro';
+import { facts, formatDate, has, smsHref, telHref } from '../facts';
+import { getArticle, topArticles } from '../help/load';
+import { roofingContractor } from '../lib/schema-org';
+
+const tel = telHref();
+const sms = smsHref();
+const { inspection, insuranceClaims, reviews } = facts;
+const google = reviews.google;
+const showReviews = has('reviews.google.url') && google.rating !== null && google.count !== null;
+const questions = topArticles().slice(0, 6);
+const insuranceAnswer = getArticle('insurance-pay');
+const nc2027 = getArticle('nc-2027-changes');
+
+const blurbs: Record<string, string> = {
+  replacement: 'Materials and installation, explained before you decide.',
+  repair: 'Leaks, damaged shingles and problem spots.',
+  storm: 'A clear picture of your roof after rough weather.',
+  drone: 'A close look at your whole roof with no foot traffic on your shingles.',
+};
+---
+
+<Base
+  title={facts.business.name}
+  description={`Roof repairs, replacements and ${facts.derived.anInspection} in ${facts.serviceArea.short}.`}
+  jsonLd={roofingContractor(Astro.site)}
+>
+  <section class="section hero">
+    <div class="wrap">
+      <p class="eyebrow">{facts.serviceArea.short}</p>
+      <h1>{facts.business.lines[1] ?? facts.business.name}</h1>
+      <p class="lede">
+        Roof repairs and replacements.{inspection.free && ' The roof inspection is free.'}
+      </p>
+      <div class="actions">
+        <a class="btn" href="/book/">{facts.derived.bookLabel}</a>
+        {tel && <a class="btn secondary" href={tel}>Call {facts.contact.phone}</a>}
+        {sms && <a class="btn secondary" href={sms}>Text us</a>}
+      </div>
+    </div>
+  </section>
+
+  <section class="section tint" aria-labelledby="how-h">
+    <div class="wrap">
+      <h2 id="how-h">How it works</h2>
+      <ol class="steps">
+        <li><strong>Book a time.</strong> Pick a {inspection.windowHours} hour window that works for you.</li>
+        {inspection.byDrone ? (
+          <li><strong>We inspect by drone.</strong> No foot traffic on your shingles until repairs or a replacement call for it.{inspection.homeNotRequired && ' You don\'t have to be home.'}</li>
+        ) : (
+          <li><strong>We inspect your roof.</strong>{inspection.homeNotRequired && ' You don\'t have to be home.'}</li>
+        )}
+        {inspection.deliverables && <li><strong>You get {inspection.deliverables}.</strong>{inspection.free && ' The inspection is free.'}</li>}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="services-h">
+    <div class="wrap">
+      <h2 id="services-h">What we do</h2>
+      <ul class="cards">
+        {facts.services.map((s) => (
+          <li class="card">
+            <h3><a href={s.path}>{s.name}</a></h3>
+            {blurbs[s.key] && <p class="muted">{blurbs[s.key]}</p>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  {showReviews && (
+    <section class="section tint-blue" aria-labelledby="reviews-h">
+      <div class="wrap">
+        <h2 id="reviews-h">Reviews</h2>
+        <p class="rating">
+          <span class="big">{google.rating!.toFixed(1)}</span> stars on Google from {google.count} reviews
+          {google.asOf && <span class="muted"> as of {formatDate(google.asOf)}</span>}.
+        </p>
+        <p><a href={google.url} rel="noopener">Read them on Google</a></p>
+      </div>
+    </section>
+  )}
+
+  <section class="section" aria-labelledby="claims-h">
+    <div class="wrap prose">
+      <h2 id="claims-h">Storm damage and insurance</h2>
+      <p>{insuranceClaims.weDo} {insuranceClaims.youDo}</p>
+      <p>We can't promise what insurance will pay, and we never cover or waive a deductible.</p>
+      {insuranceAnswer && <p><a href={`/help/${insuranceAnswer.slug}/`}>{insuranceAnswer.question}</a></p>}
+      {nc2027 && (
+        <div class="notice">
+          <p><strong>North Carolina homeowners policies that start or renew on or after June 1, 2027 pay for roof damage differently.</strong></p>
+          <p><a href={`/help/${nc2027.slug}/`}>What the change means for your roof</a></p>
+        </div>
+      )}
+    </div>
+  </section>
+
+  {facts.financing.url && (
+    <section class="section tint" aria-labelledby="fin-h">
+      <div class="wrap prose">
+        <h2 id="fin-h">Financing</h2>
+        <p>You can check financing options through {facts.financing.provider}.</p>
+        <p><a href="/financing/">How financing works</a></p>
+      </div>
+    </section>
+  )}
+
+  {questions.length > 0 && (
+    <section class="section" aria-labelledby="q-h">
+      <div class="wrap prose">
+        <h2 id="q-h">Common questions</h2>
+        <ul class="qlist">
+          {questions.map((a) => <li><a href={`/help/${a.slug}/`}>{a.question}</a></li>)}
+        </ul>
+        <p><a href="/help/">All answers in the help center</a></p>
+      </div>
+    </section>
+  )}
+
+  <BookCall />
+</Base>
+
+<style>
+  .hero {
+    padding-block: 2.5rem 2rem;
+  }
+  .hero h1 {
+    color: var(--ink);
+    max-width: 18ch;
+  }
+  .rating .big {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent-text);
+  }
+  .qlist {
+    padding-left: 1.25rem;
+  }
+  .qlist a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+  .card h3 a {
+    text-decoration: none;
+  }
+  .card h3 a:hover {
+    text-decoration: underline;
+  }
+</style>

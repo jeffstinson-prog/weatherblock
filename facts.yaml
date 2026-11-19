@@ -1,0 +1,120 @@
+# WeatherBlock Roofing: the facts file.
+#
+# The website and the assistant say only what is written here.
+# Leave a value empty ("") and everything that depends on it stays hidden:
+# the sentence, the badge, the help answer, and the assistant's knowledge of it.
+#
+# Text values can use {{business.name}} and other {{paths}} from this file.
+# Change a value in a pull request. The site updates when it merges.
+
+business:
+  name: WeatherBlock Roofing # the one place the business name lives
+  legalName: WeatherBlock Roofing Incorporated # NC business corporation, SOSID 2997840, formed 2025-03-02
+  owners:
+    - name: Justin Coffey
+      role: runs the crews # finishes the sentence "Justin ..."
+    - name: JT Stinson
+      role: ""
+  # Town only. The principal office on file with the state is a home address,
+  # so the street stays off the site.
+  city: Ocean Isle Beach
+  state: NC
+  zip: "28469"
+  lines:
+    - Local roots. Lasting protection.
+    - Coastal roofing. Local commitment.
+  verse:
+    text: Shelter from the storm and rain.
+    ref: Isaiah 4:6
+
+contact:
+  phone: (910) 209-5275
+  phoneE164: "+19102095275"
+  takesTexts: true # the Google profile offers Text on this number
+  email: weatherblockroofing@gmail.com
+  hours: "" # phone hours to publish, e.g. "Mon to Sat, 7 am to 7 pm". Google currently says "Open 24 hours".
+
+web:
+  domain: weatherblockroofingnc.com
+  launched: false # false keeps search engines out (noindex) until launch day
+
+serviceArea:
+  summary: Ocean Isle Beach and the rest of Brunswick County, North Carolina
+  short: Ocean Isle Beach and Brunswick County
+  state: NC
+  counties:
+    - Brunswick
+
+services:
+  - key: replacement
+    name: Roof replacement
+    path: /services/roof-replacement/
+  - key: repair
+    name: Roof repairs
+    path: /services/roof-repairs/
+  - key: storm
+    name: Storm damage
+    path: /services/storm-damage/
+  - key: drone
+    name: Drone inspections
+    path: /services/drone-inspections/
+
+inspection:
+  free: true
+  # From Justin's site: "We inspect your roof by drone, keeping foot traffic off
+  # your shingles until repairs or replacement are needed."
+  byDrone: true
+  windowHours: 2
+  # You get photos and a written estimate (from the insurance claims fact below).
+  deliverables: photos and a written estimate
+  homeNotRequired: true # CONFIRM: nobody has to be home for a drone inspection
+  duration: "" # how long the visit takes, e.g. "about 30 minutes". Blank: hidden.
+
+credentials:
+  license:
+    holder: Justin Coffey
+    kind: NC general contractor
+    number: "" # Blank: the site makes no license claim anywhere.
+  insurance:
+    liability: "" # e.g. "General liability, $1,000,000 per occurrence". Blank: no "insured" claim.
+    workersComp: "" # "Yes" or "No". Blank: not mentioned.
+  warranty:
+    workmanship: "" # e.g. "5 years on our labor". Blank: no warranty claim.
+  certifications: [] # e.g. ["GAF Certified Contractor"]. Empty: no certification claims.
+  fortified:
+    certified: false
+    inProgress: true # working on FORTIFIED certification
+  drone:
+    part107: "" # name of the FAA Part 107 certificate holder. Blank: not mentioned.
+
+reviews:
+  google:
+    rating: 5.0
+    count: 11
+    asOf: "2026-11-19"
+    url: https://share.google/wepCy5SeWsGcWvBwv
+
+# Any price the site or the assistant may state. Empty: no prices anywhere.
+prices: []
+
+financing:
+  provider: Acorn Finance
+  url: https://www.acornfinance.com/pre-qualify/?d=QP3YO
+  disclosure: >-
+    You'll continue to Acorn Finance, a third-party financing service. The lender
+    sets approval, rates and terms. {{business.name}} does not guarantee approval.
+  # From Acorn's own site (checked 2026-11-19). Keep in step with the provider above.
+  notes:
+    - "{{financing.provider}} is not a lender. It connects you with lenders, and the lenders make the credit decisions."
+    - "Checking offers starts with a soft credit check, which {{financing.provider}} says does not affect your credit score. A lender may run a hard credit check if you move forward with an offer."
+
+insuranceClaims:
+  weDo: We document the damage with photos and a written estimate.
+  youDo: You file the claim and settle it with your insurance company.
+
+# Only real photos of our own jobs, each with the homeowner's OK.
+# Example entry: { file: smith-roof-after.jpg, alt: "New shingle roof in Calabash", homeownerOk: "2026-12-01" }
+photos: []
+
+texts:
+  maxPerBooking: 5 # used in the consent wording on the booking form

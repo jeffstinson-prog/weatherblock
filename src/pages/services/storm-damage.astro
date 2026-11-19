@@ -1,0 +1,21 @@
+---
+import ServicePage from '../../components/ServicePage.astro';
+import { facts } from '../../facts';
+---
+
+<ServicePage
+  serviceKey="storm"
+  description="After rough weather, get a clear picture of your roof with photos and a written estimate."
+  questions={['after-storm', 'storm-damage-signs', 'insurance-pay', 'file-claim', 'deductible', 'nc-2027-changes']}
+>
+  <p class="lede">After rough weather, get a clear picture of your roof and the work needed to protect your home.</p>
+  <h2>Insurance claims</h2>
+  <p>{facts.insuranceClaims.weDo} {facts.insuranceClaims.youDo}</p>
+  <p>We can't promise what insurance will pay. We don't file, handle or negotiate claims. We never cover or waive a deductible.</p>
+  <h2>Right after a storm</h2>
+  <ul>
+    <li>Stay off the roof.</li>
+    <li>If water is coming in, catch it, move what you can, and call us.</li>
+    <li>Take photos of any damage you can see from the ground and inside.</li>
+  </ul>
+</ServicePage>

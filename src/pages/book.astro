@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import { facts, smsHref, telHref } from '../facts';
+const tel = telHref();
+const sms = smsHref();
+---
+
+<Base title={facts.derived.bookLabel} description={`${facts.derived.bookLabel} in ${facts.serviceArea.short}.`}>
+  <section class="section">
+    <div class="wrap prose">
+      <h1>{facts.derived.bookLabel}</h1>
+      <p class="lede">Call or text us and we'll set up a time.</p>
+      <div class="actions">
+        {tel && <a class="btn" href={tel}>Call {facts.contact.phone}</a>}
+        {sms && <a class="btn secondary" href={sms}>Text {facts.contact.phone}</a>}
+      </div>
+    </div>
+  </section>
+</Base>

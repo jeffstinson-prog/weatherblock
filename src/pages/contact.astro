@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro';
+import { facts, has, smsHref, telHref } from '../facts';
+import { roofingContractor } from '../lib/schema-org';
+const tel = telHref();
+const sms = smsHref();
+---
+
+<Base title="Contact" description={`Call or text ${facts.contact.phone}, or email ${facts.contact.email}.`} jsonLd={roofingContractor(Astro.site)}>
+  <section class="section">
+    <div class="wrap prose">
+      <h1>Contact</h1>
+      <div class="actions">
+        <a class="btn" href="/book/">{facts.derived.bookLabel}</a>
+        {tel && <a class="btn secondary" href={tel}>Call {facts.contact.phone}</a>}
+        {sms && <a class="btn secondary" href={sms}>Text {facts.contact.phone}</a>}
+        {facts.contact.email && <a class="btn secondary" href={`mailto:${facts.contact.email}`}>Email us</a>}
+      </div>
+      <dl class="facts">
+        {facts.contact.phone && (<><dt>Phone and text</dt><dd>{facts.contact.phone}</dd></>)}
+        {facts.contact.email && (<><dt>Email</dt><dd><a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a></dd></>)}
+        {has('contact.hours') && (<><dt>Phone hours</dt><dd>{facts.contact.hours}</dd></>)}
+        {facts.serviceArea.summary && (<><dt>Where we work</dt><dd>{facts.serviceArea.summary}</dd></>)}
+      </dl>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .facts {
+    display: grid;
+    gap: 0.25rem 1rem;
+    margin-top: 1.5rem;
+  }
+  .facts dt {
+    font-weight: 700;
+    margin-top: 0.75rem;
+  }
+  .facts dd {
+    margin: 0;
+  }
+</style>

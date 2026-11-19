@@ -1,0 +1,87 @@
+---
+import { copyrightLine, facts, has, smsHref, telHref } from '../facts';
+
+const tel = telHref();
+const sms = smsHref();
+const { lines, verse } = facts.business;
+---
+
+<footer class="site-footer">
+  <hr class="lines" />
+  <div class="wrap grid">
+    <div>
+      {lines.map((line) => <p class="line">{line}</p>)}
+      {verse.text && (
+        <p class="verse">
+          {verse.text} <span class="muted">{verse.ref}</span>
+        </p>
+      )}
+    </div>
+    <div>
+      <h2 class="h">Reach us</h2>
+      <ul class="plain">
+        {tel && <li><a href={tel}>Call {facts.contact.phone}</a></li>}
+        {sms && <li><a href={sms}>Text {facts.contact.phone}</a></li>}
+        {facts.contact.email && <li><a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a></li>}
+        {has('contact.hours') && <li class="muted">{facts.contact.hours}</li>}
+      </ul>
+      {facts.serviceArea.summary && <p class="muted small">Serving {facts.serviceArea.summary}.</p>}
+    </div>
+    <nav aria-label="Footer" class="footer-links">
+      <h2 class="h">More</h2>
+      <ul class="plain">
+        <li><a href="/book/">Book a free inspection</a></li>
+        <li><a href="/help/">Help center</a></li>
+        <li><a href="/service-area/">Service area</a></li>
+        <li><a href="/privacy/">Privacy</a></li>
+        <li><a href="/terms/">Terms</a></li>
+        <li><a href="/text-messages/">Text messages</a></li>
+        <li><a href="/accessibility/">Accessibility</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="wrap legal">
+    <p class="small muted">{copyrightLine()}</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--surface);
+    margin-top: 2rem;
+  }
+  .grid {
+    display: grid;
+    gap: 1.5rem;
+    padding-block: 2rem 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  }
+  .line {
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-bottom: 0.25rem;
+  }
+  .verse {
+    margin-top: 0.75rem;
+  }
+  .h {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .plain {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.75rem;
+  }
+  .plain a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .legal {
+    padding-block: 0.5rem 2rem;
+  }
+</style>

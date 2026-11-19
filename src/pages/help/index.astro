@@ -1,0 +1,117 @@
+---
+import Base from '../../layouts/Base.astro';
+import BookCall from '../../components/BookCall.astro';
+import { byTopic, helpArticles, topArticles } from '../../help/load';
+import type { SearchDoc } from '../../help/search';
+
+const groups = byTopic();
+const top = topArticles();
+const index: SearchDoc[] = helpArticles.map((a) => ({ slug: a.slug, q: a.question, k: a.keywords.join(' '), t: a.text }));
+---
+
+<Base title="Help center" description="Plain answers about roof inspections, storm damage, insurance claims, financing and more.">
+  <section class="section">
+    <div class="wrap prose">
+      <h1>Help center</h1>
+      <p class="lede">One plain answer per question.</p>
+      <form class="search" role="search" action="/help/" method="get" data-search>
+        <label for="help-q">Search the answers</label>
+        <input id="help-q" name="q" type="search" autocomplete="off" enterkeyhint="search" placeholder="For example: insurance, leak, cost" />
+        <p class="hint" id="help-status" aria-live="polite"></p>
+        <ol class="results" id="help-results" hidden></ol>
+      </form>
+      <script type="application/json" id="help-index" set:html={JSON.stringify(index)} />
+      {top.length > 0 && (
+        <section aria-labelledby="top-h">
+          <h2 id="top-h">Most asked</h2>
+          <ul class="qlist">
+            {top.map((a) => <li><a href={`/help/${a.slug}/`}>{a.question}</a></li>)}
+          </ul>
+        </section>
+      )}
+      {groups.map((g) => (
+        <section aria-labelledby={`t-${g.topic}`}>
+          <h2 id={`t-${g.topic}`}>{g.topic}</h2>
+          <ul class="qlist">
+            {g.articles.map((a) => <li><a href={`/help/${a.slug}/`}>{a.question}</a></li>)}
+          </ul>
+        </section>
+      ))}
+      <p class="muted">Didn't find it? Call or text us. We'll give you a straight answer.</p>
+    </div>
+  </section>
+  <BookCall heading="Want us to take a look?" />
+</Base>
+
+<script>
+  import { search, type SearchDoc } from '../../help/search';
+
+  const form = document.querySelector<HTMLFormElement>('[data-search]');
+  const input = document.getElementById('help-q') as HTMLInputElement | null;
+  const list = document.getElementById('help-results') as HTMLOListElement | null;
+  const status = document.getElementById('help-status');
+  const raw = document.getElementById('help-index')?.textContent ?? '[]';
+  const docs = JSON.parse(raw) as SearchDoc[];
+
+  function render(query: string) {
+    if (!list || !status) return;
+    list.replaceChildren();
+    const q = query.trim();
+    if (!q) {
+      list.hidden = true;
+      status.textContent = '';
+      return;
+    }
+    const hits = search(docs, q);
+    for (const hit of hits) {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = `/help/${hit.slug}/`;
+      a.textContent = hit.q;
+      li.append(a);
+      list.append(li);
+    }
+    list.hidden = hits.length === 0;
+    status.textContent =
+      hits.length === 0
+        ? 'No answer matches that yet. Try other words, or call or text us.'
+        : `${hits.length} ${hits.length === 1 ? 'answer' : 'answers'} found.`;
+  }
+
+  input?.addEventListener('input', () => render(input.value));
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    render(input?.value ?? '');
+  });
+  const initial = new URLSearchParams(location.search).get('q');
+  if (initial && input) {
+    input.value = initial;
+    render(initial);
+  }
+</script>
+
+<style>
+  .search {
+    display: grid;
+    gap: 0.4rem;
+    margin: 1.5rem 0 2rem;
+  }
+  .results {
+    padding-left: 1.25rem;
+    margin: 0.25rem 0 0;
+  }
+  .results li,
+  .qlist li {
+    margin-bottom: 0.25rem;
+  }
+  .results a,
+  .qlist a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+  .qlist {
+    padding-left: 1.25rem;
+    margin-bottom: 1.75rem;
+  }
+</style>
