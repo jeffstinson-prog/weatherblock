@@ -1,11 +1,14 @@
 ---
 import Base from '../layouts/Base.astro';
 import BookCall from '../components/BookCall.astro';
-import { canClaimInsured, canClaimLicense, facts, has } from '../facts';
+import { canClaimInsured, canClaimLicense, facts, formatDate, has } from '../facts';
 import { roofingContractor } from '../lib/schema-org';
 import { getArticle } from '../help/load';
 const fortifiedAnswer = getArticle('fortified');
 const { business, credentials } = facts;
+const google = facts.reviews.google;
+const showReviews = has('reviews.google.url') && google.rating !== null && google.count !== null;
+const showRegistration = has('credentials.registration.id');
 ---
 
 <Base title="About us" description={`${business.name} is owned by ${facts.derived.ownerNames}, based in ${business.city}, ${business.state}.`} jsonLd={roofingContractor(Astro.site)}>
@@ -14,9 +17,6 @@ const { business, credentials } = facts;
       <h1>About us</h1>
       <p class="lede">{business.lines[0]}</p>
       <p>{business.name} is owned by {facts.derived.ownerNames}. {facts.derived.ownerRoles} We're based in {business.city}, {business.state}, and we serve {facts.serviceArea.summary}.</p>
-      {canClaimLicense() && (
-        <p>{credentials.license.holder} holds {credentials.license.kind} license number {credentials.license.number}.</p>
-      )}
       {canClaimInsured() && <p>Insurance: {credentials.insurance.liability}.</p>}
       {has('credentials.insurance.workersComp') && <p>Workers' compensation: {credentials.insurance.workersComp}.</p>}
       {has('credentials.warranty.workmanship') && <p>Warranty: {credentials.warranty.workmanship}.</p>}
@@ -30,7 +30,42 @@ const { business, credentials } = facts;
           <footer class="muted">{business.verse.ref}</footer>
         </blockquote>
       )}
-      {business.legalName && <p class="small muted">{business.legalName}</p>}
+      {(showRegistration || canClaimLicense() || showReviews) && (
+        <>
+          <h2 id="check">Check us yourself</h2>
+          <ul>
+            {showRegistration && (
+              <li>
+                Registered in North Carolina as {business.legalName || business.name}, ID {credentials.registration.id}.
+                {credentials.registration.lookupUrl && (
+                  <>
+                    {' '}
+                    <a href={credentials.registration.lookupUrl} rel="noopener">Search the NC Secretary of State</a> for "{business.name}".
+                  </>
+                )}
+              </li>
+            )}
+            {canClaimLicense() && (
+              <li>
+                {credentials.license.holder} holds {credentials.license.kind} license number {credentials.license.number}.
+                {credentials.license.lookupUrl && (
+                  <>
+                    {' '}
+                    <a href={credentials.license.lookupUrl} rel="noopener">Look it up</a>.
+                  </>
+                )}
+              </li>
+            )}
+            {showReviews && (
+              <li>
+                {google.rating!.toFixed(1)} stars on Google from {google.count} reviews{google.asOf && <> as of {formatDate(google.asOf)}</>}.{' '}
+                <a href={google.url} rel="noopener">Read them on Google</a>.
+              </li>
+            )}
+          </ul>
+        </>
+      )}
+      {business.legalName && !showRegistration && <p class="small muted">{business.legalName}</p>}
     </div>
   </section>
   <BookCall />

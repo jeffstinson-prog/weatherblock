@@ -79,7 +79,14 @@ const blurbs: Record<string, string> = {
           <span class="big">{google.rating!.toFixed(1)}</span> stars on Google from {google.count} reviews
           {google.asOf && <span class="muted"> as of {formatDate(google.asOf)}</span>}.
         </p>
-        <p><a href={google.url} rel="noopener">Read them on Google</a></p>
+        <p>
+          <a href={google.url} rel="noopener">Read them on Google</a>
+          {has('credentials.registration.id') && (
+            <>
+              {' '}or <a href="/about/#check">check us yourself</a>
+            </>
+          )}
+        </p>
       </div>
     </section>
   )}

@@ -49,7 +49,8 @@ export const FactsSchema = z.strictObject({
     duration: text(),
   }),
   credentials: z.strictObject({
-    license: z.strictObject({ holder: text(), kind: text(), number: text() }),
+    registration: z.strictObject({ id: text(), lookupUrl: optionalUrl() }),
+    license: z.strictObject({ holder: text(), kind: text(), number: text(), lookupUrl: optionalUrl() }),
     insurance: z.strictObject({ liability: text(), workersComp: text() }),
     warranty: z.strictObject({ workmanship: text() }),
     certifications: z.array(z.string().trim().min(1)).default([]),
