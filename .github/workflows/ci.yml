@@ -55,6 +55,9 @@ jobs:
       - name: Build (test server)
         run: npm run build:test
 
+      - name: Every built page keeps the house rules
+        run: npm run test:content
+
       - name: Install the browser for Playwright
         run: npx playwright install --with-deps chromium
 

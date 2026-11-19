@@ -6,6 +6,7 @@ import Availability from './Availability';
 import BookingView from './BookingView';
 import More from './More';
 import Referrals from './Referrals';
+import Questions from './Questions';
 import SignIn from './SignIn';
 import Today from './Today';
 import Upcoming from './Upcoming';
@@ -62,7 +63,7 @@ export default function OwnerApp(props: AppProps) {
   if (state === 'loading') return <p class="owner-pad">Loading...</p>;
   if (state === 'out') return <SignIn businessName={props.businessName} onIn={() => setState('in')} />;
 
-  const tab = route.view === 'booking' || route.view === 'day' ? 'today' : route.view === 'referrals' ? 'more' : route.view;
+  const tab = route.view === 'booking' || route.view === 'day' ? 'today' : route.view === 'referrals' || route.view === 'questions' ? 'more' : route.view;
 
   return (
     <div class="owner">
@@ -73,6 +74,7 @@ export default function OwnerApp(props: AppProps) {
         {route.view === 'booking' && <BookingView id={route.arg} />}
         {route.view === 'availability' && <Availability />}
         {route.view === 'referrals' && <Referrals domain={props.domain} />}
+        {route.view === 'questions' && <Questions />}
         {route.view === 'more' && <More businessName={props.businessName} />}
       </main>
       <nav class="tabs" aria-label="Owner app">

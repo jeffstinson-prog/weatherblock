@@ -11,6 +11,24 @@ export default defineConfig({
         },
       },
       {
+        // Checks the built pages: run after npm run build:test.
+        test: {
+          name: 'content',
+          include: ['tests/content/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        // Talks to the real Claude API: needs ANTHROPIC_API_KEY. Costs a little each run.
+        test: {
+          name: 'assistant',
+          include: ['tests/assistant-live/**/*.test.ts'],
+          environment: 'node',
+          testTimeout: 120_000,
+          fileParallelism: false,
+        },
+      },
+      {
         // Needs a Postgres database: DATABASE_URL, see scripts/db-local.sh
         test: {
           name: 'db',

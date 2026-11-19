@@ -359,6 +359,19 @@ export async function exportCsv(owner: Owner, from: string, to: string): Promise
   return [header.map(csvCell).join(','), ...lines].join('\r\n') + '\r\n';
 }
 
+// ---------- Assistant questions ----------
+
+/** What people asked the assistant in the last 30 days, unanswered ones first. */
+export async function questions(owner: Owner) {
+  return asOwner(owner.userId, async (tx) => {
+    const rows = await tx`
+      select asked_at, question, answered, blocked_rule from wb.assistant_questions
+      where asked_at > now() - interval '30 days'
+      order by answered, asked_at desc limit 200`;
+    return rows.map((r) => ({ at: iso(r.asked_at), question: r.question as string, answered: Boolean(r.answered), blocked: (r.blocked_rule as string | null) ?? '' }));
+  });
+}
+
 // ---------- Me ----------
 
 export async function me(owner: Owner) {
