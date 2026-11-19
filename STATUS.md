@@ -4,7 +4,7 @@ Updated 2026-11-19.
 
 ## Done
 
-- **Site and help center.** All public pages, built only from `facts.yaml`. 25 help answers, searchable. Three more wait on blank facts and stay hidden: visit length, license, warranty.
+- **Site and help center.** All public pages, built only from `facts.yaml`. 26 help answers, searchable. Three more wait on blank facts and stay hidden: visit length, license, warranty.
 - **Verified at the source** (links on each answer):
   - June 1, 2027 NC homeowners changes: NC Rate Bureau circulars P-25-3, P-25-5, P-26-2 and P-26-4. Roof payment schedule, cosmetic damage exclusion and matching exclusion, each with a buyback.
   - Roof grants: NCIUA runs two programs. Island homes, like the island part of Ocean Isle Beach, use Strengthen Your Roof (up to $10,000). Mainland Brunswick County uses Strengthen Your Coastal Roof (up to $6,000). Since November 1, 2025 only Certified FORTIFIED Roofing Contractors can install grant-funded roofs, so the site says we can't do those yet.
@@ -19,23 +19,14 @@ Updated 2026-11-19.
 - **The assistant** at `/ask/`: Claude Opus 5.5 by default, answers only from the help center and facts, says it's automated, offers to book or call, and carries what it learned into the booking form. A code check of every house rule reads each reply before it's shown; the same check passes on every built page. Questions it couldn't answer are listed in the owner app for 30 days.
 - **Availability** comes from weekly windows, days off, number of inspectors and busy times from the calendar. Starting point until Justin changes it in the owner app: Monday to Saturday, 8 to 10, 10 to noon, noon to 2, 2 to 4, one inspector, bookable 12 hours to 21 days ahead.
 - **Protection.** Row level security on every table; the public can only call five narrow functions. Rate limits, a hidden bot field, at most 3 upcoming bookings per mobile number. Gate codes deleted a week after the visit.
-- **Checks on every pull request.** Unit tests, type check, database tests on Postgres, Playwright at 320px and 390px in light and dark with axe (WCAG 2.2 AA), the full booking flow, Lighthouse at phone settings. Locally: 100 in all four Lighthouse categories on all 8 pages checked, including the booking page.
+- **Checks on every pull request.** Unit tests, type check, database tests on Postgres, Playwright at 320px and 390px in light and dark with axe (WCAG 2.2 AA), the full booking flow, Lighthouse at phone settings. Locally: 100 in all four Lighthouse categories on all 9 pages checked, including the booking page.
 
 ## Next
 
-1. Launch checklist.
-2. Run the live assistant tests once there's an Anthropic key: `npm run test:assistant` (top 30 questions and 15 attempts to break the rules). Not run yet; no key in this environment.
+1. Review the pull requests and merge them in order, starting with the site.
+2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. The first decision is Supabase: a WeatherBlock org on Pro ($25 a month), or pausing one of the two free projects on the current account. Deploy previews can't take bookings until then.
+3. Run the live assistant tests once there's an Anthropic key: `npm run test:assistant` (top 30 questions and 15 attempts to break the rules). Not run yet; no key in this environment.
 
 ## Waiting on JT and Justin
 
-- Phone hours to publish (Google says "Open 24 hours")
-- NC license number and whose name it's under
-- Liability insurance (carrier and limit), workers' comp
-- Workmanship warranty, any manufacturer certifications
-- Who flies the drone and their FAA Part 107 certificate
-- How long a visit takes
-- Confirm nobody needs to be home for a drone inspection (the site says so now; `inspection.homeNotRequired` in `facts.yaml`)
-- Logo vector files
-- Job photos with the homeowner's OK (the before and after shots on Justin's temp site need that OK first)
-- Acorn: their dealer agreement asks contractors to clear financing wording with them. Send them `/financing/` before launch, and confirm the `d=QP3YO` link is ours.
-- Supabase: a WeatherBlock org on Pro ($25 a month), or pause one of your two free projects. Needed before deploy previews can take bookings.
+All of it is in [`LAUNCH.md`](LAUNCH.md). The facts in section 3 only change what the site shows, in `facts.yaml`; none of them needs a code change.

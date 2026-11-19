@@ -104,4 +104,4 @@ Netlify builds every pull request as a deploy preview and deploys `main` to prod
 | `src/styles/global.css` | Colors from the logo, type, buttons, forms |
 | `tests/unit/`, `tests/e2e/` | Tests |
 
-See [`STATUS.md`](STATUS.md) for what's done and what's next.
+See [`STATUS.md`](STATUS.md) for what's done and what's next, and [`LAUNCH.md`](LAUNCH.md) for what's left before launch.
