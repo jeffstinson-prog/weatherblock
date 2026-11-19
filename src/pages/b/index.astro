@@ -1,0 +1,26 @@
+---
+import Base from '../../layouts/Base.astro';
+import ManageApp from '../../booking/ManageApp';
+import '../../styles/booking.css';
+import { facts, telHref } from '../../facts';
+
+const props = {
+  businessName: facts.business.name,
+  phone: facts.contact.phone,
+  phoneHref: telHref(),
+  bookLabel: facts.derived.bookLabel,
+  domain: facts.web.domain,
+};
+---
+
+<Base title="Your inspection" description="See, change or cancel your inspection." noindex>
+  <section class="section">
+    <div class="wrap">
+      <h1>Your inspection</h1>
+      <ManageApp client:load {...props} />
+      <noscript>
+        <p>This page needs JavaScript. Call or text {facts.contact.phone} to change or cancel.</p>
+      </noscript>
+    </div>
+  </section>
+</Base>

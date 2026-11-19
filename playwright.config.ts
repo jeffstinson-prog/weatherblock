@@ -5,8 +5,11 @@ import { defineConfig, devices } from '@playwright/test';
 const port = Number(process.env.E2E_PORT ?? 4321);
 const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
 
+const databaseUrl = process.env.DATABASE_URL ?? 'postgres://postgres:postgres@127.0.0.1:5432/wb_e2e';
+
 export default defineConfig({
   testDir: 'tests/e2e',
+  globalSetup: './tests/e2e/global-setup.ts',
   timeout: 30_000,
   expect: { timeout: 7_000 },
   fullyParallel: true,
@@ -40,6 +43,6 @@ export default defineConfig({
         url: `${baseURL}/`,
         reuseExistingServer: !process.env.CI,
         timeout: 60_000,
-        env: { PORT: String(port), HOST: '127.0.0.1' },
+        env: { PORT: String(port), HOST: '127.0.0.1', DATABASE_URL: databaseUrl, APP_ENV: 'test', BOT_MIN_SECONDS: '0' },
       },
 });
