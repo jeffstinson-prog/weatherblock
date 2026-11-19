@@ -53,5 +53,6 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
       <slot />
     </main>
     {!bare && <Footer />}
+    {!bare && <script src="../scripts/found-us.ts"></script>}
   </body>
 </html>

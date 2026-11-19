@@ -31,7 +31,7 @@ export default defineConfig({
     csp: {
       directives: [
         "default-src 'self'",
-        "img-src 'self' data: blob:",
+        "img-src 'self' data: blob: https://maps.googleapis.com",
         `connect-src 'self'${supabaseUrl ? ` ${supabaseUrl}` : ''}`,
         "font-src 'self'",
         "object-src 'none'",

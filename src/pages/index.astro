@@ -24,7 +24,7 @@ const blurbs: Record<string, string> = {
 
 <Base
   title={facts.business.name}
-  description={`Roof repairs, replacements and ${facts.derived.anInspection} in ${facts.serviceArea.short}.`}
+  description={`Roof repairs, replacements and ${facts.derived.anInspection} in ${facts.serviceArea.short}. Book online in about a minute.`}
   jsonLd={roofingContractor(Astro.site)}
 >
   <section class="section hero">
@@ -32,7 +32,7 @@ const blurbs: Record<string, string> = {
       <p class="eyebrow">{facts.serviceArea.short}</p>
       <h1>{facts.business.lines[1] ?? facts.business.name}</h1>
       <p class="lede">
-        Roof repairs and replacements.{inspection.free && ' The roof inspection is free.'}
+        Roof repairs and replacements. Book {inspection.free ? 'a free roof inspection' : 'a roof inspection'} online in about a minute.
       </p>
       <div class="actions">
         <a class="btn" href="/book/">{facts.derived.bookLabel}</a>
@@ -46,7 +46,7 @@ const blurbs: Record<string, string> = {
     <div class="wrap">
       <h2 id="how-h">How it works</h2>
       <ol class="steps">
-        <li><strong>Book a time.</strong> Pick a {inspection.windowHours} hour window that works for you.</li>
+        <li><strong>Book online.</strong> Pick a {inspection.windowHours} hour window that works for you. It takes about a minute.</li>
         {inspection.byDrone ? (
           <li><strong>We inspect by drone.</strong> No foot traffic on your shingles until repairs or a replacement call for it.{inspection.homeNotRequired && ' You don\'t have to be home.'}</li>
         ) : (
