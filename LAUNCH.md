@@ -13,7 +13,7 @@ The full list of settings is in `.env.example`.
 - [ ] **GitHub**: the empty private repo, with the Claude GitHub app allowed on it.
 - [ ] **Netlify**: add the site from the repo (Add new site, Import from GitHub). It goes in your existing Pro team, no new plan. Deploy previews then appear on every pull request.
 - [ ] **Supabase**: the project is WeatherBlock Roofing (`fsyrlkpzxljwhqpfxofh`). It signs owner logins with published keys (ES256), which the site checks, so no JWT secret is needed.
-  - [ ] Load the tables: `npm run --silent db:setup-sql` prints every migration as one file. Paste it into the SQL Editor and click Run. It runs as one transaction and ends with a summary line to check. Later changes are new files in `supabase/migrations/`, applied with `supabase db push`.
+  - [x] Load the tables (done November 19, 2026): `npm run --silent db:setup-sql` prints every migration as one file. Paste it into the SQL Editor and click Run. It runs as one transaction and ends with a summary line to check. Later changes are new files in `supabase/migrations/`, applied with `supabase db push`.
   - [ ] Authentication: email sign-in on, sign-ups off, and the "Magic link" email template changed to show the 6-digit code (`{{ .Token }}`). Send auth email through Resend (Authentication, SMTP settings); Supabase's built-in email is only for testing.
   - [ ] If it's on the free plan, move it to Pro ($25 a month) before real bookings. Free projects have no daily backups and pause after a quiet week.
   - Deploy previews share this project until launch, so their test bookings land here too (cleared on launch day).
