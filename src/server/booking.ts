@@ -24,6 +24,24 @@ export interface SlotOut {
   endsAt: string;
 }
 
+/** The estimate as the customer sees it, once it's sent. */
+export interface CustomerEstimate {
+  status: 'sent' | 'accepted' | 'declined';
+  amountCents: number | null;
+  summary: string;
+  hasFile: boolean;
+  sentAt: string;
+  decidedAt: string | null;
+  askedAt: string | null;
+}
+
+/** The roof job as the customer sees it, once they've said yes. */
+export interface CustomerJob {
+  status: 'to_schedule' | 'scheduled' | 'done';
+  day: string | null;
+  doneAt: string | null;
+}
+
 export interface BookingSummary {
   id: string;
   ref: string;
@@ -34,11 +52,17 @@ export interface BookingSummary {
   firstName: string;
   smsConsent: boolean;
   canChange: boolean;
+  estimate?: CustomerEstimate | null;
+  job?: CustomerJob | null;
 }
 
 export const TIMEZONE = 'America/New_York';
 
-function toSummary(row: Record<string, unknown>): BookingSummary {
+const isoOrNull = (v: unknown) => (v ? new Date(String(v)).toISOString() : null);
+
+export function toSummary(row: Record<string, unknown>): BookingSummary {
+  const e = row.estimate as Record<string, unknown> | null | undefined;
+  const j = row.job as Record<string, unknown> | null | undefined;
   return {
     id: String(row.id),
     ref: String(row.ref),
@@ -49,6 +73,18 @@ function toSummary(row: Record<string, unknown>): BookingSummary {
     firstName: String(row.first_name ?? ''),
     smsConsent: Boolean(row.sms_consent),
     canChange: Boolean(row.can_change),
+    estimate: e
+      ? {
+          status: e.status as CustomerEstimate['status'],
+          amountCents: (e.amount_cents as number | null) ?? null,
+          summary: String(e.summary ?? ''),
+          hasFile: Boolean(e.has_file),
+          sentAt: new Date(String(e.sent_at)).toISOString(),
+          decidedAt: isoOrNull(e.decided_at),
+          askedAt: isoOrNull(e.asked_at),
+        }
+      : null,
+    job: j ? { status: j.status as CustomerJob['status'], day: (j.day as string | null) ?? null, doneAt: isoOrNull(j.done_at) } : null,
   };
 }
 

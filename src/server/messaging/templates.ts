@@ -83,11 +83,18 @@ export function ownerSms(kind: 'new' | 'rescheduled' | 'cancelled', b: BookingDe
 
 // Emails: plain HTML that works in every mail app, plus a text version.
 
-function escape(s: string): string {
+export function escape(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function layout(siteUrl: string, title: string, paragraphs: string[], button?: { label: string; href: string }): string {
+export function layout(
+  siteUrl: string,
+  title: string,
+  paragraphs: string[],
+  button?: { label: string; href: string },
+  /** Extra footer lines, already escaped (follow-up emails: how to stop, the mailing address). */
+  footer: string[] = [],
+): string {
   const p = paragraphs.map((x) => `<p style="margin:0 0 14px;font-size:16px;line-height:1.5;color:#0f2b3a">${x}</p>`).join('');
   const btn = button
     ? `<p style="margin:20px 0"><a href="${escape(button.href)}" style="display:inline-block;background:#1a6a93;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:999px">${escape(button.label)}</a></p>`
@@ -98,6 +105,7 @@ function layout(siteUrl: string, title: string, paragraphs: string[], button?: {
 <img src="${escape(siteUrl)}/brand/logo.png" alt="${escape(name())}" width="150" style="display:block;margin:0 0 16px;height:auto">
 <h1 style="font-size:22px;line-height:1.3;margin:0 0 16px;color:#0f2b3a">${escape(title)}</h1>
 ${p}${btn}
+${footer.map((f) => `<p style="margin:16px 0 0;font-size:14px;color:#4a6170">${f}</p>`).join('')}
 <p style="margin:24px 0 0;font-size:14px;color:#4a6170">${escape(name())}, ${escape(facts.business.city)}, ${escape(facts.business.state)}. Call or text ${escape(facts.contact.phone)}.</p>
 </td></tr></table></td></tr></table></body></html>`;
 }

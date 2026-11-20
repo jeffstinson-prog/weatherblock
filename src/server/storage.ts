@@ -22,7 +22,7 @@ function authHeaders(): Record<string, string> {
   return key.startsWith('eyJ') ? { apikey: key, Authorization: `Bearer ${key}` } : { apikey: key };
 }
 
-export async function createUpload(path: string, contentType: string): Promise<Upload> {
+export async function createUpload(path: string, contentType: string, bucket = config.photoBucket()): Promise<Upload> {
   if (!useSupabase()) {
     if (isProduction()) throw new Error('Photo storage is not configured');
     const sig = sign(`put:${path}`, config.manageTokenSecret());
@@ -33,7 +33,7 @@ export async function createUpload(path: string, contentType: string): Promise<U
     };
   }
   const base = config.supabaseUrl()!;
-  const res = await fetch(`${base}/storage/v1/object/upload/sign/${config.photoBucket()}/${path}`, {
+  const res = await fetch(`${base}/storage/v1/object/upload/sign/${bucket}/${path}`, {
     method: 'POST',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
     body: '{}',
@@ -49,13 +49,13 @@ export async function createUpload(path: string, contentType: string): Promise<U
 }
 
 /** A link an owner can open for a few minutes. */
-export async function viewUrl(path: string, seconds = 600): Promise<string> {
+export async function viewUrl(path: string, seconds = 600, bucket = config.photoBucket()): Promise<string> {
   if (!useSupabase()) {
     const sig = sign(`get:${path}`, config.manageTokenSecret());
     return `/api/photos/local?path=${encodeURIComponent(path)}&sig=${sig}`;
   }
   const base = config.supabaseUrl()!;
-  const res = await fetch(`${base}/storage/v1/object/sign/${config.photoBucket()}/${path}`, {
+  const res = await fetch(`${base}/storage/v1/object/sign/${bucket}/${path}`, {
     method: 'POST',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ expiresIn: seconds }),

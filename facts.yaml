@@ -20,6 +20,9 @@ business:
   city: Ocean Isle Beach
   state: NC
   zip: "28469"
+  # Printed at the bottom of follow-up and review emails, as the CAN-SPAM Act
+  # requires. A P.O. box works. Blank: those emails wait, and the owner app says so.
+  mailingAddress: ""
   lines:
     - Local roots. Lasting protection.
     - Coastal roofing. Local commitment.
@@ -99,8 +102,26 @@ reviews:
     asOf: "2026-11-19"
     url: https://share.google/wepCy5SeWsGcWvBwv
 
-# Any price the site or the assistant may state. Empty: no prices anywhere.
+# Any price the site or the assistant may state, besides the instant estimate below.
 prices: []
+
+# The instant estimate on /estimate/: a ballpark for a new roof, from the house's
+# outline in open building data. Only what customers pay; never our costs.
+instantEstimate:
+  on: true
+  material: architectural shingles
+  pricePerSquare: 450 # installed, per square (100 square feet of roof)
+  largeRoof:
+    minSquares: 30
+    pricePerSquare: [350, 400] # less per square on big roofs, depending on size
+  # Roof area is the outline's area times this: about 1.1 for a low slope, 1.3 for a steep one.
+  slopeFactor: [1.1, 1.3]
+
+# After the inspection: the estimate, follow-ups and the roof job.
+pipeline:
+  estimateTurnaround: "" # finishes "Your estimate will be ready ...", e.g. "within 2 business days". Blank: "soon".
+  followUpDays: [2, 7, 21] # follow-up emails after an estimate goes out, until the customer answers
+  reviewUrl: "" # the "ask for reviews" link from your Google Business Profile. Blank: the reviews link above.
 
 financing:
   provider: Acorn Finance
@@ -122,4 +143,4 @@ insuranceClaims:
 photos: []
 
 texts:
-  maxPerBooking: 5 # used in the consent wording on the booking form
+  maxPerBooking: 12 # the most texts one customer gets, from booking through the roof job. Shown on the booking form.

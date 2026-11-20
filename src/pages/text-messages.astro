@@ -4,8 +4,8 @@ import { facts } from '../facts';
 const { business, contact, texts } = facts;
 ---
 
-<Legal title="Text message terms" description={`How ${business.name} appointment texts work.`} updated="2026-11-19">
-  <p>When you book an inspection, you can choose to get text messages about your appointment from {business.name}. Texting is optional. You can book without it.</p>
+<Legal title="Text message terms" description={`How ${business.name} appointment texts work.`} updated="2026-11-20">
+  <p>When you book an inspection, you can choose to get text messages from {business.name} about your inspection, your estimate, and any roof work you go ahead with. Texting is optional. You can book without it.</p>
 
   <h2>What we send</h2>
   <ul>
@@ -13,6 +13,8 @@ const { business, contact, texts } = facts;
     <li>A reminder the day before and the morning of</li>
     <li>A note when we're on the way</li>
     <li>A message if your appointment changes</li>
+    <li>A thank-you after the inspection, and a note when your estimate is ready</li>
+    <li>If you go ahead with roof work: the day it's scheduled, a reminder the day before, and a message if weather moves it</li>
   </ul>
   <p>Usually no more than {texts.maxPerBooking} messages per booking. We don't send marketing texts.</p>
 

@@ -13,6 +13,7 @@ export const FactsSchema = z.strictObject({
     city: text(),
     state: text(),
     zip: text(),
+    mailingAddress: text(),
     lines: z.array(z.string().trim().min(1)).default([]),
     verse: z.strictObject({ text: text(), ref: text() }),
   }),
@@ -71,6 +72,25 @@ export const FactsSchema = z.strictObject({
   prices: z
     .array(z.strictObject({ label: z.string().trim().min(1), amount: z.string().trim().min(1) }))
     .default([]),
+  instantEstimate: z.strictObject({
+    on: z.boolean().default(false),
+    material: text(),
+    pricePerSquare: z.number().positive(),
+    largeRoof: z.strictObject({
+      minSquares: z.number().positive(),
+      pricePerSquare: z.tuple([z.number().positive(), z.number().positive()]),
+    }),
+    slopeFactor: z.tuple([z.number().min(1).max(2), z.number().min(1).max(2)]),
+  }),
+  pipeline: z.strictObject({
+    estimateTurnaround: text(),
+    followUpDays: z
+      .array(z.number().int().min(1).max(90))
+      .max(5)
+      .refine((d) => d.every((x, i) => i === 0 || x > d[i - 1]!), 'list the days in order, smallest first')
+      .default([2, 7, 21]),
+    reviewUrl: optionalUrl(),
+  }),
   financing: z.strictObject({
     provider: text(),
     url: optionalUrl(),
@@ -104,6 +124,8 @@ export interface Derived {
   theInspection: string;
   /** "Book a free inspection" or "Book an inspection" */
   bookLabel: string;
+  /** "$450 per square (100 square feet) for architectural shingles, installed. ..." or "" */
+  roofPriceText: string;
 }
 
 export type Facts = FactsInput & { derived: Derived };

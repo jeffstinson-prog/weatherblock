@@ -4,6 +4,7 @@ import { NotAnOwner, ownerFrom, type Owner } from '../../../server/auth';
 import { openSlots } from '../../../server/booking';
 import { BadRequest, json, readJson, serverError } from '../../../server/http';
 import * as o from '../../../server/owner';
+import * as p from '../../../server/pipeline';
 
 export const prerender = false;
 
@@ -13,8 +14,8 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const today = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
-function result(r: o.ActionResult & Record<string, unknown>) {
-  return r.ok ? json(200, r) : json(r.status, { error: 'failed', message: r.message });
+function result(r: (o.ActionResult | p.Result) & Record<string, unknown>) {
+  return r.ok ? json(200, r) : json(r.status, { error: (r.code as string | undefined) ?? 'failed', message: r.message });
 }
 
 async function route(owner: Owner, method: string, path: string[], url: URL, request: Request): Promise<Response> {
@@ -44,7 +45,28 @@ async function route(owner: Owner, method: string, path: string[], url: URL, req
         return result(await o.reschedule(owner, id, body.slotId, tell));
       case 'on_my_way':
         return result(await o.sendOnMyWay(owner, id, body.minutes));
+      // After the inspection: the estimate and the roof job.
+      case 'estimate_save':
+        return result(await p.saveEstimate(owner, id, body.estimate));
+      case 'estimate_upload':
+        return result(await p.estimateUpload(owner, id));
+      case 'estimate':
+        return result(await p.estimateAction(owner, id, body.estimateAction));
+      case 'job_schedule':
+        return result(await p.scheduleJob(owner, id, body.job));
+      case 'job_status':
+        return result(await p.setJobStatus(owner, id, body.status));
     }
+  }
+
+  if (method === 'GET' && head === 'pipeline') return json(200, await p.pipeline(owner));
+  if (head === 'jobs') {
+    if (method === 'GET') return json(200, await p.jobsCalendar(owner, url.searchParams.get('from') ?? today()));
+    if (method === 'POST' && id === 'move-day') return result(await p.moveDay(owner, body));
+  }
+  if (head === 'crews') {
+    if (method === 'GET') return json(200, { crews: await p.listCrews(owner) });
+    return result(await p.saveCrews(owner, body.crews));
   }
 
   if (head === 'availability') {
