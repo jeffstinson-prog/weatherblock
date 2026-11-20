@@ -255,3 +255,31 @@ details.field summary {
   border-radius: var(--radius-sm);
   background: var(--tint-blue);
 }
+
+/* The private link after the visit: the estimate and the roof job. */
+.estimate-card {
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.25rem;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+.estimate-card h2 {
+  margin-top: 0;
+}
+.estimate-card .price {
+  font-size: 1.75rem;
+  font-weight: 750;
+  margin: 0.25rem 0 0.75rem;
+}
+.estimate-card .scope p {
+  margin: 0 0 0.75rem;
+}
+.confirm-box {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+.visit-h {
+  margin-top: 1.5rem;
+}
