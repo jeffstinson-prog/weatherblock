@@ -42,8 +42,8 @@ app and not sent; email works from day one.
 
 - [ ] **Brand**: WeatherBlock Roofing Incorporated, EIN, the principal office address on file with the state, website, contact.
 - [ ] **Campaign**: "Low volume mixed" (about $1.50 a month), or "Customer care" if Twilio steers you there. One-time fees run about $20 (brand plus vetting).
-  - Description: appointment confirmations, reminders, "on my way" and schedule changes for roof inspections customers book online.
-  - Sample messages: copy them from `src/server/messaging/templates.ts`.
+  - Description: for customers who book a roof inspection online and opt in: appointment confirmations, reminders, "on my way", schedule changes, a note when their estimate is ready, and for roof work they agree to, the scheduled day, a reminder the day before and weather changes. No marketing.
+  - Sample messages: copy them from `src/server/messaging/templates.ts` and `src/server/messaging/pipeline-templates.ts`.
   - How people opt in: an optional, unchecked box on step 4 of the booking form at `/book/`, with the exact wording shown there. Terms at `/text-messages/`, privacy at `/privacy/`.
   - Opt-out STOP, help HELP.
 
@@ -51,6 +51,10 @@ app and not sent; email works from day one.
 
 Each of these is blank or unconfirmed, and the site hides whatever depends on it.
 
+- [ ] A mailing address for the business (`business.mailingAddress`). A P.O. box works. Follow-up and review emails print it at the bottom, as the CAN-SPAM Act requires, and wait until it's set.
+- [ ] The Google review link (`pipeline.reviewUrl`): Google Business Profile, "Ask for reviews", copy the link.
+- [ ] When estimates are usually ready (`pipeline.estimateTurnaround`), for example "within 2 business days". It finishes the sentence in the thank-you after each visit.
+- [ ] Justin: is $450 per square for the roof as measured, or with waste added? The instant estimate shows the measured roof times 1.1 to 1.3 for slope. Also check the crews in the owner app (Jobs, Crews): names and jobs a day.
 - [ ] Phone hours. Also fix the Google Business Profile, which says "Open 24 hours".
 - [ ] NC license number, and whose name it's under.
 - [ ] Liability insurance (carrier and limit), workers' comp.
@@ -98,6 +102,7 @@ is on (the MX and SPF records). Keep the email forwarding.
 | Twilio | about $12 at 100 bookings a month |
 | Resend | $0 (free up to 100 a day; $20 if a storm rush goes past that) |
 | Google Maps and Calendar | $0 under the free caps |
+| Instant estimate data (Census, Microsoft, USGS) | $0 |
 | Claude API | about 10 cents a conversation on Opus 5.5 |
 
 ## Reviews, from day one
@@ -108,5 +113,4 @@ is on (the MX and SPF records). Keep the email forwarding.
 ## After launch (from the brief)
 
 - Inspection report: the inspector uploads photos and findings from a phone, and the customer gets a private link.
-- Roof size from aerial data with a price range, once Justin gives per-square pricing. Check the data provider's terms first.
 - Opt-in storm alerts by text.

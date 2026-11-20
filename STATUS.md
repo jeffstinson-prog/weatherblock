@@ -1,6 +1,6 @@
 # Status
 
-Updated 2026-11-19.
+Updated 2026-11-20.
 
 ## Done
 
@@ -18,6 +18,9 @@ Updated 2026-11-19.
 - **Owner app** at `/app/`, installable: sign in with an emailed code; Today with directions, call and text; booking details with the gate code on tap, photos, notes, status, reschedule and "on my way"; Upcoming with overbooking warnings; Availability (windows, inspectors, notice, days off); referral codes with share links; CSV export (no gate codes); your alerts.
 - **Google Calendar sync** both ways: bookings go on the calendar and come off when cancelled; anything else busy blocks those windows; events moved or deleted in Google are put back. Waits on a Google service account.
 - **The assistant** at `/ask/`: Claude Opus 5.5 by default, answers only from the help center and facts, says it's automated, offers to book or call, and carries what it learned into the booking form. A code check of every house rule reads each reply before it's shown; the same check passes on every built page. Questions it couldn't answer are listed in the owner app for 30 days.
+- **After the visit, automated.** Mark the visit done and the customer is thanked. Write the estimate in the owner app (price, what's included, an optional PDF) and send it: the customer gets an email and a text with their private link, where they say yes, ask a question, or say no thanks. Follow-up emails go out on days 2, 7 and 21 until they answer, ask or text us, and wait for a mailing address on file (CAN-SPAM). A yes alerts the owners and goes to Jobs.
+- **Roof jobs and crews.** Three crews to start (rename them in the app). Put a job on a crew's day (it asks first when the crew is full); the customer hears the date, gets a reminder the evening before, hears when weather moves the day (one tap moves every job on it), and gets thanks and one review request when it's done.
+- **Instant estimate** at `/estimate/`: address in, the house outlined on an aerial photo, and a ballpark from `facts.yaml` ($450 per square installed for architectural shingles, $350 to $400 per square from 30 squares). Public data only: Census Bureau addresses, Microsoft building outlines (ODbL), USDA aerial photos. Google's Solar API can't be used for roofing quotes under its terms.
 - **Availability** comes from weekly windows, days off, number of inspectors and busy times from the calendar. Starting point until Justin changes it in the owner app: Monday to Saturday, 8 to 10, 10 to noon, noon to 2, 2 to 4, one inspector, bookable 12 hours to 21 days ahead.
 - **Protection.** Row level security on every table; the public can only call five narrow functions. Rate limits, a hidden bot field, at most 3 upcoming bookings per mobile number. Gate codes deleted a week after the visit.
 - **Checks on every pull request.** Unit tests, type check, database tests on Postgres, Playwright at 320px and 390px in light and dark with axe (WCAG 2.2 AA), the full booking flow, Lighthouse at phone settings. Locally: 100 in all four Lighthouse categories on all 9 pages checked, including the booking page.
@@ -26,7 +29,9 @@ Updated 2026-11-19.
 
 1. Review the pull requests and merge them in order, starting with the site.
 2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase: tables loaded and sign-ups off (November 19). The sign-in code email waits for Resend, since Supabase only allows template edits with custom SMTP.
-3. Run the live assistant tests once there's an Anthropic key: `npm run test:assistant` (top 30 questions and 15 attempts to break the rules). Not run yet; no key in this environment.
+3. Load the new tables into Supabase: paste `npm run --silent db:setup-sql -- --after 20261119150000` into the SQL Editor (crews, estimates, roof jobs).
+4. Facts for the automation (LAUNCH.md section 3): a mailing address, the Google review link, when estimates are ready, and whether $450 per square is for the measured roof or includes waste.
+5. Run the live assistant tests once there's an Anthropic key: `npm run test:assistant` (top 30 questions and 15 attempts to break the rules). Not run yet; no key in this environment.
 
 ## Waiting on JT and Justin
 
