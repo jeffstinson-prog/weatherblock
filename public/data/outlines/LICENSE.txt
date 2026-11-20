@@ -1,0 +1,6 @@
+Building outlines for the instant estimate, derived from Microsoft Global ML Building Footprints.
+Source: https://github.com/microsoft/GlobalMLBuildingFootprints
+This database is made available under the Open Database License: https://opendatacommons.org/licenses/odbl/1-0/
+Each file holds the buildings in one 0.01 degree square: center (millionths of a degree from the
+square's south-west corner), area seen from above in square meters, and a simplified outline in
+decimeters from the center. Rebuilt with scripts/build-outlines.mjs.
