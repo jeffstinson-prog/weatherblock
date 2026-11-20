@@ -255,3 +255,96 @@ details.field summary {
   border-radius: var(--radius-sm);
   background: var(--tint-blue);
 }
+
+/* The private link after the visit: the estimate and the roof job. */
+.estimate-card {
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.25rem;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+.estimate-card h2 {
+  margin-top: 0;
+}
+.estimate-card .price {
+  font-size: 1.75rem;
+  font-weight: 750;
+  margin: 0.25rem 0 0.75rem;
+}
+.estimate-card .scope p {
+  margin: 0 0 0.75rem;
+}
+.confirm-box {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+.visit-h {
+  margin-top: 1.5rem;
+}
+
+/* The instant estimate. */
+.estimate-lookup {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0 1.5rem;
+}
+.estimate-lookup label {
+  font-weight: 700;
+}
+.estimate-lookup .hint {
+  margin: 0;
+}
+.aerial {
+  margin: 0.5rem 0 1rem;
+}
+.aerial-frame {
+  position: relative;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--line);
+}
+.aerial-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.aerial-frame svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.aerial-frame polygon {
+  fill: rgb(255 213 0 / 0.18);
+  stroke: #ffd500;
+  stroke-width: 3;
+  paint-order: stroke;
+  filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.9));
+}
+.aerial figcaption {
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+ul.plain {
+  padding-left: 1.1rem;
+}
+.sources {
+  margin-top: 2rem;
+}
+
+/* Google Maps text attribution, as Google's guidelines ask: plain, unbroken, readable. */
+.gmp-attribution {
+  font-family: Roboto, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: normal;
+  white-space: nowrap;
+  color: #5e5e5e;
+}
+@media (prefers-color-scheme: dark) {
+  .gmp-attribution {
+    color: #ffffff;
+  }
+}

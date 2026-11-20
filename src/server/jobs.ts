@@ -3,6 +3,7 @@ import { asService } from './db';
 import { config } from './env';
 import { retryFailed } from './messaging/send';
 import { runReminders } from './reminders';
+import { runFollowUps, runJobReminders } from './pipeline';
 import { syncCalendar } from './calendar';
 
 async function removeOrphanPhotos(): Promise<number> {
@@ -39,6 +40,8 @@ export async function runJobs(now = new Date()): Promise<Record<string, unknown>
     }
   };
   await step('reminders', () => runReminders(now));
+  await step('followUps', () => runFollowUps(now));
+  await step('jobReminders', () => runJobReminders(now));
   await step('retried', () => retryFailed());
   await step('cleanup', async () => (await asService((tx) => tx`select wb.cleanup() as r`))[0]?.r);
   await step('orphanPhotos', () => removeOrphanPhotos());

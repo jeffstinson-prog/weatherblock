@@ -25,6 +25,19 @@ function joinNames(names: string[]): string {
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
+const dollars = (n: number) => '$' + n.toLocaleString('en-US');
+
+function roofPriceText(input: FactsInput): string {
+  const e = input.instantEstimate;
+  if (!e.on || !e.material) return '';
+  const [lo, hi] = e.largeRoof.pricePerSquare;
+  const big = lo === hi ? dollars(lo) : dollars(lo) + ' to ' + dollars(hi);
+  return (
+    dollars(e.pricePerSquare) + ' per square (100 square feet) for ' + e.material + ', installed. ' +
+    'On roofs of ' + e.largeRoof.minSquares + ' squares or more, ' + big + ' per square.'
+  );
+}
+
 export function derive(input: FactsInput): Facts {
   const owners = input.business.owners;
   const free = input.inspection.free;
@@ -37,6 +50,7 @@ export function derive(input: FactsInput): Facts {
     anInspection: free ? 'a free inspection' : 'an inspection',
     theInspection: free ? 'the free inspection' : 'the inspection',
     bookLabel: free ? 'Book a free inspection' : 'Book an inspection',
+    roofPriceText: roofPriceText(input),
   };
   return { ...input, derived };
 }

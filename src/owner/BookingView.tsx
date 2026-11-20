@@ -6,6 +6,7 @@ import { formatMobile } from '../booking/rules';
 import { SlotPicker } from '../booking/ui';
 import type { Slot } from '../booking/client';
 import { STATUS_LABEL, directions } from './Today';
+import EstimatePanel, { type CrewInfo, type EstimateInfo, type JobInfo } from './EstimatePanel';
 
 interface Detail {
   id: string;
@@ -39,6 +40,10 @@ interface Detail {
   photoUrls: { id: string; url: string }[];
   events: { at: string; actor: string; kind: string; detail: Record<string, unknown> }[];
   messages: { at: string; channel: string; direction: string; audience: string; kind: string; status: string; to: string; summary: string }[];
+  estimate: EstimateInfo | null;
+  job: JobInfo | null;
+  crews: CrewInfo[];
+  followUpsHeld: boolean;
 }
 
 const MINUTES = [10, 15, 20, 30, 45, 60];
@@ -107,6 +112,22 @@ export default function BookingView(props: { id: string }) {
         <a class="btn secondary" href={`tel:${b.mobile}`}>Call {b.name.split(' ')[0]}</a>
         <a class="btn secondary" href={`sms:${b.mobile}`}>Text</a>
       </div>
+
+      {(b.status === 'done' || b.estimate) && (
+        <EstimatePanel
+          bookingId={b.id}
+          bookingStatus={b.status}
+          firstName={b.name.split(' ')[0] ?? ''}
+          smsConsent={b.smsConsent}
+          estimate={b.estimate}
+          job={b.job}
+          crews={b.crews}
+          followUpsHeld={b.followUpsHeld}
+          onChanged={load}
+          onFlash={setFlash}
+          onError={setError}
+        />
+      )}
 
       {b.status === 'booked' && (
         <section aria-labelledby="omw-h" class="panel">

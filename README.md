@@ -23,7 +23,7 @@ npm run dev          # http://localhost:4321
 
 ## Database
 
-Supabase Postgres. The schema is in [`supabase/migrations/`](supabase/migrations/), applied in order. For a new, empty project, `npm run --silent db:setup-sql` prints them all as one file to paste into the SQL Editor.
+Supabase Postgres. The schema is in [`supabase/migrations/`](supabase/migrations/), applied in order. For a new, empty project, `npm run --silent db:setup-sql` prints them all as one file to paste into the SQL Editor; `npm run --silent db:setup-sql -- --after <version>` prints only the newer ones, for a project that has the rest.
 
 - `wb` holds the tables. The public can't read them.
 - `wb_api` holds the only functions the public can call: open windows, book, the manage link.
@@ -38,7 +38,9 @@ Email goes through Resend, texts through Twilio. Every message is written to `wb
 
 - **No keys, no sending.** Without `RESEND_API_KEY` or the Twilio keys, messages are recorded as `logged` and never leave. The confirmation screen only says "we emailed" or "we texted" when one really went out.
 - **Customer:** confirmation (email always, text if they agreed), a reminder 6 to 9 pm the evening before and from 7:30 am the morning of, "on my way", and a note when the time changes or is cancelled.
-- **Owners:** a text and an email for every new, moved or cancelled booking. Until owners are set up in the app, alerts go to the business email in `facts.yaml`.
+- **After the visit:** a thank-you when an owner marks it done, "your estimate is ready" with the private link, then follow-up emails on the days in `facts.yaml` (2, 7 and 21), 9 am to 6 pm, at least a day apart. Follow-ups stop on an answer, a question, any text from the customer, or an owner's tap, and wait until `business.mailingAddress` is set (CAN-SPAM). For a roof job: the day it's set, a reminder the evening before, a message when it moves (with "because of the weather" when that's why), and thanks when it's done, with one Google review request when a mailing address is on file.
+- **Texts** go only to customers who agreed, up to `texts.maxPerBooking` (12) per booking, enforced; email still goes past the limit. Follow-ups and review requests are email only.
+- **Owners:** a text and an email for every new, moved or cancelled booking, and when a customer says yes, no thanks, or asks about an estimate. Until owners are set up in the app, alerts go to the business email in `facts.yaml`.
 - **Replies to our number** are kept, STOP and START are honored, and every reply is forwarded to the owners. Point the Twilio number's incoming webhook at `https://<site>/api/twilio/sms`.
 - **Every 15 minutes** `netlify/functions/every-15-minutes.mts` calls `/api/jobs` with `CRON_SECRET`: reminders, retries of failed messages, clean-up (gate codes after a week, unused photo uploads after two days).
 
@@ -46,14 +48,26 @@ Email goes through Resend, texts through Twilio. Every message is written to `wb
 
 At `/app/`. Installs to a phone's home screen. Owners sign in with a 6-digit code sent by email (Supabase Auth, no passwords, no public sign-ups).
 
-- **Today** (any day): inspections in time order with directions, call and text. Each booking shows everything the customer gave, the gate code on tap, photos, your notes, status (booked, done, cancelled, no show), reschedule, "on my way" texts, every message sent, and the history.
+- **Today** (any day): inspections in time order with directions, call and text. Each booking shows everything the customer gave, the gate code on tap, photos, your notes, status (booked, done, cancelled, no show), reschedule, "on my way" texts, every message sent, and the history. Once the visit is done: the estimate (price, what's included, an optional PDF), whether it was opened, the follow-ups, the customer's answer, and the roof job's crew and day.
 - **Upcoming:** the next two weeks, and a warning when a window holds more bookings than inspectors.
-- **Availability:** windows by weekday, inspectors, notice, how far ahead, days off, and the Google Calendar.
-- **More:** referral codes (each with a link like `/r/SMITH24`), the CSV export, your alerts.
+- **Estimates:** needs an estimate, waiting on the customer, said yes and needs a day, said no thanks.
+- **Jobs:** roof jobs for four weeks by day and crew. "Move this day" moves every job on it (weather) and tells each customer. Crews: names, jobs a day, who's working; scheduling past a crew's jobs a day asks first.
+- **More:** inspection availability (windows by weekday, inspectors, notice, how far ahead, days off, the Google Calendar), crews, referral codes (each with a link like `/r/SMITH24`), the CSV export, your alerts.
 
 Add an owner: `node scripts/add-owner.mjs <email> "<name>" [mobile]` with the production variables set.
 
 **Google Calendar:** bookings appear on the calendar and leave it when cancelled; anything else marked busy takes one inspector out of the windows it overlaps. Move and cancel bookings in the app (it's what tells the customer); an event moved or deleted in Google is put back on the next sync. Set up a Google service account, share the calendar with it ("Make changes to events"), and set `GOOGLE_SERVICE_ACCOUNT_EMAIL` and `GOOGLE_SERVICE_ACCOUNT_KEY`.
+
+## Instant estimate
+
+At `/estimate/`. Pick an address, get a ballpark for a new roof, in a few seconds. Nothing is stored.
+
+- **Address:** the same Google suggestions as the booking form.
+- **The roof:** Google's Solar API (Building Insights) measures the actual roof from aerial imagery: its area with the slope, the area seen from above, and the pitch (`src/server/solar.ts`, called from `/api/estimate`). 10,000 lookups a month cost nothing, then a cent each. It runs on its own key, `GOOGLE_SOLAR_KEY`, best in its own Google Cloud project: Google's terms describe the Solar API for solar and energy systems, so if Google ever objects, only that key is affected and the page falls back on its own.
+- **When Google has no data** for a house (new construction, mostly): building outlines from Microsoft Global ML Building Footprints (Open Database License), cut to the county by `scripts/build-outlines.mjs` into `public/data/outlines/`, shown on a USDA aerial photo with "Is this your house?". When that's missing too: heated square feet and stories.
+- **The price:** `instantEstimate` in `facts.yaml`: price per square, the large-roof price per square, Google's measured roof times `measuredRange` (1.0 to 1.15, for waste), or an outline times `slopeFactor` (1.1 to 1.3). Rounded out to $100. No price for a building too big or small to be one house.
+- **Booking:** one tap carries the chosen address (already picked, no retyping), the satellite picture and the ballpark into the booking form, so Justin sees it.
+- **Refresh the outlines** when Microsoft publishes new data: download the county's files (see the top of `scripts/build-outlines.mjs`) and run it.
 
 ## The assistant
 

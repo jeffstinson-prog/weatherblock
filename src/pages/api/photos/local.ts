@@ -20,7 +20,8 @@ export const GET: APIRoute = async ({ url }) => {
   if (!localAllowed() || !checkLocalSignature('get', path, sig)) return new Response('Not found', { status: 404 });
   try {
     const data = await localRead(path);
-    return new Response(new Uint8Array(data), { headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-store' } });
+    const type = path.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg';
+    return new Response(new Uint8Array(data), { headers: { 'Content-Type': type, 'Cache-Control': 'no-store' } });
   } catch {
     return new Response('Not found', { status: 404 });
   }

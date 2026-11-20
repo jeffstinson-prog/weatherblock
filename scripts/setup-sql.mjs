@@ -1,22 +1,38 @@
-// Prints every migration as one file to paste into the Supabase SQL Editor:
-//   npm run --silent db:setup-sql > setup.sql
-// For a new, empty project. It runs as one transaction, records the
-// migrations so the Supabase CLI knows they're in, opens the first windows,
-// and ends with a one-line summary to check.
+// Prints migrations as one file to paste into the Supabase SQL Editor.
+//   New, empty project:  npm run --silent db:setup-sql > setup.sql
+//   Add what's new:      npm run --silent db:setup-sql -- --after 20261119150000 > update.sql
+//     (--after: only the migrations newer than that version, for a project that has the rest)
+// It runs as one transaction, records the migrations so the Supabase CLI knows
+// they're in, opens the first windows, and ends with a one-line summary to check.
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const dir = join(import.meta.dirname, '..', 'supabase', 'migrations');
-const files = readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
+const all = readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
 const split = (f) => {
   const stem = f.replace(/\.sql$/, '');
   const i = stem.indexOf('_');
   return { version: stem.slice(0, i), name: stem.slice(i + 1) };
 };
+const afterAt = process.argv.indexOf('--after');
+const after = afterAt > -1 ? process.argv[afterAt + 1] : '';
+if (afterAt > -1 && !/^\d{14}$/.test(after ?? '')) {
+  console.error('Use --after with a migration version, like 20261119150000.');
+  process.exit(1);
+}
+const files = all.filter((f) => !after || split(f).version > after);
+if (files.length === 0) {
+  console.error(`Nothing newer than ${after}.`);
+  process.exit(1);
+}
+// Every table the full set creates, so the summary can say what to expect.
+const tables = all.reduce((n, f) => n + (readFileSync(join(dir, f), 'utf8').match(/create table wb\.\w+/g) ?? []).length, 0);
 
 const out = [
-  '-- WeatherBlock Roofing: database setup.',
-  '-- For a new, empty Supabase project. Paste all of it into the SQL Editor and click Run.',
+  `-- WeatherBlock Roofing: database ${after ? 'update' : 'setup'}.`,
+  after
+    ? `-- For a project that already has every migration up to ${after}. Paste all of it into the SQL Editor and click Run.`
+    : '-- For a new, empty Supabase project. Paste all of it into the SQL Editor and click Run.',
   "-- It runs as one transaction: if anything fails, nothing is changed.",
   '',
   'begin;',
@@ -38,8 +54,8 @@ out.push(
   '',
   'commit;',
   '',
-  '-- What you should see: tables 14, tables_without_row_security 0,',
-  '-- bookable_windows about 75 (it depends on the day), photo_bucket 1, migrations 5.',
+  `-- What you should see: tables ${tables}, tables_without_row_security 0,`,
+  `-- bookable_windows about 75 (it depends on the day), photo_bucket 1, migrations ${files.length}.`,
   'select',
   "  (select count(*) from pg_tables where schemaname = 'wb') as tables,",
   "  (select count(*) from pg_tables where schemaname = 'wb' and not rowsecurity) as tables_without_row_security,",

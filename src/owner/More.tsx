@@ -58,6 +58,8 @@ export default function More(props: { businessName: string }) {
       {flash && <p class="notice ok" role="status">{flash}</p>}
       {error && <p class="error-box" role="alert">{error}</p>}
 
+      <p><a class="btn secondary block" href="#/availability">Inspection availability</a></p>
+      <p><a class="btn secondary block" href="#/crews">Crews</a></p>
       <p><a class="btn secondary block" href="#/referrals">Referral codes</a></p>
       <p><a class="btn secondary block" href="#/questions">Questions people asked the assistant</a></p>
 

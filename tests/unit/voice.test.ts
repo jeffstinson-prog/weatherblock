@@ -50,7 +50,11 @@ describe('voice', () => {
   });
 
   it('puts dollar figures in help answers only when the answer cites its sources', () => {
-    const unsourced = helpArticles.filter((a) => /\$\s?\d/.test(a.markdown) && a.sources.length === 0).map((a) => a.slug);
+    // Prices that come from facts.yaml (the roof price per square) are ours to state; anything else needs a source.
+    const own = facts.derived.roofPriceText;
+    const unsourced = helpArticles
+      .filter((a) => /\$\s?\d/.test(own ? a.markdown.replaceAll(own, '') : a.markdown) && a.sources.length === 0)
+      .map((a) => a.slug);
     expect(unsourced).toEqual([]);
   });
 

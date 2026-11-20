@@ -13,6 +13,7 @@ const pages = [
   '/help/cost/',
   '/help/insurance-pay/',
   '/financing/',
+  '/estimate/',
   '/service-area/',
   '/about/',
   '/contact/',

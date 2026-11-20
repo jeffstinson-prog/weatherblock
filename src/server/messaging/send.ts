@@ -6,7 +6,7 @@ import { asService } from '../db';
 import { read } from '../env';
 
 export type Channel = 'sms' | 'email';
-export type Outcome = 'sent' | 'logged' | 'failed' | 'duplicate' | 'opted_out' | 'no_recipient';
+export type Outcome = 'sent' | 'logged' | 'failed' | 'duplicate' | 'opted_out' | 'no_recipient' | 'over_limit';
 
 export interface OutMessage {
   bookingId?: string | null;
@@ -32,6 +32,16 @@ export const emailProvider = (): 'resend' | 'log' => (read('RESEND_API_KEY') ? '
 
 export function emailFrom(): string {
   return read('EMAIL_FROM') ?? `${facts.business.name} <bookings@${facts.web.domain}>`;
+}
+
+/** Texts this booking's customer has had from us (sent, logged or still trying). */
+export async function textsSent(bookingId: string): Promise<number> {
+  const rows = await asService(
+    (tx) => tx`select count(*)::int as n from wb.messages
+               where booking_id = ${bookingId} and channel = 'sms' and direction = 'out' and audience = 'customer'
+                 and status in ('queued', 'sent', 'logged', 'failed')`,
+  );
+  return rows[0]?.n ?? 0;
 }
 
 export async function optedOut(mobile: string): Promise<boolean> {
@@ -88,6 +98,10 @@ async function deliverEmail(m: OutMessage, idempotencyKey: string): Promise<stri
 export async function send(m: OutMessage): Promise<Outcome> {
   if (!m.to) return 'no_recipient';
   if (m.channel === 'sms' && (await optedOut(m.to))) return 'opted_out';
+  if (m.channel === 'sms' && m.audience === 'customer' && m.bookingId && (await textsSent(m.bookingId)) >= facts.texts.maxPerBooking) {
+    // The booking form promises a limit. Past it, the customer still gets email.
+    return 'over_limit';
+  }
   const provider = m.channel === 'sms' ? smsProvider() : emailProvider();
   const id = await asService(async (tx) => {
     const rows = await tx`

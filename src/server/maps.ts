@@ -33,10 +33,10 @@ export interface CheckedPlace extends Place {
 const BIAS = { latitude: 33.97, longitude: -78.25 };
 
 const FAKE: Place[] = [
-  { placeId: 'test-oib-1', text: '101 Test Beach Dr W, Ocean Isle Beach, NC 28469', lat: 33.8914, lng: -78.4392, county: 'Brunswick', city: 'Ocean Isle Beach', zip: '28469', state: 'NC' },
+  { placeId: 'test-oib-1', text: '101 Test Beach Dr W, Ocean Isle Beach, NC 28469', lat: 33.895447, lng: -78.434496, county: 'Brunswick', city: 'Ocean Isle Beach', zip: '28469', state: 'NC' },
   { placeId: 'test-oib-2', text: '202 Test Causeway Rd, Ocean Isle Beach, NC 28469', lat: 33.9101, lng: -78.4267, county: 'Brunswick', city: 'Ocean Isle Beach', zip: '28469', state: 'NC' },
   { placeId: 'test-cal-1', text: '303 Test River Rd, Calabash, NC 28467', lat: 33.8907, lng: -78.5689, county: 'Brunswick', city: 'Calabash', zip: '28467', state: 'NC' },
-  { placeId: 'test-sha-1', text: '404 Test Main St, Shallotte, NC 28470', lat: 33.9729, lng: -78.3858, county: 'Brunswick', city: 'Shallotte', zip: '28470', state: 'NC' },
+  { placeId: 'test-sha-1', text: '404 Test Main St, Shallotte, NC 28470', lat: 33.974452, lng: -78.379911, county: 'Brunswick', city: 'Shallotte', zip: '28470', state: 'NC' },
   { placeId: 'test-wil-1', text: '505 Test Market St, Wilmington, NC 28401', lat: 34.2357, lng: -77.9456, county: 'New Hanover', city: 'Wilmington', zip: '28401', state: 'NC' },
   { placeId: 'test-myr-1', text: '606 Test Ocean Blvd, Myrtle Beach, SC 29577', lat: 33.6891, lng: -78.8867, county: 'Horry', city: 'Myrtle Beach', zip: '29577', state: 'SC' },
 ];
@@ -160,12 +160,22 @@ export async function details(placeId: string, sessionToken: string): Promise<Ch
  * URL signing secret so the URL can't be reused for other places.
  */
 export function satelliteUrl(lat: number, lng: number): string | null {
+  const center = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+  return signedStaticMap(`center=${center}&zoom=19&size=640x360&scale=2&maptype=satellite&markers=color:red%7C${center}`);
+}
+
+/** The instant estimate's picture: the measured roof outlined in yellow on Google's satellite view. */
+export function roofImageUrl(box: { sw: { lat: number; lng: number }; ne: { lat: number; lng: number } }): string | null {
+  const c = (lat: number, lng: number) => `${lat.toFixed(6)},${lng.toFixed(6)}`;
+  const { sw, ne } = box;
+  const ring = [c(sw.lat, sw.lng), c(sw.lat, ne.lng), c(ne.lat, ne.lng), c(ne.lat, sw.lng), c(sw.lat, sw.lng)].join('%7C');
+  return signedStaticMap(`size=640x400&scale=2&maptype=satellite&path=color:0xffd500ff%7Cweight:3%7Cfillcolor:0xffd50033%7C${ring}`);
+}
+
+function signedStaticMap(query: string): string | null {
   const key = config.googleStaticKey();
   if (!key) return null;
-  const center = `${lat.toFixed(6)},${lng.toFixed(6)}`;
-  const path =
-    `/maps/api/staticmap?center=${center}&zoom=19&size=640x360&scale=2&maptype=satellite` +
-    `&markers=color:red%7C${center}&key=${encodeURIComponent(key)}`;
+  const path = `/maps/api/staticmap?${query}&key=${encodeURIComponent(key)}`;
   const secret = config.googleStaticSecret();
   if (!secret) return `https://maps.googleapis.com${path}`;
   const sig = createHmac('sha1', Buffer.from(secret.replace(/-/g, '+').replace(/_/g, '/'), 'base64'))

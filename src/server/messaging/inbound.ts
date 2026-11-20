@@ -42,6 +42,9 @@ export async function handleInbound(m: Inbound): Promise<{ optedOut: boolean; op
     await tx`
       insert into wb.messages (booking_id, channel, direction, audience, kind, to_addr, from_addr, body, provider, provider_id, status)
       values (${b?.id ?? null}, 'sms', 'in', 'customer', 'inbound', ${m.to}, ${m.from}, ${body}, 'twilio', ${m.sid}, 'received')`;
+    // Any text from a customer stops estimate follow-ups: a person takes it from here.
+    await tx`update wb.estimates set replied_at = now()
+             where status = 'sent' and booking_id in (select id from wb.bookings where mobile = ${m.from})`;
     if (optOut) await tx`insert into wb.sms_optouts (mobile) values (${m.from}) on conflict (mobile) do nothing`;
     if (optIn) await tx`delete from wb.sms_optouts where mobile = ${m.from}`;
     return b as { id: string; name: string } | undefined;

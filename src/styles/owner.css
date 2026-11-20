@@ -24,7 +24,7 @@
   right: 0;
   bottom: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   background: var(--bg);
   border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom);
@@ -38,7 +38,10 @@
   font-weight: 650;
   text-decoration: none;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: clamp(0.72rem, 3.4vw, 0.95rem);
+  padding: 0 0.1rem;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 .tabs a[aria-current='page'] {
   color: var(--link);
@@ -201,4 +204,71 @@ details.panel summary {
   align-items: center;
   cursor: pointer;
   font-weight: 650;
+}
+
+/* After the inspection: estimate, answer, roof job. */
+.estimate-form label,
+.crew-row label,
+.move-day label,
+.panel > label {
+  display: block;
+  font-weight: 650;
+  margin-top: 0.75rem;
+}
+.estimate-form input:not([type='file']),
+.estimate-form textarea,
+.crew-row input,
+.crew-row select,
+.move-day input[type='date'],
+.panel > input[type='date'] {
+  width: 100%;
+  min-height: var(--tap);
+}
+.file-row {
+  margin: 0.75rem 0;
+}
+.file-btn {
+  position: relative;
+  cursor: pointer;
+}
+.file-btn:focus-within {
+  outline: 3px solid var(--link);
+  outline-offset: 2px;
+}
+.customer-note {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--link);
+  background: var(--surface);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.customer-note p {
+  margin: 0 0 0.25rem;
+}
+.more-actions {
+  margin-top: 1rem;
+}
+.more-actions summary {
+  cursor: pointer;
+  font-weight: 650;
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+}
+.crew-pick {
+  margin-top: 0.75rem;
+}
+.chip.est-sent {
+  background: var(--tint-blue);
+}
+.chip.est-accepted {
+  background: var(--tint-green);
+}
+.chip.est-declined,
+.chip.est-withdrawn {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.crews-link {
+  margin-top: 2rem;
 }

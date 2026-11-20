@@ -24,6 +24,11 @@ const answers = questions.map((slug) => getArticle(slug)).filter((a) => a !== un
       <p class="crumbs small"><a href="/services/">Services</a></p>
       <h1>{service.name}</h1>
       <slot />
+      {serviceKey === 'replacement' && facts.instantEstimate.on && (
+        <p>
+          <a href="/estimate/">See an instant estimate for a new roof</a>, from your house's outline seen from above.
+        </p>
+      )}
       {answers.length > 0 && (
         <section aria-labelledby="sq-h" class="more">
           <h2 id="sq-h">Questions people ask</h2>

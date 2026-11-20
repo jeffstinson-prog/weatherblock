@@ -51,7 +51,7 @@ async function stepYou(page: Page, mobile = nextPhone()) {
   await page.getByLabel('Your name').fill('Pat Tester');
   await page.getByLabel('Mobile number').fill(mobile);
   await page.getByLabel('Email').fill('pat@example.com');
-  await page.getByRole('checkbox', { name: /Text me about this appointment/ }).check();
+  await page.getByRole('checkbox', { name: /Text me about my inspection/ }).check();
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.getByRole('heading', { name: 'Check and book' })).toBeFocused();
 }

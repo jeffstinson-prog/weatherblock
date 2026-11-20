@@ -1,0 +1,47 @@
+---
+import Base from '../layouts/Base.astro';
+import BookCall from '../components/BookCall.astro';
+import EstimateApp from '../estimate/EstimateApp';
+import '../styles/booking.css';
+import { facts, telHref } from '../facts';
+
+const e = facts.instantEstimate;
+const on = e.on && Boolean(e.material);
+const props = {
+  config: { pricePerSquare: e.pricePerSquare, largeRoof: e.largeRoof, measuredRange: e.measuredRange, slopeFactor: e.slopeFactor },
+  material: e.material,
+  priceText: facts.derived.roofPriceText,
+  bookLabel: facts.derived.bookLabel,
+  phone: facts.contact.phone,
+  phoneHref: telHref(),
+  serviceAreaShort: facts.serviceArea.short,
+};
+---
+
+<Base title="Instant roof estimate" description={`A ballpark for a new roof in ${facts.serviceArea.short}, from your house's outline seen from above.`}>
+  <section class="section">
+    <div class="wrap">
+      <h1>Instant roof estimate</h1>
+      {
+        on ? (
+          <>
+            <p class="lede">A ballpark for a new roof with {e.material}, from your house's outline seen from above. It takes about ten seconds.</p>
+            <EstimateApp client:load {...props} />
+            <noscript>
+              <p>This page needs JavaScript. Call or text {facts.contact.phone} for a price.</p>
+            </noscript>
+            <p class="small muted sources">
+              Addresses and roof measurements: <span class="gmp-attribution" translate="no">Google Maps</span>. When Google has no data for a house:
+              building outlines from Microsoft, under the Open Database License (our copy is at{' '}
+              <a href="/data/outlines/LICENSE.txt">/data/outlines</a>), and aerial photos from the USDA National Agriculture Imagery Program,
+              via the U.S. Geological Survey.
+            </p>
+          </>
+        ) : (
+          <p class="lede">Prices come in a written estimate after {facts.derived.theInspection}.</p>
+        )
+      }
+    </div>
+  </section>
+  <BookCall />
+</Base>

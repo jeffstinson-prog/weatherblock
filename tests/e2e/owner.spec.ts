@@ -135,7 +135,8 @@ test('sign in, then work a booking from a phone', async ({ page }) => {
 
 test('availability: a day off, and a bad window is refused with a reason', async ({ page }) => {
   await signIn(page);
-  await page.getByRole('link', { name: 'Availability' }).click();
+  await page.getByRole('link', { name: 'More' }).click();
+  await page.getByRole('link', { name: 'Inspection availability' }).click();
   await expect(page.getByRole('heading', { name: 'Availability', level: 1 })).toBeVisible();
   await expectAccessible(page);
   await page.getByLabel('Date').fill('2026-12-24');
