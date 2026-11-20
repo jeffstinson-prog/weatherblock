@@ -25,6 +25,7 @@ The full list of settings is in `.env.example`.
   - A server key limited to Places API (New).
   - A browser key limited to Maps Static API and the site's domains, plus a URL signing secret.
   - A service account for the calendar. Put its email and private key in Netlify. Justin shares his calendar with the service account's email ("Make changes to events") and enters the calendar ID in the owner app (Availability).
+  - The instant estimate's roof data: a second Google Cloud project with the Solar API turned on, and a key limited to it, as `GOOGLE_SOLAR_KEY`. Keeping it separate means that if Google ever objects to roofing use (its terms describe the Solar API for energy systems), booking's address search isn't touched; the page falls back to the free outlines on its own. 10,000 lookups a month are free.
 - [ ] **Anthropic**: an API key with a monthly spend limit, in Netlify and as the `ANTHROPIC_API_KEY` GitHub secret. Then run the live assistant tests (step 5).
 - [ ] **Netlify settings**:
   - Production: `APP_ENV=production` and the live keys.
@@ -54,7 +55,7 @@ Each of these is blank or unconfirmed, and the site hides whatever depends on it
 - [ ] A mailing address for the business (`business.mailingAddress`). A P.O. box works. Follow-up and review emails print it at the bottom, as the CAN-SPAM Act requires, and wait until it's set.
 - [ ] The Google review link (`pipeline.reviewUrl`): Google Business Profile, "Ask for reviews", copy the link.
 - [ ] When estimates are usually ready (`pipeline.estimateTurnaround`), for example "within 2 business days". It finishes the sentence in the thank-you after each visit.
-- [ ] Justin: is $450 per square for the roof as measured, or with waste added? The instant estimate shows the measured roof times 1.1 to 1.3 for slope. Also check the crews in the owner app (Jobs, Crews): names and jobs a day.
+- [ ] Justin: is $450 per square for the roof as measured, or with waste added? The instant estimate shows Google's measured roof up to 15% more for waste (`measuredRange`). Also check the crews in the owner app (Jobs, Crews): names and jobs a day.
 - [ ] Phone hours. Also fix the Google Business Profile, which says "Open 24 hours".
 - [ ] NC license number, and whose name it's under.
 - [ ] Liability insurance (carrier and limit), workers' comp.
@@ -102,7 +103,7 @@ is on (the MX and SPF records). Keep the email forwarding.
 | Twilio | about $12 at 100 bookings a month |
 | Resend | $0 (free up to 100 a day; $20 if a storm rush goes past that) |
 | Google Maps and Calendar | $0 under the free caps |
-| Instant estimate data (Census, Microsoft, USGS) | $0 |
+| Instant estimate (Google roof data, first 10,000 a month; then 1 cent each) | $0 |
 | Claude API | about 10 cents a conversation on Opus 5.5 |
 
 ## Reviews, from day one

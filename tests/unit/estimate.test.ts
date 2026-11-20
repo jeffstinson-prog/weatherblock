@@ -5,7 +5,9 @@ import { facts } from '../../src/facts';
 import {
   candidates,
   distanceTo,
+  measuredEstimate,
   outlineFromHouse,
+  pitchLabel,
   parseTile,
   roofEstimate,
   tileKey,
@@ -14,7 +16,7 @@ import {
   type PriceConfig,
 } from '../../src/estimate/roof';
 
-const cfg: PriceConfig = { pricePerSquare: 450, largeRoof: { minSquares: 30, pricePerSquare: [350, 400] }, slopeFactor: [1.1, 1.3] };
+const cfg: PriceConfig = { pricePerSquare: 450, largeRoof: { minSquares: 30, pricePerSquare: [350, 400] }, measuredRange: [1.0, 1.15], slopeFactor: [1.1, 1.3] };
 
 describe('roof size and price', () => {
   it('a typical house: price per square across the slope range, rounded out to $100', () => {
@@ -46,6 +48,21 @@ describe('roof size and price', () => {
     expect(Math.round(m2 * 10.7639)).toBe(1035);
     expect(roofEstimate(m2, cfg).outlineSqft).toBe(1040);
     expect(roofEstimate(m2, cfg).price).not.toBeNull();
+  });
+
+  it("Google's measured roof: from as measured to 15% more, priced the same way", () => {
+    const r = measuredEstimate(209, 187, cfg);
+    expect(r.roofSqft).toEqual([2250, 2590]);
+    expect(r.squares).toEqual([22.5, 26]);
+    expect(r.price).toEqual([10100, 11700]);
+    expect(r.outlineSqft).toBe(2010);
+    expect(measuredEstimate(900, 800, cfg).price).toBeNull();
+  });
+
+  it('says pitch the way roofers do', () => {
+    expect(pitchLabel(26.57)).toBe('6/12');
+    expect(pitchLabel(18.43)).toBe('4/12');
+    expect(pitchLabel(45)).toBe('12/12');
   });
 
   it("uses the prices in facts.yaml, and the text says the same numbers", () => {

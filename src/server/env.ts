@@ -45,4 +45,6 @@ export const config = {
   googleServerKey: () => read('GOOGLE_MAPS_SERVER_KEY'),
   googleStaticKey: () => read('GOOGLE_MAPS_STATIC_KEY'),
   googleStaticSecret: () => read('GOOGLE_MAPS_SIGNING_SECRET'),
+  // Its own key (best in its own Google Cloud project), so trouble there can't touch booking.
+  googleSolarKey: () => read('GOOGLE_SOLAR_KEY'),
 };

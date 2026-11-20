@@ -80,6 +80,7 @@ export const FactsSchema = z.strictObject({
       minSquares: z.number().positive(),
       pricePerSquare: z.tuple([z.number().positive(), z.number().positive()]),
     }),
+    measuredRange: z.tuple([z.number().min(0.8).max(1.5), z.number().min(0.8).max(1.5)]),
     slopeFactor: z.tuple([z.number().min(1).max(2), z.number().min(1).max(2)]),
   }),
   pipeline: z.strictObject({

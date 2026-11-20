@@ -60,12 +60,13 @@ Add an owner: `node scripts/add-owner.mjs <email> "<name>" [mobile]` with the pr
 
 ## Instant estimate
 
-At `/estimate/`. An address in, a ballpark for a new roof out, in about ten seconds. Nothing is stored.
+At `/estimate/`. Pick an address, get a ballpark for a new roof, in a few seconds. Nothing is stored.
 
-- **Address:** the U.S. Census Bureau's free geocoder (public domain), from a server function (`/api/geocode`). Google's address data stays in the booking form: its terms don't allow pairing its locations with other map data, and Google's Solar API is only for energy systems.
-- **The house:** building outlines from Microsoft Global ML Building Footprints (Open Database License), cut to the county by `scripts/build-outlines.mjs` into `public/data/outlines/` (one small file per 0.01 degree square). The page picks the house-sized building nearest the address point, shows it outlined on a USDA aerial photo (public domain, from the USGS), and asks "Is this your house?", with the next building one tap away.
-- **The price:** `instantEstimate` in `facts.yaml`: price per square, the large-roof price per square, and a slope range (1.1 to 1.3 times the outline). Rounded out to $100. No price for outlines too big or small to be one house. When the outline is missing or wrong, heated square feet and stories work instead.
-- **Booking:** one tap carries the address and the ballpark into the booking form's notes, so Justin sees it.
+- **Address:** the same Google suggestions as the booking form.
+- **The roof:** Google's Solar API (Building Insights) measures the actual roof from aerial imagery: its area with the slope, the area seen from above, and the pitch (`src/server/solar.ts`, called from `/api/estimate`). 10,000 lookups a month cost nothing, then a cent each. It runs on its own key, `GOOGLE_SOLAR_KEY`, best in its own Google Cloud project: Google's terms describe the Solar API for solar and energy systems, so if Google ever objects, only that key is affected and the page falls back on its own.
+- **When Google has no data** for a house (new construction, mostly): building outlines from Microsoft Global ML Building Footprints (Open Database License), cut to the county by `scripts/build-outlines.mjs` into `public/data/outlines/`, shown on a USDA aerial photo with "Is this your house?". When that's missing too: heated square feet and stories.
+- **The price:** `instantEstimate` in `facts.yaml`: price per square, the large-roof price per square, Google's measured roof times `measuredRange` (1.0 to 1.15, for waste), or an outline times `slopeFactor` (1.1 to 1.3). Rounded out to $100. No price for a building too big or small to be one house.
+- **Booking:** one tap carries the chosen address (already picked, no retyping), the satellite picture and the ballpark into the booking form, so Justin sees it.
 - **Refresh the outlines** when Microsoft publishes new data: download the county's files (see the top of `scripts/build-outlines.mjs`) and run it.
 
 ## The assistant

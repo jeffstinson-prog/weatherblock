@@ -105,8 +105,9 @@ reviews:
 # Any price the site or the assistant may state, besides the instant estimate below.
 prices: []
 
-# The instant estimate on /estimate/: a ballpark for a new roof, from the house's
-# outline in open building data. Only what customers pay; never our costs.
+# The instant estimate on /estimate/: a ballpark for a new roof. Google measures the
+# roof from aerial imagery; when Google has no data for a house, the house's outline
+# in open building data stands in. Only what customers pay; never our costs.
 instantEstimate:
   on: true
   material: architectural shingles
@@ -114,7 +115,9 @@ instantEstimate:
   largeRoof:
     minSquares: 30
     pricePerSquare: [350, 400] # less per square on big roofs, depending on size
-  # Roof area is the outline's area times this: about 1.1 for a low slope, 1.3 for a steep one.
+  # Google's measured roof area times this: from as measured to 15% more, for waste and what imagery can't see.
+  measuredRange: [1.0, 1.15]
+  # Without Google data: the outline's area times this, about 1.1 for a low slope, 1.3 for a steep one.
   slopeFactor: [1.1, 1.3]
 
 # After the inspection: the estimate, follow-ups and the roof job.

@@ -333,3 +333,18 @@ ul.plain {
 .sources {
   margin-top: 2rem;
 }
+
+/* Google Maps text attribution, as Google's guidelines ask: plain, unbroken, readable. */
+.gmp-attribution {
+  font-family: Roboto, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: normal;
+  white-space: nowrap;
+  color: #5e5e5e;
+}
+@media (prefers-color-scheme: dark) {
+  .gmp-attribution {
+    color: #ffffff;
+  }
+}

@@ -8,13 +8,13 @@ import { facts, telHref } from '../facts';
 const e = facts.instantEstimate;
 const on = e.on && Boolean(e.material);
 const props = {
-  config: { pricePerSquare: e.pricePerSquare, largeRoof: e.largeRoof, slopeFactor: e.slopeFactor },
+  config: { pricePerSquare: e.pricePerSquare, largeRoof: e.largeRoof, measuredRange: e.measuredRange, slopeFactor: e.slopeFactor },
   material: e.material,
   priceText: facts.derived.roofPriceText,
   bookLabel: facts.derived.bookLabel,
   phone: facts.contact.phone,
   phoneHref: telHref(),
-  imagery: true,
+  serviceAreaShort: facts.serviceArea.short,
 };
 ---
 
@@ -31,9 +31,10 @@ const props = {
               <p>This page needs JavaScript. Call or text {facts.contact.phone} for a price.</p>
             </noscript>
             <p class="small muted sources">
-              Address match: U.S. Census Bureau. Building outlines: Microsoft, under the Open Database License (our copy is at{' '}
-              <a href="/data/outlines/LICENSE.txt">/data/outlines</a>). Aerial photos: USDA National Agriculture Imagery Program, from the U.S.
-              Geological Survey.
+              Addresses and roof measurements: <span class="gmp-attribution" translate="no">Google Maps</span>. When Google has no data for a house:
+              building outlines from Microsoft, under the Open Database License (our copy is at{' '}
+              <a href="/data/outlines/LICENSE.txt">/data/outlines</a>), and aerial photos from the USDA National Agriculture Imagery Program,
+              via the U.S. Geological Survey.
             </p>
           </>
         ) : (
