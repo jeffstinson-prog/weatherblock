@@ -15,7 +15,7 @@ The full list of settings is in `.env.example`.
 
 - [x] **GitHub**: the private repo `weatherblock` (done November 19, 2026).
   - [ ] Turn on GitHub Actions, so the tests run on every pull request: in the repo, Settings, Actions, General, "Allow all actions and reusable workflows", Save.
-- [ ] **Netlify**: add the site from the repo (Add new site, Import from GitHub). It goes in your existing Pro team, no new plan. Deploy previews then appear on every pull request.
+- [x] **Netlify** (done November 20, 2026): the project `heartfelt-profiterole-59a6a3`, connected to the repo, building the `8-pipeline` branch until the pull requests are merged (then switch Production branch to `main`). Test site: https://heartfelt-profiterole-59a6a3.netlify.app. Booking checked end to end on it.
 - [ ] **Supabase**: the project is WeatherBlock Roofing (`fsyrlkpzxljwhqpfxofh`). It signs owner logins with published keys (ES256), which the site checks, so no JWT secret is needed.
   - [x] Load the tables (done November 19, 2026), and the update for estimates, crews and roof jobs (done November 20, 2026). `npm run --silent db:setup-sql` prints every migration as one file to paste into the SQL Editor; `-- --after <version>` prints only the newer ones. Each runs as one transaction and ends with a summary line to check.
   - [x] Sign-ups off (done November 19, 2026).
@@ -30,11 +30,10 @@ The full list of settings is in `.env.example`.
   - A browser key limited to Maps Static API and the site's domains, plus a URL signing secret.
   - A service account for the calendar. Put its email and private key in Netlify. Justin shares his calendar with the service account's email ("Make changes to events") and enters the calendar ID in the owner app (Availability).
   - The instant estimate's roof data: a second Google Cloud project with the Solar API turned on, and a key limited to it, as `GOOGLE_SOLAR_KEY`. Keeping it separate means that if Google ever objects to roofing use (its terms describe the Solar API for energy systems), booking's address search isn't touched; the page falls back to the free outlines on its own. 10,000 lookups a month are free.
-- [ ] **Anthropic**: an API key with a monthly spend limit, in Netlify and as the `ANTHROPIC_API_KEY` GitHub secret. Then run the live assistant tests (step 5).
-- [ ] **Netlify settings** (me, once the accounts above exist):
-  - Production: `APP_ENV=production` and the live keys.
+- [ ] **Claude, for the assistant**: it already works on the test site through Netlify's built-in AI, billed to your Netlify credits, which all of your Netlify sites share. Before launch, add WeatherBlock's own Anthropic API key with a monthly spend limit as `ANTHROPIC_API_KEY` in Netlify (it takes over automatically), so its bill is separate and a busy month can't use up credits your other sites need. Also add it as a GitHub secret for the live assistant tests (step 5).
+- [ ] **Netlify settings** (me, once the accounts above exist). In place now: the database, the Supabase keys, `APP_ENV=preview`, and the three random secrets.
+  - At launch: `APP_ENV=production` and the live keys.
   - Deploy previews: `APP_ENV=preview`, the preview database and test keys (Twilio test credentials send nothing).
-  - Random 32+ character values for `MANAGE_TOKEN_SECRET`, `RATE_LIMIT_SALT` and `CRON_SECRET` (`openssl rand -base64 32`).
   - All variables together must stay under Netlify's 4 KB limit for functions. The Google private key is the big one, about 1.7 KB.
 - [ ] **Owners**: send me your and Justin's email and mobile, and I add you (me: `node scripts/add-owner.mjs <email> "<name>" <mobile>`). Then sign in at `/app/`, check your alert settings, and add the app to your home screen.
 
@@ -108,7 +107,7 @@ is on (the MX and SPF records). Keep the email forwarding.
 | Resend | $0 (free up to 100 a day; $20 if a storm rush goes past that) |
 | Google Maps and Calendar | $0 under the free caps |
 | Instant estimate (Google roof data, first 10,000 a month; then 1 cent each) | $0 |
-| Claude API | about 10 cents a conversation on Opus 5.5 |
+| Claude API (the assistant) | about 10 cents a conversation on Opus 5.5; on Netlify's built-in AI until you add your own key |
 
 ## Reviews, from day one
 
