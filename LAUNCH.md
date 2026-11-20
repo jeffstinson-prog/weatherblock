@@ -3,6 +3,9 @@
 What's left before real customers book. Roughly in order. Anything that costs
 money, touches DNS, or texts or emails real people waits for your OK.
 
+You do the sign-ups, payments and answers. Items marked **(me)** are mine: the
+settings, code and tests, once you've made the account or given the answer.
+
 ## 1. Accounts
 
 Use the business Gmail (weatherblockroofing@gmail.com) as the login where you
@@ -10,10 +13,11 @@ can, then add each other, so the business owns every account. Keys go in
 Netlify's environment settings (and GitHub secrets for tests), never in the repo.
 The full list of settings is in `.env.example`.
 
-- [ ] **GitHub**: the empty private repo, with the Claude GitHub app allowed on it.
+- [x] **GitHub**: the private repo `weatherblock` (done November 19, 2026).
+  - [ ] Turn on GitHub Actions, so the tests run on every pull request: in the repo, Settings, Actions, General, "Allow all actions and reusable workflows", Save.
 - [ ] **Netlify**: add the site from the repo (Add new site, Import from GitHub). It goes in your existing Pro team, no new plan. Deploy previews then appear on every pull request.
 - [ ] **Supabase**: the project is WeatherBlock Roofing (`fsyrlkpzxljwhqpfxofh`). It signs owner logins with published keys (ES256), which the site checks, so no JWT secret is needed.
-  - [x] Load the tables (done November 19, 2026): `npm run --silent db:setup-sql` prints every migration as one file. Paste it into the SQL Editor and click Run. It runs as one transaction and ends with a summary line to check. Later changes are new files in `supabase/migrations/`, applied with `supabase db push`.
+  - [x] Load the tables (done November 19, 2026), and the update for estimates, crews and roof jobs (done November 20, 2026). `npm run --silent db:setup-sql` prints every migration as one file to paste into the SQL Editor; `-- --after <version>` prints only the newer ones. Each runs as one transaction and ends with a summary line to check.
   - [x] Sign-ups off (done November 19, 2026).
   - [ ] With the Resend step: send sign-in email through Resend (Authentication, SMTP settings), then change the "Magic Link" email template to include the 6-digit code, for example `Your sign-in code: {{ .Token }}`. Supabase only allows template edits once custom SMTP is set up, and its built-in email is only for testing. Until then, owners can't sign in to the owner app.
   - [ ] If it's on the free plan, move it to Pro ($25 a month) before real bookings. Free projects have no daily backups and pause after a quiet week.
@@ -27,12 +31,12 @@ The full list of settings is in `.env.example`.
   - A service account for the calendar. Put its email and private key in Netlify. Justin shares his calendar with the service account's email ("Make changes to events") and enters the calendar ID in the owner app (Availability).
   - The instant estimate's roof data: a second Google Cloud project with the Solar API turned on, and a key limited to it, as `GOOGLE_SOLAR_KEY`. Keeping it separate means that if Google ever objects to roofing use (its terms describe the Solar API for energy systems), booking's address search isn't touched; the page falls back to the free outlines on its own. 10,000 lookups a month are free.
 - [ ] **Anthropic**: an API key with a monthly spend limit, in Netlify and as the `ANTHROPIC_API_KEY` GitHub secret. Then run the live assistant tests (step 5).
-- [ ] **Netlify settings**:
+- [ ] **Netlify settings** (me, once the accounts above exist):
   - Production: `APP_ENV=production` and the live keys.
   - Deploy previews: `APP_ENV=preview`, the preview database and test keys (Twilio test credentials send nothing).
   - Random 32+ character values for `MANAGE_TOKEN_SECRET`, `RATE_LIMIT_SALT` and `CRON_SECRET` (`openssl rand -base64 32`).
   - All variables together must stay under Netlify's 4 KB limit for functions. The Google private key is the big one, about 1.7 KB.
-- [ ] **Owners**: `node scripts/add-owner.mjs <email> "<name>" <mobile>` for each of you. Then sign in at `/app/`, check your alert settings, and add the app to your home screen.
+- [ ] **Owners**: send me your and Justin's email and mobile, and I add you (me: `node scripts/add-owner.mjs <email> "<name>" <mobile>`). Then sign in at `/app/`, check your alert settings, and add the app to your home screen.
 
 ## 2. Texts: carrier registration (A2P 10DLC)
 
@@ -88,10 +92,10 @@ is on (the MX and SPF records). Keep the email forwarding.
 
 ## 5. Launch day
 
-- [ ] Clear the test bookings out of the database.
-- [ ] Set `web.launched: true` in `facts.yaml`. Search engines are kept out until then.
+- [ ] Clear the test bookings out of the database (me).
+- [ ] Set `web.launched: true` in `facts.yaml` (me). Search engines are kept out until then.
 - [ ] On your phone, book a real inspection. Get the text and the email, see it in the owner app and on Justin's calendar, then reschedule and cancel from the link.
-- [ ] Run `npm run test:assistant`, read the answers, and fix any help answer it stumbles on.
+- [ ] Run `npm run test:assistant`, read the answers, and fix any help answer it stumbles on (me).
 - [ ] Add the site to Google Search Console and submit `/sitemap-index.xml`.
 
 ## Monthly cost, roughly

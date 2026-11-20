@@ -29,7 +29,7 @@ Updated 2026-11-20.
 
 1. Review the pull requests and merge them in order, starting with the site.
 2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase: tables loaded and sign-ups off (November 19). The sign-in code email waits for Resend, since Supabase only allows template edits with custom SMTP.
-3. Load the new tables into Supabase: paste `npm run --silent db:setup-sql -- --after 20261119150000` into the SQL Editor (crews, estimates, roof jobs).
+3. Supabase has the new tables for estimates, crews and roof jobs (loaded November 20).
 4. Facts for the automation (LAUNCH.md section 3): a mailing address, the Google review link, when estimates are ready, and whether $450 per square is for the measured roof or includes waste.
 5. Run the live assistant tests once there's an Anthropic key: `npm run test:assistant` (top 30 questions and 15 attempts to break the rules). Not run yet; no key in this environment.
 
