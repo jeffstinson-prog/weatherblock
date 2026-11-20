@@ -1,7 +1,7 @@
 // The house rules, checked in code on every assistant reply (and, in tests,
 // on every page of the site). A reply that breaks one is never shown.
 //
-//   price           no prices except facts.prices (sourced grant amounts are fine)
+//   price           no prices except facts.prices and the roof price per square (sourced grant amounts are fine)
 //   insurance       never promise or suggest insurance will pay
 //   claims          never say we file, handle or negotiate claims
 //   deductible      never offer to cover or waive a deductible
@@ -51,12 +51,14 @@ type Check = (s: string, allowed: Allowed) => boolean;
 
 const CHECKS: Record<string, Check> = {
   price: (s, a) => {
-    for (const m of s.matchAll(/\$\s?([\d,]+(?:\.\d+)?)\s*(k|thousand)?/gi)) {
+    const amounts = [...s.matchAll(/\$\s?([\d,]+(?:\.\d+)?)\s*(k|thousand)?/gi)];
+    for (const m of amounts) {
       const value = n(m[1]!) * (m[2] ? 1000 : 1);
       if (!a.amounts.has(value)) return true;
     }
     if (/\b\d[\d,]*\s*(dollars|bucks)\b/i.test(s)) return true;
-    if (/\bper (square|sq\.? ?ft|square foot)\b/i.test(s) && /\d/.test(s)) return true;
+    // A number per square is a price. It passes only as a dollar amount from the facts (checked above).
+    if (/\bper (square|sq\.? ?ft|square foot)\b/i.test(s) && /\d/.test(s) && amounts.length === 0) return true;
     return false;
   },
 

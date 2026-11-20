@@ -6,6 +6,7 @@ import { facts, telHref } from '../facts';
 const here = Astro.url.pathname;
 const links = [
   { href: '/book/', label: facts.derived.bookLabel },
+  ...(facts.instantEstimate.on ? [{ href: '/estimate/', label: 'Instant estimate' }] : []),
   { href: '/services/', label: 'Services' },
   { href: '/help/', label: 'Help' },
   { href: '/ask/', label: 'Ask a question' },

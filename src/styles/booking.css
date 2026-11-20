@@ -283,3 +283,53 @@ details.field summary {
 .visit-h {
   margin-top: 1.5rem;
 }
+
+/* The instant estimate. */
+.estimate-lookup {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0 1.5rem;
+}
+.estimate-lookup label {
+  font-weight: 700;
+}
+.estimate-lookup .hint {
+  margin: 0;
+}
+.aerial {
+  margin: 0.5rem 0 1rem;
+}
+.aerial-frame {
+  position: relative;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--line);
+}
+.aerial-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.aerial-frame svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.aerial-frame polygon {
+  fill: rgb(255 213 0 / 0.18);
+  stroke: #ffd500;
+  stroke-width: 3;
+  paint-order: stroke;
+  filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.9));
+}
+.aerial figcaption {
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+ul.plain {
+  padding-left: 1.1rem;
+}
+.sources {
+  margin-top: 2rem;
+}
