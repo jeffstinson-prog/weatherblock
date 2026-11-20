@@ -57,7 +57,7 @@ test("an address we can't find, or a house outside the map data, falls back to t
   await expect(page.getByRole('button', { name: 'Get my estimate' })).toBeEnabled();
   await expect(page.getByRole('alert')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: "Use your house's size" })).toBeVisible();
-  await expect(page.getByText('Ballpark for a new roof')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Ballpark for a new roof' })).toHaveCount(0);
   await page.getByLabel('Heated square feet').fill('90');
   await page.getByRole('button', { name: 'Show the ballpark' }).click();
   await expect(page.getByRole('alert')).toContainText('Enter the heated square feet');

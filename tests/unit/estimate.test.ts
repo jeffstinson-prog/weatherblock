@@ -19,8 +19,8 @@ const cfg: PriceConfig = { pricePerSquare: 450, largeRoof: { minSquares: 30, pri
 describe('roof size and price', () => {
   it('a typical house: price per square across the slope range, rounded out to $100', () => {
     const r = roofEstimate(150, cfg); // about 1,615 square feet from above
-    expect(r.outlineSqft).toBe(1615);
-    expect(r.roofSqft).toEqual([1776, 2099]);
+    expect(r.outlineSqft).toBe(1610);
+    expect(r.roofSqft).toEqual([1780, 2100]);
     expect(r.squares).toEqual([18, 21]);
     expect(r.price).toEqual([7900, 9500]);
   });
@@ -44,6 +44,7 @@ describe('roof size and price', () => {
   it('from heated square feet and stories, with an allowance for porches and overhangs', () => {
     const m2 = outlineFromHouse(1800, 2);
     expect(Math.round(m2 * 10.7639)).toBe(1035);
+    expect(roofEstimate(m2, cfg).outlineSqft).toBe(1040);
     expect(roofEstimate(m2, cfg).price).not.toBeNull();
   });
 

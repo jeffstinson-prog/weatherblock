@@ -66,7 +66,8 @@ const tel = telHref();
     flex: none;
   }
   .brand img {
-    width: 136px;
+    /* Smaller on the narrowest phones, so Call and Menu keep their words on one line. */
+    width: clamp(104px, 34vw, 136px);
     height: auto;
   }
   .bar-actions {
@@ -75,7 +76,11 @@ const tel = telHref();
     align-items: center;
   }
   .bar-actions .btn {
-    padding-inline: 1rem;
+    padding-inline: clamp(0.75rem, 3.5vw, 1rem);
+  }
+  .bar-actions .btn,
+  .menu summary {
+    white-space: nowrap;
   }
   .menu summary {
     list-style: none;

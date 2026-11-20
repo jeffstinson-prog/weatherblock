@@ -1,7 +1,7 @@
 // The instant estimate: an address in, the house's outline from above, and a
 // ballpark for a new roof. Or, when the outline is missing or wrong, the
 // house's size typed in. A rough guide, never a quote.
-import { useState } from 'preact/hooks';
+import { useRef, useState } from 'preact/hooks';
 import {
   candidates,
   dollars,
@@ -90,6 +90,9 @@ export default function EstimateApp(p: Props) {
   const [sqft, setSqft] = useState('');
   const [stories, setStories] = useState('1');
   const [manualResult, setManualResult] = useState<RoofEstimate | null>(null);
+  // Read the boxes themselves when a button is pressed: someone can type before the page's script is ready.
+  const addressBox = useRef<HTMLInputElement>(null);
+  const sqftBox = useRef<HTMLInputElement>(null);
 
   async function lookUp(e: Event) {
     e.preventDefault();
@@ -99,13 +102,15 @@ export default function EstimateApp(p: Props) {
     setPick(0);
     setManualResult(null);
     setManual(false);
-    if (query.trim().length < 5) {
+    const typed = addressBox.current?.value ?? query;
+    setQuery(typed);
+    if (typed.trim().length < 5) {
       setError('Enter the street address, town and ZIP code.');
       return;
     }
     setBusy(true);
     try {
-      const res = await fetch('/api/geocode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: query }) });
+      const res = await fetch('/api/geocode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: typed }) });
       const data = (await res.json()) as { matches?: Match[]; message?: string };
       if (!res.ok) throw new Error(data.message ?? 'Something went wrong. Try again.');
       const m = data.matches?.[0];
@@ -129,7 +134,9 @@ export default function EstimateApp(p: Props) {
   function fromSize(e: Event) {
     e.preventDefault();
     setError('');
-    const n = Number(sqft.replace(/[,\s]/g, ''));
+    const raw = sqftBox.current?.value ?? sqft;
+    setSqft(raw);
+    const n = Number(raw.replace(/[,\s]/g, ''));
     if (!Number.isFinite(n) || n < 300 || n > 15000) {
       setError('Enter the heated square feet, like 1,800. Your listing or tax card has it.');
       return;
@@ -159,6 +166,7 @@ export default function EstimateApp(p: Props) {
         <p class="hint" id="est-address-hint">Street, town and ZIP code. For example: 123 Ocean Blvd W, Holden Beach, NC 28462</p>
         <input
           id="est-address"
+          ref={addressBox}
           type="text"
           autoComplete="street-address"
           aria-describedby="est-address-hint"
@@ -249,7 +257,7 @@ export default function EstimateApp(p: Props) {
               <p class="hint" id="est-sqft-hint">
                 From your listing or the county tax card.
               </p>
-              <input id="est-sqft" type="text" inputMode="numeric" aria-describedby="est-sqft-hint" value={sqft} onInput={(e) => setSqft((e.currentTarget as HTMLInputElement).value)} />
+              <input id="est-sqft" ref={sqftBox} type="text" inputMode="numeric" aria-describedby="est-sqft-hint" value={sqft} onInput={(e) => setSqft((e.currentTarget as HTMLInputElement).value)} />
             </div>
             <div class="field">
               <label for="est-stories">Stories</label>

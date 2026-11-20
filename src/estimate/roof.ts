@@ -102,13 +102,15 @@ export const MAX_OUTLINE_M2 = 600;
 const MIN_OUTLINE_M2 = 40;
 
 const half = (n: number) => Math.round(n * 2) / 2;
+/** Square feet to the nearest 10: the measurement is rough, and the numbers shouldn't pretend otherwise. */
+const ten = (n: number) => Math.round(n / 10) * 10;
 
 export function roofEstimate(outlineM2: number, cfg: PriceConfig): RoofEstimate {
   const outlineSqft = outlineM2 * SQFT_PER_M2;
   const roof: [number, number] = [outlineSqft * cfg.slopeFactor[0], outlineSqft * cfg.slopeFactor[1]];
   const squares: [number, number] = [half(roof[0] / 100), half(roof[1] / 100)];
   if (outlineM2 > MAX_OUTLINE_M2 || outlineM2 < MIN_OUTLINE_M2) {
-    return { outlineSqft: Math.round(outlineSqft), roofSqft: [Math.round(roof[0]), Math.round(roof[1])], squares, price: null };
+    return { outlineSqft: ten(outlineSqft), roofSqft: [ten(roof[0]), ten(roof[1])], squares, price: null };
   }
   // Price at each end of the size range, and at the large-roof line if the range crosses it.
   const min = cfg.largeRoof.minSquares;
@@ -132,7 +134,7 @@ export function roofEstimate(outlineM2: number, cfg: PriceConfig): RoofEstimate 
   }
   const low = Math.floor(Math.min(...lows) / 100) * 100;
   const high = Math.ceil(Math.max(...highs) / 100) * 100;
-  return { outlineSqft: Math.round(outlineSqft), roofSqft: [Math.round(roof[0]), Math.round(roof[1])], squares, price: [low, high] };
+  return { outlineSqft: ten(outlineSqft), roofSqft: [ten(roof[0]), ten(roof[1])], squares, price: [low, high] };
 }
 
 /** When there's no outline, or it's wrong: the house's size from above, from heated square feet and stories.
