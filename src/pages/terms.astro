@@ -5,7 +5,7 @@ const { business, contact, insuranceClaims, inspection } = facts;
 const who = business.legalName || business.name;
 ---
 
-<Legal title="Terms" description={`The terms for using the ${business.name} website.`} updated="2026-11-19">
+<Legal title="Terms" description={`The terms for using the ${business.name} website.`} updated="2026-11-21">
   <p>These terms cover this website and booking an inspection on it. The website is run by {who}, {business.city}, {business.state}.</p>
 
   <h2>Inspections</h2>
@@ -23,7 +23,7 @@ const who = business.legalName || business.name;
   )}
 
   <h2>Insurance</h2>
-  <p>{insuranceClaims.weDo} {insuranceClaims.youDo} We don't file, handle or negotiate insurance claims. We can't promise what insurance will pay. We never cover or waive a deductible.</p>
+  <p>{insuranceClaims.weDo} {insuranceClaims.youDo} We don't file, handle or negotiate insurance claims. We can't promise what insurance will pay.</p>
 
   <h2>Financing</h2>
   <p>{facts.financing.disclosure}</p>

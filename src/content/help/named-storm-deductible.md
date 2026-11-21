@@ -5,7 +5,7 @@ order: 35
 sources:
   - label: NC Department of Insurance, windstorm and hail deductibles
     url: https://www.ncdoi.gov/consumers/homeowners-insurance/windstorm-and-hail
-related: [deductible, insurance-pay, nc-2027-changes]
+related: [insurance-pay, nc-2027-changes]
 keywords: [named storm, hurricane, tropical storm, percentage, wind, hail, declarations page, coverage a]
 ---
 In North Carolina it's usually called a named storm deductible. It's a separate deductible for wind and hail damage from a storm with an official name: a hurricane, a tropical storm or a tropical depression.
