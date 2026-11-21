@@ -1,19 +1,35 @@
 ---
 import Base from '../layouts/Base.astro';
-import { facts, smsHref, telHref } from '../facts';
+import BookingApp from '../booking/BookingApp';
+import '../styles/booking.css';
+import { facts, telHref, smsHref } from '../facts';
+import { smsConsentText } from '../booking/rules';
+
+const props = {
+  businessName: facts.business.name,
+  phone: facts.contact.phone,
+  phoneHref: telHref(),
+  consentText: smsConsentText(facts.business.name, facts.texts.maxPerBooking),
+  bookLabel: facts.derived.bookLabel,
+  free: facts.inspection.free,
+  serviceAreaShort: facts.serviceArea.short,
+  deliverables: facts.inspection.deliverables,
+  byDrone: facts.inspection.byDrone,
+  domain: facts.web.domain,
+};
 const tel = telHref();
 const sms = smsHref();
 ---
 
-<Base title={facts.derived.bookLabel} description={`${facts.derived.bookLabel} in ${facts.serviceArea.short}.`}>
+<Base title={facts.derived.bookLabel} description={`${facts.derived.bookLabel} in ${facts.serviceArea.short}. Pick a two-hour window online.`}>
   <section class="section">
-    <div class="wrap prose">
+    <div class="wrap">
       <h1>{facts.derived.bookLabel}</h1>
-      <p class="lede">Call or text us and we'll set up a time.</p>
-      <div class="actions">
-        {tel && <a class="btn" href={tel}>Call {facts.contact.phone}</a>}
-        {sms && <a class="btn secondary" href={sms}>Text {facts.contact.phone}</a>}
-      </div>
+      <p class="muted">About a minute. Prefer to talk? {tel && <a href={tel}>Call {facts.contact.phone}</a>}{sms && <> or <a href={sms}>text us</a></>}.</p>
+      <BookingApp client:load {...props} />
+      <noscript>
+        <p>Online booking needs JavaScript. Call or text {facts.contact.phone} and we'll book it for you.</p>
+      </noscript>
     </div>
   </section>
 </Base>

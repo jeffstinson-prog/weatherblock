@@ -5,6 +5,7 @@ const pages = ['/', '/book/', '/help/', '/help/cost/', '/services/roof-replaceme
 module.exports = {
   ci: {
     collect: {
+      // Needs DATABASE_URL (the booking page loads open times). APP_ENV=test uses stand-ins for Google and storage.
       startServerCommand: 'node scripts/start-node.mjs',
       startServerReadyPattern: 'Server listening',
       startServerReadyTimeout: 60000,

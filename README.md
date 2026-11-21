@@ -21,15 +21,27 @@ npm install
 npm run dev          # http://localhost:4321
 ```
 
+## Database
+
+Supabase Postgres. The schema is in [`supabase/migrations/`](supabase/migrations/), applied in order.
+
+- `wb` holds the tables. The public can't read them.
+- `wb_api` holds the only functions the public can call: open windows, book, the manage link.
+- Capacity is enforced by the database: booking locks the window's row before counting, so a window can never be overbooked, even when two people book at the same moment.
+- Owners read and write through row level security.
+
+Tests run the same migrations on plain Postgres 16 or newer, with a few stand-ins for what Supabase provides ([`supabase/test-shim.sql`](supabase/test-shim.sql)).
+
 ## Test
 
 ```sh
 npm test                                   # unit tests: facts, help center, house rules
+npm run db:local && npm run test:db        # database: capacity, two people racing for one spot, row level security
 npm run build:node && npm run test:e2e     # Playwright at 320px and 390px, light and dark, with axe accessibility checks
 FORCE_INDEXABLE=1 npm run build:node && npm run lhci   # Lighthouse, phone settings, 95+ required
 ```
 
-Lighthouse needs Chrome. If it isn't found, set `CHROME_PATH` to a Chrome or Chromium binary.
+The database and end-to-end tests need a Postgres you can throw away. Set `DATABASE_URL` (default `postgres://postgres:postgres@127.0.0.1:5432/wb_test`; end-to-end uses `wb_e2e`). Lighthouse needs Chrome; if it isn't found, set `CHROME_PATH`.
 
 All of these run on every pull request in GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
@@ -47,6 +59,10 @@ Netlify builds every pull request as a deploy preview and deploys `main` to prod
 | --- | --- |
 | `facts.yaml` | Every fact the site may state |
 | `src/content/help/` | Help center answers |
+| `src/booking/` | The booking form and the manage link (Preact) |
+| `src/server/` | Server code: database, booking, maps, storage |
+| `src/pages/api/` | Server endpoints |
+| `supabase/migrations/` | Database schema |
 | `src/pages/` | Pages (one file per URL) |
 | `src/components/`, `src/layouts/` | Shared pieces |
 | `src/styles/global.css` | Colors from the logo, type, buttons, forms |

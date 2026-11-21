@@ -16,6 +16,20 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v6
 
@@ -33,6 +47,11 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Database tests (capacity, races, row level security)
+        run: npm run test:db
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/wb_test
+
       - name: Build (test server)
         run: npm run build:node
 
@@ -41,11 +60,16 @@ jobs:
 
       - name: End-to-end tests at phone width
         run: npm run test:e2e
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/wb_e2e
 
       - name: Lighthouse, phone settings, 95+ in all four categories
         run: |
           FORCE_INDEXABLE=1 npm run build:node
           npx lhci autorun
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/wb_e2e
+          APP_ENV: test
 
       - name: Keep reports when something fails
         if: failure()

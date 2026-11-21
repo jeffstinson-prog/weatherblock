@@ -4,23 +4,25 @@ Updated 2026-11-19.
 
 ## Done
 
-- **Site and help center.** All public pages, built only from `facts.yaml`. 23 help answers, searchable. Three more wait on blank facts and stay hidden: visit length, license, warranty.
+- **Site and help center.** All public pages, built only from `facts.yaml`. 25 help answers, searchable. Three more wait on blank facts and stay hidden: visit length, license, warranty.
 - **Verified at the source** (links on each answer):
   - June 1, 2027 NC homeowners changes: NC Rate Bureau circulars P-25-3, P-25-5, P-26-2 and P-26-4. Roof payment schedule, cosmetic damage exclusion and matching exclusion, each with a buyback.
   - Roof grants: NCIUA runs two programs. Island homes, like the island part of Ocean Isle Beach, use Strengthen Your Roof (up to $10,000). Mainland Brunswick County uses Strengthen Your Coastal Roof (up to $6,000). Since November 1, 2025 only Certified FORTIFIED Roofing Contractors can install grant-funded roofs, so the site says we can't do those yet.
   - Public adjuster law: N.C. Gen. Stat. Article 33A.
   - Deductibles: no NC statute bans waivers. The site states our policy (never) and quotes NCDOI's general warning.
   - Acorn Finance: marketplace, not a lender; soft credit check to see offers. Wording from Acorn's own pages.
-- **Look.** Logo from Justin's site (`src/assets/logo.png`, untouched). Favicon and app icon are a crop of the logo's roof mark. Palette from the logo, darkened where needed so text passes contrast. Light and dark follow the phone.
-- **Checks on every pull request.** Unit tests, type check, Playwright at 320px and 390px in light and dark with axe (WCAG 2.2 AA), broken link crawl, Lighthouse at phone settings. Locally: 100 in all four Lighthouse categories on the 8 pages checked.
+- **Online booking.** Five steps: address (suggestions as you type, service area checked), roof (material, age, reason, notes, up to 6 photos), a two-hour window, contact and text consent, then review with the satellite image. Saved on the phone as you go for 24 hours. Confirmation with a reference, Apple and Google calendar buttons, and a private link to reschedule or cancel. No passwords, nothing personal in any URL (the link's secret sits after `#`).
+- **Capacity in the database.** Booking locks the window's row, then counts. Tested with eight bookings racing for one spot (exactly one wins) and in the browser with two phones (the loser is offered the nearest open times).
+- **Availability** comes from weekly windows, days off, number of inspectors and busy times from the calendar. Starting point until Justin changes it in the owner app: Monday to Saturday, 8 to 10, 10 to noon, noon to 2, 2 to 4, one inspector, bookable 12 hours to 21 days ahead.
+- **Protection.** Row level security on every table; the public can only call five narrow functions. Rate limits, a hidden bot field, at most 3 upcoming bookings per mobile number. Gate codes deleted a week after the visit.
+- **Checks on every pull request.** Unit tests, type check, database tests on Postgres, Playwright at 320px and 390px in light and dark with axe (WCAG 2.2 AA), the full booking flow, Lighthouse at phone settings. Locally: 100 in all four Lighthouse categories on all 8 pages checked, including the booking page.
 
 ## Next
 
-1. Online booking with live availability, capacity enforced in the database, the manage link (reschedule, cancel).
-2. Texts and email: confirmations, reminders, owner alerts.
-3. Owner app and Google Calendar sync.
-4. The assistant and its rule tests.
-5. Launch checklist.
+1. Texts and email: confirmations, reminders the day before and the morning of, owner alerts, "on my way".
+2. Owner app and Google Calendar sync.
+3. The assistant and its rule tests.
+4. Launch checklist.
 
 ## Waiting on JT and Justin
 
@@ -34,3 +36,4 @@ Updated 2026-11-19.
 - Logo vector files
 - Job photos with the homeowner's OK (the before and after shots on Justin's temp site need that OK first)
 - Acorn: their dealer agreement asks contractors to clear financing wording with them. Send them `/financing/` before launch, and confirm the `d=QP3YO` link is ours.
+- Supabase: a WeatherBlock org on Pro ($25 a month), or pause one of your two free projects. Needed before deploy previews can take bookings.
