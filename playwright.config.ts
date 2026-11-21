@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// End-to-end tests run against the Node build of the site (npm run build:node).
+// End-to-end tests run against the Node build of the site (npm run build:test).
 // Phone first: the smallest supported width is 320px.
 const port = Number(process.env.E2E_PORT ?? 4321);
 const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
@@ -43,6 +43,13 @@ export default defineConfig({
         url: `${baseURL}/`,
         reuseExistingServer: !process.env.CI,
         timeout: 60_000,
-        env: { PORT: String(port), HOST: '127.0.0.1', DATABASE_URL: databaseUrl, APP_ENV: 'test', BOT_MIN_SECONDS: '0' },
+        env: {
+          PORT: String(port),
+          HOST: '127.0.0.1',
+          DATABASE_URL: databaseUrl,
+          APP_ENV: 'test',
+          BOT_MIN_SECONDS: '0',
+          SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET ?? 'e2e-only-jwt-secret-0123456789abcdef',
+        },
       },
 });

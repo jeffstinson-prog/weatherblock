@@ -42,12 +42,25 @@ Email goes through Resend, texts through Twilio. Every message is written to `wb
 - **Replies to our number** are kept, STOP and START are honored, and every reply is forwarded to the owners. Point the Twilio number's incoming webhook at `https://<site>/api/twilio/sms`.
 - **Every 15 minutes** `netlify/functions/every-15-minutes.mts` calls `/api/jobs` with `CRON_SECRET`: reminders, retries of failed messages, clean-up (gate codes after a week, unused photo uploads after two days).
 
+## Owner app
+
+At `/app/`. Installs to a phone's home screen. Owners sign in with a 6-digit code sent by email (Supabase Auth, no passwords, no public sign-ups).
+
+- **Today** (any day): inspections in time order with directions, call and text. Each booking shows everything the customer gave, the gate code on tap, photos, your notes, status (booked, done, cancelled, no show), reschedule, "on my way" texts, every message sent, and the history.
+- **Upcoming:** the next two weeks, and a warning when a window holds more bookings than inspectors.
+- **Availability:** windows by weekday, inspectors, notice, how far ahead, days off, and the Google Calendar.
+- **More:** referral codes (each with a link like `/r/SMITH24`), the CSV export, your alerts.
+
+Add an owner: `node scripts/add-owner.mjs <email> "<name>" [mobile]` with the production variables set.
+
+**Google Calendar:** bookings appear on the calendar and leave it when cancelled; anything else marked busy takes one inspector out of the windows it overlaps. Move and cancel bookings in the app (it's what tells the customer); an event moved or deleted in Google is put back on the next sync. Set up a Google service account, share the calendar with it ("Make changes to events"), and set `GOOGLE_SERVICE_ACCOUNT_EMAIL` and `GOOGLE_SERVICE_ACCOUNT_KEY`.
+
 ## Test
 
 ```sh
 npm test                                   # unit tests: facts, help center, house rules
 npm run db:local && npm run test:db        # database: capacity, two people racing for one spot, row level security
-npm run build:node && npm run test:e2e     # Playwright at 320px and 390px, light and dark, with axe accessibility checks
+npm run build:test && npm run test:e2e     # Playwright at 320px and 390px, light and dark, with axe: booking, manage link, owner app
 FORCE_INDEXABLE=1 npm run build:node && npm run lhci   # Lighthouse, phone settings, 95+ required
 ```
 
@@ -70,6 +83,7 @@ Netlify builds every pull request as a deploy preview and deploys `main` to prod
 | `facts.yaml` | Every fact the site may state |
 | `src/content/help/` | Help center answers |
 | `src/booking/` | The booking form and the manage link (Preact) |
+| `src/owner/` | The owner app (Preact) |
 | `src/server/` | Server code: database, booking, maps, storage |
 | `src/pages/api/` | Server endpoints |
 | `supabase/migrations/` | Database schema |

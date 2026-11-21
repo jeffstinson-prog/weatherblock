@@ -14,15 +14,16 @@ Updated 2026-11-19.
 - **Online booking.** Five steps: address (suggestions as you type, service area checked), roof (material, age, reason, notes, up to 6 photos), a two-hour window, contact and text consent, then review with the satellite image. Saved on the phone as you go for 24 hours. Confirmation with a reference, Apple and Google calendar buttons, and a private link to reschedule or cancel. No passwords, nothing personal in any URL (the link's secret sits after `#`).
 - **Capacity in the database.** Booking locks the window's row, then counts. Tested with eight bookings racing for one spot (exactly one wins) and in the browser with two phones (the loser is offered the nearest open times).
 - **Texts and email.** Confirmation, a reminder the evening before (6 to 9 pm) and the morning of (from 7:30 am), changes and cancellations, owner alerts by text and email, replies to our number forwarded to the owners, STOP and START honored. Without keys everything is logged, not sent. Retries and clean-up run every 15 minutes.
+- **Owner app** at `/app/`, installable: sign in with an emailed code; Today with directions, call and text; booking details with the gate code on tap, photos, notes, status, reschedule and "on my way"; Upcoming with overbooking warnings; Availability (windows, inspectors, notice, days off); referral codes with share links; CSV export (no gate codes); your alerts.
+- **Google Calendar sync** both ways: bookings go on the calendar and come off when cancelled; anything else busy blocks those windows; events moved or deleted in Google are put back. Waits on a Google service account.
 - **Availability** comes from weekly windows, days off, number of inspectors and busy times from the calendar. Starting point until Justin changes it in the owner app: Monday to Saturday, 8 to 10, 10 to noon, noon to 2, 2 to 4, one inspector, bookable 12 hours to 21 days ahead.
 - **Protection.** Row level security on every table; the public can only call five narrow functions. Rate limits, a hidden bot field, at most 3 upcoming bookings per mobile number. Gate codes deleted a week after the visit.
 - **Checks on every pull request.** Unit tests, type check, database tests on Postgres, Playwright at 320px and 390px in light and dark with axe (WCAG 2.2 AA), the full booking flow, Lighthouse at phone settings. Locally: 100 in all four Lighthouse categories on all 8 pages checked, including the booking page.
 
 ## Next
 
-1. Owner app and Google Calendar sync ("on my way" is ready on the server and gets its button in the app).
-2. The assistant and its rule tests.
-3. Launch checklist.
+1. The assistant and its rule tests.
+2. Launch checklist.
 
 ## Waiting on JT and Justin
 
