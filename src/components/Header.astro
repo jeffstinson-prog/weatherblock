@@ -1,124 +1,242 @@
 ---
+// The top bar. It stays in view on ordinary pages; on one-job pages (booking,
+// the estimate, a private link) it's quiet: logo and a way to call, nothing else.
 import { Image } from 'astro:assets';
 import logo from '../assets/logo.png';
-import { facts, telHref } from '../facts';
+import Icon from './Icon.astro';
+import { facts, smsHref, telHref } from '../facts';
+
+interface Props {
+  focus?: boolean;
+}
+const { focus = false } = Astro.props;
 
 const here = Astro.url.pathname;
-const links = [
-  { href: '/book/', label: facts.derived.bookLabel },
-  ...(facts.instantEstimate.on ? [{ href: '/estimate/', label: 'Instant estimate' }] : []),
+const pages = [
   { href: '/services/', label: 'Services' },
+  ...(facts.instantEstimate.on ? [{ href: '/estimate/', label: 'Instant estimate' }] : []),
   { href: '/help/', label: 'Help' },
-  { href: '/ask/', label: 'Ask a question' },
-  { href: '/financing/', label: 'Financing' },
+  ...(facts.financing.url ? [{ href: '/financing/', label: 'Financing' }] : []),
   { href: '/about/', label: 'About' },
   { href: '/contact/', label: 'Contact' },
 ];
+const menu = [{ href: '/book/', label: facts.derived.bookLabel }, ...pages.slice(0, -2), { href: '/ask/', label: 'Ask a question' }, ...pages.slice(-2)];
+// The desktop bar has room for the main four; the rest are in the footer.
+const wide = pages.filter((p) => !['/financing/', '/contact/'].includes(p.href));
 const current = (href: string) => (here === href || (href !== '/' && here.startsWith(href)) ? 'page' : undefined);
 const tel = telHref();
+const sms = smsHref();
 ---
 
-<header class="site-header">
+<header class:list={['site-header', { focus }]}>
   <div class="wrap bar">
     <a href="/" class="brand">
-      <Image src={logo} alt={`${facts.business.name}, home`} width={136} height={72} loading="eager" fetchpriority="high" densities={[1, 2]} />
+      <Image src={logo} alt={`${facts.business.name}, home`} width={140} height={74} loading="eager" fetchpriority="high" densities={[1, 2]} />
     </a>
-    <nav class="wide-nav" aria-label="Main">
-      <ul>
-        {links.map((l) => (
-          <li><a href={l.href} aria-current={current(l.href)}>{l.label}</a></li>
-        ))}
-      </ul>
-    </nav>
+    {!focus && (
+      <nav class="wide-nav" aria-label="Main">
+        <ul>
+          {wide.map((l) => (
+            <li><a href={l.href} aria-current={current(l.href)}>{l.label}</a></li>
+          ))}
+        </ul>
+      </nav>
+    )}
     <div class="bar-actions">
-      {tel && <a class="btn secondary" href={tel}>Call</a>}
-      <details class="menu">
-        <summary class="btn secondary">Menu</summary>
-        <nav aria-label="Main">
-          <ul>
-            {links.map((l) => (
-              <li><a href={l.href} aria-current={current(l.href)}>{l.label}</a></li>
-            ))}
-          </ul>
-        </nav>
-      </details>
+      {tel && (
+        <a class="btn ghost call" href={tel}>
+          <Icon name="phone" size={18} />
+          <span class="call-short">Call</span>
+          <span class="call-long">{facts.contact.phone}</span>
+        </a>
+      )}
+      {!focus && <a class="btn book" href="/book/">{facts.derived.bookLabel}</a>}
+      {!focus && (
+        <details class="menu">
+          <summary class="btn ghost">
+            <Icon name="menu" size={18} class="when-closed" />
+            <Icon name="x" size={18} class="when-open" />
+            Menu
+          </summary>
+          <div class="sheet">
+            <nav aria-label="Main">
+              <ul>
+                {menu.map((l) => (
+                  <li>
+                    <a href={l.href} aria-current={current(l.href)}>
+                      {l.label}
+                      <Icon name="chevron-right" size={20} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <div class="sheet-actions">
+              {tel && (
+                <a class="btn secondary" href={tel}>
+                  <Icon name="phone" size={18} />
+                  Call {facts.contact.phone}
+                </a>
+              )}
+              {sms && (
+                <a class="btn secondary" href={sms}>
+                  <Icon name="message-square" size={18} />
+                  Text us
+                </a>
+              )}
+            </div>
+          </div>
+        </details>
+      )}
     </div>
   </div>
-  <hr class="lines" />
 </header>
+
+<script>
+  // Close the phone menu with Escape, and when the screen grows past phone size.
+  const menu = document.querySelector<HTMLDetailsElement>('details.menu');
+  if (menu) {
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menu.open) {
+        menu.open = false;
+        menu.querySelector('summary')?.focus();
+      }
+    });
+    window.matchMedia('(min-width: 64rem)').addEventListener('change', (e) => {
+      if (e.matches) menu.open = false;
+    });
+  }
+</script>
 
 <style>
   .site-header {
-    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    background: color-mix(in srgb, var(--paper) 86%, transparent);
+    -webkit-backdrop-filter: saturate(1.5) blur(14px);
+    backdrop-filter: saturate(1.5) blur(14px);
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  }
+  .site-header.focus {
+    position: static;
+    background: var(--paper);
   }
   .bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    padding-block: 0.6rem;
-    position: relative;
+    min-height: var(--header-h);
+    padding-block: 0.4rem;
   }
   .brand {
     display: block;
     line-height: 0;
-    border-radius: 6px;
+    border-radius: 10px;
     flex: none;
   }
   .brand img {
     /* Smaller on the narrowest phones, so Call and Menu keep their words on one line. */
-    width: clamp(104px, 34vw, 136px);
+    width: clamp(100px, 30vw, 132px);
     height: auto;
+  }
+  /* The logo is drawn for a light background, so in dark mode it sits on a light plate. */
+  @media (prefers-color-scheme: dark) {
+    .brand {
+      background: #f7f9f9;
+      padding: 0.3rem 0.55rem;
+    }
+    .brand img {
+      width: clamp(88px, 26vw, 116px);
+    }
   }
   .bar-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.35rem;
     align-items: center;
   }
   .bar-actions .btn {
-    padding-inline: clamp(0.75rem, 3.5vw, 1rem);
-  }
-  .bar-actions .btn,
-  .menu summary {
+    padding-inline: clamp(0.7rem, 3vw, 1rem);
     white-space: nowrap;
   }
+  .call-long,
+  .book {
+    display: none;
+  }
+
   .menu summary {
     list-style: none;
   }
   .menu summary::-webkit-details-marker {
     display: none;
   }
-  .menu nav {
-    position: absolute;
-    right: 1rem;
-    left: 1rem;
-    top: calc(100% + 0.25rem);
-    z-index: 50;
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    box-shadow: 0 12px 32px rgb(0 0 0 / 0.18);
-    padding: 0.5rem;
+  .menu :global(.when-open),
+  .menu[open] :global(.when-closed) {
+    display: none;
   }
-  .menu ul,
+  .menu[open] :global(.when-open) {
+    display: inline;
+  }
+  .menu[open] summary {
+    background: var(--brand-soft);
+  }
+  /* The phone menu: a full sheet under the bar. */
+  .sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    height: calc(100vh - var(--header-h));
+    height: calc(100dvh - var(--header-h));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--paper);
+    padding: 0.5rem var(--gutter) 2rem;
+    display: grid;
+    align-content: start;
+    gap: 1.25rem;
+    animation: sheet-in 0.18s ease-out;
+  }
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+  .sheet ul,
   .wide-nav ul {
     list-style: none;
     margin: 0;
     padding: 0;
   }
-  .menu a {
+  .sheet li + li {
+    border-top: 1px solid var(--line);
+  }
+  .sheet nav a {
     display: flex;
     align-items: center;
-    min-height: var(--tap);
-    padding: 0.5rem 0.9rem;
-    border-radius: var(--radius-sm);
+    justify-content: space-between;
+    min-height: 3.75rem;
+    padding: 0.5rem 0.25rem;
     text-decoration: none;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: 1.4rem;
     font-weight: 600;
+    letter-spacing: -0.01em;
   }
-  .menu a:hover,
-  .menu a[aria-current='page'] {
-    background: var(--tint-blue);
+  .sheet nav a :global(.icon) {
+    color: var(--link);
   }
+  .sheet nav a[aria-current='page'] {
+    color: var(--link);
+  }
+  .sheet-actions {
+    display: grid;
+    gap: 0.6rem;
+  }
+
   .wide-nav {
     display: none;
   }
@@ -128,30 +246,59 @@ const tel = telHref();
     }
     .wide-nav {
       display: block;
+      margin-inline: auto;
     }
     .wide-nav ul {
       display: flex;
-      gap: 0.25rem;
-      flex-wrap: wrap;
+      gap: 0.15rem;
     }
     .wide-nav a {
       display: inline-flex;
       align-items: center;
-      min-height: var(--tap);
-      padding: 0.25rem 0.7rem;
+      min-height: 2.75rem;
+      padding: 0.25rem 0.85rem;
+      white-space: nowrap;
       text-decoration: none;
+      color: var(--ink-2);
       font-weight: 600;
-      border-radius: var(--radius-sm);
+      border-radius: var(--pill);
+      transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+    }
+    .wide-nav a:hover {
+      background: var(--brand-soft);
+      color: var(--ink);
     }
     .wide-nav a[aria-current='page'] {
-      text-decoration: underline;
-      text-decoration-thickness: 2px;
+      color: var(--link);
+      background: var(--brand-soft);
     }
-    .wide-nav li:first-child a {
-      background: var(--btn-bg);
-      color: var(--btn-fg);
-      border-radius: 999px;
-      padding-inline: 1rem;
+    .book {
+      display: inline-flex;
+    }
+    .brand img {
+      width: 140px;
+    }
+  }
+  @media (min-width: 76rem) {
+    .call-short {
+      display: none;
+    }
+    .call-long {
+      display: inline;
+    }
+  }
+</style>
+
+<style is:global>
+  /* While the phone menu is open, the page behind it stays put. */
+  html:has(details.menu[open]) {
+    overflow: hidden;
+  }
+  @media (min-width: 64rem) {
+    :root {
+      --header-h: 4.75rem;
     }
   }
 </style>
