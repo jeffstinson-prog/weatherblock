@@ -963,6 +963,13 @@ legend {
   }
 }
 
+/* Netlify adds its own review toolbar to preview builds (never to the real site). Our
+   security policy blocks what goes inside it, which leaves an invisible strip across
+   the bottom of the screen, right over the Continue button. Take the strip out. */
+div[data-netlify-deploy-id] {
+  display: none !important;
+}
+
 @media print {
   .site-header nav,
   .site-header .bar-actions,
