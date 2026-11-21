@@ -74,6 +74,8 @@ async function route(owner: Owner, method: string, path: string[], url: URL, req
     });
   }
 
+  if (head === 'questions' && method === 'GET') return json(200, { questions: await o.questions(owner) });
+
   if (head === 'me') {
     if (method === 'GET') return json(200, await o.me(owner));
     return result(await o.saveMe(owner, body));

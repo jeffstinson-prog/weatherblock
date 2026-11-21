@@ -55,10 +55,21 @@ Add an owner: `node scripts/add-owner.mjs <email> "<name>" [mobile]` with the pr
 
 **Google Calendar:** bookings appear on the calendar and leave it when cancelled; anything else marked busy takes one inspector out of the windows it overlaps. Move and cancel bookings in the app (it's what tells the customer); an event moved or deleted in Google is put back on the next sync. Set up a Google service account, share the calendar with it ("Make changes to events"), and set `GOOGLE_SERVICE_ACCOUNT_EMAIL` and `GOOGLE_SERVICE_ACCOUNT_KEY`.
 
+## The assistant
+
+At `/ask/`, a page (never a pop-up). One request to the Claude API per question, from a server function (`src/server/assistant/`). Model: `ASSISTANT_MODEL`, default `claude-opus-5-5`, low effort, with the server-side refusal fallback on.
+
+- **It knows only** the facts file (blank facts left out, and it's told which facts we don't have) and the published help center.
+- **It says it's automated**, says when it doesn't know, and offers to book or call. It can start a booking: what it learned about the roof is carried into the booking form (never names, numbers or addresses).
+- **Every reply passes a code check** of the house rules before anyone sees it (`src/server/assistant/guard.ts`): no prices beyond the facts, no insurance promises, no claim handling, no deductible offers, no credentials, ratings or years in business we can't back up, no "I'm a person", no "you're booked", and only phone numbers, links and percentages we know. A reply that fails is replaced with "call us" and shows up in the owner app's question list.
+- **The same check runs over every built page** (`npm run test:content`).
+- **Live tests** (`npm run test:assistant`, needs `ANTHROPIC_API_KEY`): the top 30 questions and 15 attempts to break the rules. A separate workflow runs them when the facts, the help center or the assistant change, once the repository has the key as a secret.
+
 ## Test
 
 ```sh
-npm test                                   # unit tests: facts, help center, house rules
+npm test                                   # unit tests: facts, help center, house rules, the rule check
+npm run test:content                       # every built page keeps the house rules (after a build)
 npm run db:local && npm run test:db        # database: capacity, two people racing for one spot, row level security
 npm run build:test && npm run test:e2e     # Playwright at 320px and 390px, light and dark, with axe: booking, manage link, owner app
 FORCE_INDEXABLE=1 npm run build:node && npm run lhci   # Lighthouse, phone settings, 95+ required
@@ -84,6 +95,7 @@ Netlify builds every pull request as a deploy preview and deploys `main` to prod
 | `src/content/help/` | Help center answers |
 | `src/booking/` | The booking form and the manage link (Preact) |
 | `src/owner/` | The owner app (Preact) |
+| `src/assistant/`, `src/server/assistant/` | The assistant page, its prompt and the rule check |
 | `src/server/` | Server code: database, booking, maps, storage |
 | `src/pages/api/` | Server endpoints |
 | `supabase/migrations/` | Database schema |
