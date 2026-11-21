@@ -106,6 +106,7 @@ const trust: { icon: IconName; text: string }[] = [
             <li class="ghost-row" aria-hidden="true"></li>
             <li class="ghost-row" aria-hidden="true"></li>
           </ul>
+          <template data-arrow><Icon name="arrow-right" size={18} /></template>
           <p class="times-foot">
             <span class="times-note">{inspection.windowHours} hour arrival windows{inspection.free ? '. Free.' : '.'}</span>
             <a class="more-link" href="/book/">
@@ -301,7 +302,6 @@ const trust: { icon: IconName; text: string }[] = [
   // The hero's "Next open times": the three soonest windows, straight from the
   // booking calendar. Tapping one starts a booking with that time already picked.
   import { dayKey, shortDay, windowLabel } from '../booking/format';
-  import { ICONS } from '../icons/data';
 
   interface Slot {
     id: string;
@@ -311,6 +311,7 @@ const trust: { icon: IconName; text: string }[] = [
 
   const card = document.querySelector<HTMLElement>('[data-next-times]');
   const list = card?.querySelector<HTMLElement>('[data-times-list]');
+  const arrow = card?.querySelector<HTMLTemplateElement>('template[data-arrow]')?.content.firstElementChild;
   if (card && list) {
     const today = dayKey(new Date().toISOString());
     const tomorrow = dayKey(new Date(Date.now() + 86_400_000).toISOString());
@@ -327,12 +328,8 @@ const trust: { icon: IconName; text: string }[] = [
       const time = document.createElement('span');
       time.className = 't';
       time.textContent = windowLabel(s.startsAt, s.endsAt);
-      const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', width: '18', height: '18', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', class: 'icon' })) {
-        arrow.setAttribute(k, v);
-      }
-      arrow.innerHTML = ICONS['arrow-right'];
-      a.append(day, time, arrow);
+      a.append(day, time);
+      if (arrow) a.append(arrow.cloneNode(true));
       li.append(a);
       return li;
     };

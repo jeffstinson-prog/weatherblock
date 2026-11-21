@@ -22,6 +22,7 @@ const index: SearchDoc[] = helpArticles.map((a) => ({ slug: a.slug, q: a.questio
       </div>
       <p class="hint" id="help-status" aria-live="polite"></p>
       <ol class="rows results" id="help-results" hidden></ol>
+      <template id="help-chevron"><Icon name="chevron-right" size={20} /></template>
     </form>
   </PageHero>
   <script type="application/json" id="help-index" set:html={JSON.stringify(index)} />
@@ -97,7 +98,6 @@ const index: SearchDoc[] = helpArticles.map((a) => ({ slug: a.slug, q: a.questio
 
 <script>
   import { search, type SearchDoc } from '../../help/search';
-  import { ICONS } from '../../icons/data';
 
   const form = document.querySelector<HTMLFormElement>('[data-search]');
   const input = document.getElementById('help-q') as HTMLInputElement | null;
@@ -106,13 +106,7 @@ const index: SearchDoc[] = helpArticles.map((a) => ({ slug: a.slug, q: a.questio
   const raw = document.getElementById('help-index')?.textContent ?? '[]';
   const docs = JSON.parse(raw) as SearchDoc[];
 
-  function chevron(): SVGSVGElement {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    const attrs = { viewBox: '0 0 24 24', width: '20', height: '20', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', class: 'icon' };
-    for (const [k, v] of Object.entries(attrs)) svg.setAttribute(k, v);
-    svg.innerHTML = ICONS['chevron-right'];
-    return svg;
-  }
+  const chevron = (document.getElementById('help-chevron') as HTMLTemplateElement | null)?.content.firstElementChild;
 
   function render(query: string) {
     if (!list || !status) return;
@@ -128,7 +122,8 @@ const index: SearchDoc[] = helpArticles.map((a) => ({ slug: a.slug, q: a.questio
       const li = document.createElement('li');
       const a = document.createElement('a');
       a.href = `/help/${hit.slug}/`;
-      a.append(hit.q, chevron());
+      a.append(hit.q);
+      if (chevron) a.append(chevron.cloneNode(true));
       li.append(a);
       list.append(li);
     }

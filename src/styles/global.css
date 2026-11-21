@@ -26,14 +26,23 @@
   font-display: swap;
   src: url('../assets/fonts/figtree-latin-wght-normal.woff2') format('woff2');
 }
-/* System fonts resized to the web fonts' proportions, shown until those load. */
+/* System fonts resized to the web fonts' proportions, shown until those load, so the
+   text barely moves when they arrive. Arial and Georgia cover Apple and Windows
+   (Liberation Sans is Arial's twin on Linux); Roboto and Noto Serif cover Android. */
 @font-face {
   font-family: 'Figtree Fallback';
-  src: local('Arial'), local('ArialMT');
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans');
   ascent-override: 94.3231%;
   descent-override: 24.8219%;
   line-gap-override: 0%;
   size-adjust: 100.7176%;
+}
+@font-face {
+  font-family: 'Figtree Fallback Android';
+  src: local('Roboto'), local('Roboto Regular'), local('Roboto-Regular');
+  ascent-override: 94.1165%;
+  descent-override: 24.7675%;
+  size-adjust: 100.9387%;
 }
 @font-face {
   font-family: 'Fraunces Fallback';
@@ -41,6 +50,13 @@
   ascent-override: 92.9623%;
   descent-override: 24.2386%;
   size-adjust: 105.2039%;
+}
+@font-face {
+  font-family: 'Fraunces Fallback Android';
+  src: local('Noto Serif'), local('Noto Serif Regular'), local('NotoSerif-Regular');
+  ascent-override: 100.3023%;
+  descent-override: 26.1525%;
+  size-adjust: 97.5052%;
 }
 
 :root {
@@ -105,8 +121,8 @@
   --header-h: 4rem;
 
   /* Type */
-  --font-sans: 'Figtree', 'Figtree Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Fraunces', 'Fraunces Fallback', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Figtree', 'Figtree Fallback', 'Figtree Fallback Android', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fraunces', 'Fraunces Fallback', 'Fraunces Fallback Android', Georgia, 'Times New Roman', serif;
   --text-xs: 0.8125rem;
   --text-s: 0.9375rem;
   --text-m: 1.0625rem;
