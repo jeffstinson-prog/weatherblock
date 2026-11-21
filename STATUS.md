@@ -4,12 +4,12 @@ Updated 2026-11-21.
 
 ## Done
 
-- **Site and help center.** All public pages, built only from `facts.yaml`. 29 help answers, searchable. Three more wait on blank facts and stay hidden: visit length, license, warranty.
+- **Site and help center.** All public pages, built only from `facts.yaml`. 28 help answers, searchable. Three more wait on blank facts and stay hidden: visit length, license, warranty.
 - **Verified at the source** (links on each answer):
   - June 1, 2027 NC homeowners changes: NC Rate Bureau circulars P-25-3, P-25-5, P-26-2 and P-26-4. Roof payment schedule, cosmetic damage exclusion and matching exclusion, each with a buyback.
   - Roof grants: NCIUA runs two programs. Island homes, like the island part of Ocean Isle Beach, use Strengthen Your Roof (up to $10,000). Mainland Brunswick County uses Strengthen Your Coastal Roof (up to $6,000). Since November 1, 2025 only Certified FORTIFIED Roofing Contractors can install grant-funded roofs, so the site says we can't do those yet.
   - Public adjuster law: N.C. Gen. Stat. Article 33A.
-  - Deductibles: no NC statute bans waivers. The site states our policy (never) and quotes NCDOI's general warning.
+  - Deductibles: no NC statute bans waivers. The site says nothing about covering or waiving one (JT's call, November 21): it explains what a hurricane deductible is and leaves the rest to a conversation. The assistant never offers to cover one and never states a policy; it sends that question to a phone call.
   - Acorn Finance: marketplace, not a lender; soft credit check to see offers. Wording from Acorn's own pages.
 - **Checked against the best sites** (November 19): the biggest US roofing companies' sites (Roofing Contractor's Top 100), 11 local competitors, and published research on booking forms (Baymard, Nielsen Norman Group, GOV.UK). Only one local competitor lets people pick a time online. Changes that came from it: the soonest times show without scrolling, a change made from the review goes straight back to it, the review says "You're not booked yet", the mobile and email fields say what they're for, "Check us yourself" on the about page (state registration and reviews, each linked), and three answers (vacation homes, hurricane deductibles, door-to-door roofers, sourced from NCDOI).
 - **Online booking.** Five steps: address (suggestions as you type, service area checked), roof (material, age, reason, notes, up to 6 photos), a two-hour window, contact and text consent, then review with the satellite image. Saved on the phone as you go for 24 hours. Confirmation with a reference, Apple and Google calendar buttons, and a private link to reschedule or cancel. No passwords, nothing personal in any URL (the link's secret sits after `#`).
@@ -24,18 +24,18 @@ Updated 2026-11-21.
 - **Availability** comes from weekly windows, days off, number of inspectors and busy times from the calendar. Starting point until Justin changes it in the owner app: Monday to Saturday, 8 to 10, 10 to noon, noon to 2, 2 to 4, one inspector, bookable 12 hours to 21 days ahead.
 - **Protection.** Row level security on every table; the public can only call five narrow functions. Rate limits, a hidden bot field, at most 3 upcoming bookings per mobile number. Gate codes deleted a week after the visit.
 - **Redesign** (November 21, pull request 9). A full visual pass over every page and flow, after measuring twelve well-made sites (four roofing and exterior companies, plus Opendoor, Block, Lemonade, Tend, One Medical and others) for type, spacing and structure. What changed:
-  - Two typefaces served from our own site (Fraunces for headings, Figtree for the rest), a warm paper background with white cards, and deep ocean sections. Dark mode throughout.
+  - Two typefaces served from our own site (Fraunces for headings, Figtree for the rest), a warm paper background with white cards, and deep ocean sections. One light design for every visitor; the site no longer goes dark on phones set to dark mode (JT's call, November 21).
   - The home page opens with the next three open times, read from the calendar. Tapping one starts a booking with that time already picked.
   - A header that stays in view, a menu sheet on phones, and on phones a Book and Call bar that appears once the page's own buttons scroll away. It never covers content and is not a pop-up.
   - Booking: five dots across the top show where you are, Back and Continue stay in reach at the bottom, days and windows are large tiles, and the review is one card per section with its own Change link. Booking pages drop the menu and the long footer.
   - Inner pages share one header block; service pages and answers carry a side card on wide screens (book an inspection, or ask us). The help center has a large search box, topic links and row lists.
   - The owner app has icons on its tabs and cards for each visit.
   - Typing an address before the page's script has loaded no longer loses the list of matches.
-- **Checks on every pull request.** Unit tests, type check, database tests on Postgres, Playwright at 320px and 390px in light and dark with axe (WCAG 2.2 AA), the full booking flow, Lighthouse at phone settings. Locally: 100 in all four Lighthouse categories on all 10 pages checked, including the booking page, with the new typefaces.
+- **Checks on every pull request.** Unit tests, type check, database tests on Postgres, Playwright at 320px and 390px with axe (WCAG 2.2 AA), one of them a phone set to dark mode to prove the site stays light, the full booking flow, and Lighthouse at phone settings (three runs a page, judged on the middle one). GitHub Actions is on (November 21) and passing: 100 in all four Lighthouse categories on all 10 pages checked, on GitHub's machine too.
 
 ## Next
 
-1. All nine pull requests are merged into `main` (November 21), the redesign included. One setting is left: Netlify still builds the test site from the `8-pipeline` branch, so it shows the old design until its Production branch is switched to `main` (steps in [`LAUNCH.md`](LAUNCH.md), section 1).
+1. All nine pull requests are merged into `main` (November 21), the redesign included. Netlify builds the test site from `main`, and the redesign is live there. From here on, each merge into `main` publishes on its own.
 2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase: tables loaded and sign-ups off (November 19). The sign-in code email waits for Resend, since Supabase only allows template edits with custom SMTP.
 3. Supabase has the new tables for estimates, crews and roof jobs (loaded November 20).
 4. Facts for the automation (LAUNCH.md section 3): a mailing address, the Google review link, when estimates are ready, and whether $450 per square is for the measured roof or includes waste.
