@@ -17,7 +17,7 @@ export const auth: GoTrueClient | null =
     : null;
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(public status: number, message: string, public code = '') {
     super(message);
   }
 }
@@ -55,7 +55,7 @@ export async function api<T>(path: string, init: { method?: 'GET' | 'POST'; body
     throw new ApiError(401, 'Sign in again.');
   }
   const data = (await res.json().catch(() => ({}))) as T & { message?: string };
-  if (!res.ok) throw new ApiError(res.status, data.message ?? 'Something went wrong.');
+  if (!res.ok) throw new ApiError(res.status, data.message ?? 'Something went wrong.', (data as { error?: string }).error ?? '');
   return data;
 }
 

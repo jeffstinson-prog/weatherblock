@@ -39,6 +39,11 @@ const blurbs: Record<string, string> = {
         {tel && <a class="btn secondary" href={tel}>Call {facts.contact.phone}</a>}
         {sms && <a class="btn secondary" href={sms}>Text us</a>}
       </div>
+      {facts.instantEstimate.on && (
+        <p class="hero-alt">
+          <a href="/estimate/">Or see an instant estimate for a new roof</a>
+        </p>
+      )}
     </div>
   </section>
 

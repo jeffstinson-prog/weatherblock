@@ -3,6 +3,9 @@
 What's left before real customers book. Roughly in order. Anything that costs
 money, touches DNS, or texts or emails real people waits for your OK.
 
+You do the sign-ups, payments and answers. Items marked **(me)** are mine: the
+settings, code and tests, once you've made the account or given the answer.
+
 ## 1. Accounts
 
 Use the business Gmail (weatherblockroofing@gmail.com) as the login where you
@@ -10,10 +13,11 @@ can, then add each other, so the business owns every account. Keys go in
 Netlify's environment settings (and GitHub secrets for tests), never in the repo.
 The full list of settings is in `.env.example`.
 
-- [ ] **GitHub**: the empty private repo, with the Claude GitHub app allowed on it.
-- [ ] **Netlify**: add the site from the repo (Add new site, Import from GitHub). It goes in your existing Pro team, no new plan. Deploy previews then appear on every pull request.
+- [x] **GitHub**: the private repo `weatherblock` (done November 19, 2026).
+  - [ ] Turn on GitHub Actions, so the tests run on every pull request: in the repo, Settings, Actions, General, "Allow all actions and reusable workflows", Save.
+- [x] **Netlify** (done November 20, 2026): the project `heartfelt-profiterole-59a6a3`, connected to the repo, building the `8-pipeline` branch until the pull requests are merged (then switch Production branch to `main`). Test site: https://heartfelt-profiterole-59a6a3.netlify.app. Booking checked end to end on it.
 - [ ] **Supabase**: the project is WeatherBlock Roofing (`fsyrlkpzxljwhqpfxofh`). It signs owner logins with published keys (ES256), which the site checks, so no JWT secret is needed.
-  - [x] Load the tables (done November 19, 2026): `npm run --silent db:setup-sql` prints every migration as one file. Paste it into the SQL Editor and click Run. It runs as one transaction and ends with a summary line to check. Later changes are new files in `supabase/migrations/`, applied with `supabase db push`.
+  - [x] Load the tables (done November 19, 2026), and the update for estimates, crews and roof jobs (done November 20, 2026). `npm run --silent db:setup-sql` prints every migration as one file to paste into the SQL Editor; `-- --after <version>` prints only the newer ones. Each runs as one transaction and ends with a summary line to check.
   - [x] Sign-ups off (done November 19, 2026).
   - [ ] With the Resend step: send sign-in email through Resend (Authentication, SMTP settings), then change the "Magic Link" email template to include the 6-digit code, for example `Your sign-in code: {{ .Token }}`. Supabase only allows template edits once custom SMTP is set up, and its built-in email is only for testing. Until then, owners can't sign in to the owner app.
   - [ ] If it's on the free plan, move it to Pro ($25 a month) before real bookings. Free projects have no daily backups and pause after a quiet week.
@@ -25,13 +29,13 @@ The full list of settings is in `.env.example`.
   - A server key limited to Places API (New).
   - A browser key limited to Maps Static API and the site's domains, plus a URL signing secret.
   - A service account for the calendar. Put its email and private key in Netlify. Justin shares his calendar with the service account's email ("Make changes to events") and enters the calendar ID in the owner app (Availability).
-- [ ] **Anthropic**: an API key with a monthly spend limit, in Netlify and as the `ANTHROPIC_API_KEY` GitHub secret. Then run the live assistant tests (step 5).
-- [ ] **Netlify settings**:
-  - Production: `APP_ENV=production` and the live keys.
+  - The instant estimate's roof data: a second Google Cloud project with the Solar API turned on, and a key limited to it, as `GOOGLE_SOLAR_KEY`. Keeping it separate means that if Google ever objects to roofing use (its terms describe the Solar API for energy systems), booking's address search isn't touched; the page falls back to the free outlines on its own. 10,000 lookups a month are free.
+- [ ] **Claude, for the assistant**: it already works on the test site through Netlify's built-in AI, billed to your Netlify credits, which all of your Netlify sites share. Before launch, add WeatherBlock's own Anthropic API key with a monthly spend limit as `ANTHROPIC_API_KEY` in Netlify (it takes over automatically), so its bill is separate and a busy month can't use up credits your other sites need. Also add it as a GitHub secret for the live assistant tests (step 5).
+- [ ] **Netlify settings** (me, once the accounts above exist). In place now: the database, the Supabase keys, `APP_ENV=preview`, and the three random secrets.
+  - At launch: `APP_ENV=production` and the live keys.
   - Deploy previews: `APP_ENV=preview`, the preview database and test keys (Twilio test credentials send nothing).
-  - Random 32+ character values for `MANAGE_TOKEN_SECRET`, `RATE_LIMIT_SALT` and `CRON_SECRET` (`openssl rand -base64 32`).
   - All variables together must stay under Netlify's 4 KB limit for functions. The Google private key is the big one, about 1.7 KB.
-- [ ] **Owners**: `node scripts/add-owner.mjs <email> "<name>" <mobile>` for each of you. Then sign in at `/app/`, check your alert settings, and add the app to your home screen.
+- [ ] **Owners**: send me your and Justin's email and mobile, and I add you (me: `node scripts/add-owner.mjs <email> "<name>" <mobile>`). Then sign in at `/app/`, check your alert settings, and add the app to your home screen.
 
 ## 2. Texts: carrier registration (A2P 10DLC)
 
@@ -42,8 +46,8 @@ app and not sent; email works from day one.
 
 - [ ] **Brand**: WeatherBlock Roofing Incorporated, EIN, the principal office address on file with the state, website, contact.
 - [ ] **Campaign**: "Low volume mixed" (about $1.50 a month), or "Customer care" if Twilio steers you there. One-time fees run about $20 (brand plus vetting).
-  - Description: appointment confirmations, reminders, "on my way" and schedule changes for roof inspections customers book online.
-  - Sample messages: copy them from `src/server/messaging/templates.ts`.
+  - Description: for customers who book a roof inspection online and opt in: appointment confirmations, reminders, "on my way", schedule changes, a note when their estimate is ready, and for roof work they agree to, the scheduled day, a reminder the day before and weather changes. No marketing.
+  - Sample messages: copy them from `src/server/messaging/templates.ts` and `src/server/messaging/pipeline-templates.ts`.
   - How people opt in: an optional, unchecked box on step 4 of the booking form at `/book/`, with the exact wording shown there. Terms at `/text-messages/`, privacy at `/privacy/`.
   - Opt-out STOP, help HELP.
 
@@ -51,6 +55,10 @@ app and not sent; email works from day one.
 
 Each of these is blank or unconfirmed, and the site hides whatever depends on it.
 
+- [ ] A mailing address for the business (`business.mailingAddress`). A P.O. box works. Follow-up and review emails print it at the bottom, as the CAN-SPAM Act requires, and wait until it's set.
+- [ ] The Google review link (`pipeline.reviewUrl`): Google Business Profile, "Ask for reviews", copy the link.
+- [ ] When estimates are usually ready (`pipeline.estimateTurnaround`), for example "within 2 business days". It finishes the sentence in the thank-you after each visit.
+- [ ] Justin: is $450 per square for the roof as measured, or with waste added? The instant estimate shows Google's measured roof up to 15% more for waste (`measuredRange`). Also check the crews in the owner app (Jobs, Crews): names and jobs a day.
 - [ ] Phone hours. Also fix the Google Business Profile, which says "Open 24 hours".
 - [ ] NC license number, and whose name it's under.
 - [ ] Liability insurance (carrier and limit), workers' comp.
@@ -83,10 +91,10 @@ is on (the MX and SPF records). Keep the email forwarding.
 
 ## 5. Launch day
 
-- [ ] Clear the test bookings out of the database.
-- [ ] Set `web.launched: true` in `facts.yaml`. Search engines are kept out until then.
+- [ ] Clear the test bookings out of the database (me).
+- [ ] Set `web.launched: true` in `facts.yaml` (me). Search engines are kept out until then.
 - [ ] On your phone, book a real inspection. Get the text and the email, see it in the owner app and on Justin's calendar, then reschedule and cancel from the link.
-- [ ] Run `npm run test:assistant`, read the answers, and fix any help answer it stumbles on.
+- [ ] Run `npm run test:assistant`, read the answers, and fix any help answer it stumbles on (me).
 - [ ] Add the site to Google Search Console and submit `/sitemap-index.xml`.
 
 ## Monthly cost, roughly
@@ -98,7 +106,8 @@ is on (the MX and SPF records). Keep the email forwarding.
 | Twilio | about $12 at 100 bookings a month |
 | Resend | $0 (free up to 100 a day; $20 if a storm rush goes past that) |
 | Google Maps and Calendar | $0 under the free caps |
-| Claude API | about 10 cents a conversation on Opus 5.5 |
+| Instant estimate (Google roof data, first 10,000 a month; then 1 cent each) | $0 |
+| Claude API (the assistant) | about 10 cents a conversation on Opus 5.5; on Netlify's built-in AI until you add your own key |
 
 ## Reviews, from day one
 
@@ -108,5 +117,4 @@ is on (the MX and SPF records). Keep the email forwarding.
 ## After launch (from the brief)
 
 - Inspection report: the inspector uploads photos and findings from a phone, and the customer gets a private link.
-- Roof size from aerial data with a price range, once Justin gives per-square pricing. Check the data provider's terms first.
 - Opt-in storm alerts by text.

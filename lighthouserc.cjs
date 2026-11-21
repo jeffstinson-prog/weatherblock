@@ -1,6 +1,6 @@
 // Lighthouse CI: phone settings, every key page must score 95+ in all four categories.
 // Run after `npm run build:node`. Locally, set CHROME_PATH to a Chrome or Chromium binary.
-const pages = ['/', '/book/', '/help/', '/help/cost/', '/ask/', '/services/roof-replacement/', '/financing/', '/about/', '/privacy/'];
+const pages = ['/', '/book/', '/estimate/', '/help/', '/help/cost/', '/ask/', '/services/roof-replacement/', '/financing/', '/about/', '/privacy/'];
 
 module.exports = {
   ci: {

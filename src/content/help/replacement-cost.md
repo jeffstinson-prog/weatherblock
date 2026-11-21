@@ -15,3 +15,5 @@ These change the price:
 - The condition of the wood decking under the shingles
 
 Ask which of these your estimate includes, and how damage found under the old roof will be priced. Our prices come in the written estimate after {{derived.theInspection}}.
+
+?{instantEstimate.on} Our price for {{instantEstimate.material}}: {{derived.roofPriceText}} For a ballpark for your house, try the [instant estimate](/estimate/).

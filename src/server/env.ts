@@ -41,7 +41,10 @@ export const config = {
   supabaseUrl: () => read('PUBLIC_SUPABASE_URL')?.replace(/\/$/, ''),
   supabaseServiceKey: () => read('SUPABASE_SERVICE_ROLE_KEY'),
   photoBucket: () => read('PHOTO_BUCKET') ?? 'booking-photos',
+  estimateBucket: () => read('ESTIMATE_BUCKET') ?? 'estimate-files',
   googleServerKey: () => read('GOOGLE_MAPS_SERVER_KEY'),
   googleStaticKey: () => read('GOOGLE_MAPS_STATIC_KEY'),
   googleStaticSecret: () => read('GOOGLE_MAPS_SIGNING_SECRET'),
+  // Its own key (best in its own Google Cloud project), so trouble there can't touch booking.
+  googleSolarKey: () => read('GOOGLE_SOLAR_KEY'),
 };

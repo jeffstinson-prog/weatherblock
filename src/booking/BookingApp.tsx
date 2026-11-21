@@ -83,6 +83,29 @@ function newDraft(): Draft {
   };
 }
 
+/** The satellite picture the instant estimate already had, for the review step. */
+let handoffSatellite: string | null = null;
+
+/** A booking the instant estimate started: the address they picked and what it showed, for us to pick up.
+ *  The address comes with the server's signature, so it counts as picked from the list. */
+function takeEstimateHandoff(d: Draft): Draft {
+  try {
+    const raw = sessionStorage.getItem('estimate-handoff-v1');
+    if (!raw) return d;
+    sessionStorage.removeItem('estimate-handoff-v1');
+    const h = JSON.parse(raw) as { address?: string; place?: Draft['address'] | null; satellite?: string | null; notes?: string };
+    const picked = h.place && typeof (h.place as { sig?: unknown }).sig === 'string' ? h.place : null;
+    if (picked && !d.address.text) handoffSatellite = typeof h.satellite === 'string' ? h.satellite : null;
+    return {
+      ...d,
+      address: d.address.text ? d.address : picked ?? { text: (h.address ?? '').slice(0, 300) },
+      roof: { ...d.roof, reason: d.roof.reason || 'replace', notes: (d.roof.notes || h.notes || '').slice(0, 2000) },
+    };
+  } catch {
+    return d;
+  }
+}
+
 /** A booking the assistant started: it leaves a few answers on the phone for us to pick up. */
 function takeAssistantHandoff(d: Draft): Draft {
   try {
@@ -129,12 +152,16 @@ export default function BookingApp(props: BookingProps) {
   useEffect(() => {
     const saved = loadSaved();
     if (saved) {
-      setDraft(takeAssistantHandoff(saved.draft));
+      setDraft(takeEstimateHandoff(takeAssistantHandoff(saved.draft)));
       setStep(Math.min(Math.max(saved.step, 0), 4));
       setSatellite(saved.satellite);
       setRestored(saved.step > 0 || saved.draft.address.text.length > 0);
     } else {
-      setDraft((d) => takeAssistantHandoff(d));
+      setDraft((d) => takeEstimateHandoff(takeAssistantHandoff(d)));
+    }
+    if (handoffSatellite) {
+      setSatellite(handoffSatellite);
+      handoffSatellite = null;
     }
     setReady(true);
   }, []);

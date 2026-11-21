@@ -16,7 +16,11 @@ const who = business.legalName || business.name;
   </ul>
 
   <h2>Estimates and prices</h2>
-  <p>This website doesn't list prices. Prices come in a written estimate after we've seen the roof. Any work happens under a separate written agreement.</p>
+  {facts.instantEstimate.on ? (
+    <p>The instant estimate on this website is a rough guide from public data, not an offer or a quote. Your price is the one in a written estimate after we've seen the roof. Any work happens under a separate written agreement.</p>
+  ) : (
+    <p>This website doesn't list prices. Prices come in a written estimate after we've seen the roof. Any work happens under a separate written agreement.</p>
+  )}
 
   <h2>Insurance</h2>
   <p>{insuranceClaims.weDo} {insuranceClaims.youDo} We don't file, handle or negotiate insurance claims. We can't promise what insurance will pay. We never cover or waive a deductible.</p>

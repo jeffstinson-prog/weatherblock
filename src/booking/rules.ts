@@ -203,8 +203,8 @@ export function firstStepWithErrors(d: Draft): Step | null {
 /** The exact consent wording shown next to the checkbox. Stored with each booking. */
 export function smsConsentText(businessName: string, maxPerBooking: number): string {
   return (
-    `Text me about this appointment. ${businessName} will send a confirmation, reminders and updates, ` +
-    `up to ${maxPerBooking} messages per booking. Message and data rates may apply. ` +
+    `Text me about my inspection, my estimate and any roof work I go ahead with. ${businessName} will send ` +
+    `confirmations, reminders and updates, up to ${maxPerBooking} messages per booking. Message and data rates may apply. ` +
     `Reply STOP to opt out, HELP for help. Texting is optional.`
   );
 }

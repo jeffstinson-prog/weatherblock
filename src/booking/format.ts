@@ -44,4 +44,15 @@ export function windowLabel(startIso: string, endIso: string): string {
 export const whenLabel = (startIso: string, endIso: string) => `${longDay(startIso)}, ${windowLabel(startIso, endIso)}`;
 
 /** "K7M3QX" to "K7M-3QX", easier to read over the phone. */
+/** A calendar date (YYYY-MM-DD) as "Fri, Dec 4" and "Friday, December 4". Noon UTC keeps it on the same local day. */
+export const dateShort = (date: string) => shortDay(`${date}T12:00:00Z`);
+export const dateLong = (date: string) => longDay(`${date}T12:00:00Z`);
+
+/** Dollars from cents: 1234500 is "$12,345". */
+export function money(cents: number): string {
+  const dollars = cents / 100;
+  const whole = Number.isInteger(dollars);
+  return '$' + dollars.toLocaleString('en-US', { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: 2 });
+}
+
 export const refLabel = (ref: string) => (ref.length === 6 ? `${ref.slice(0, 3)}-${ref.slice(3)}` : ref);

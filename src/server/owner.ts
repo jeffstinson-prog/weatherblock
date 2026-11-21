@@ -5,6 +5,7 @@ import { AGES, MATERIALS, REASONS, RELATIONSHIPS, SOMEONE_HOME, labelOf } from '
 import { TZ } from '../booking/format';
 import { asOwner, dbErrorCode } from './db';
 import { bookingChanged, onMyWay } from './notify';
+import { forBooking, inspected } from './pipeline';
 import { calendarApi, serviceAccountEmail, syncCalendar } from './calendar';
 import { viewUrl } from './storage';
 import type { BookingSummary } from './booking';
@@ -80,7 +81,9 @@ export async function detail(owner: Owner, id: string) {
   });
   if (!found) return null;
   const { r, photos, events, messages } = found;
+  const after = await forBooking(owner, id);
   return {
+    ...after,
     ...row(r),
     gateCode: (r.gate_code as string | null) ?? '',
     relationship: labelOf(RELATIONSHIPS, r.relationship as string),
@@ -148,6 +151,7 @@ export async function setStatus(owner: Owner, id: string, status: unknown, tellC
   }
   if (!r) return { ok: false, status: 404, message: 'Booking not found.' };
   if (s.data === 'cancelled' && tellCustomer) await bookingChanged(summaryFor(r), 'cancelled', { byOwner: true });
+  if (s.data === 'done' && tellCustomer) await inspected(id);
   return { ok: true };
 }
 
