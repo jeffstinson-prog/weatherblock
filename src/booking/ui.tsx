@@ -1,8 +1,9 @@
 // Small accessible building blocks for the booking and manage screens.
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import Icon from '../icons/Icon';
 import type { Slot } from './client';
-import { dayKey, shortDay, windowLabel } from './format';
+import { dayKey, monthDay, weekday, windowLabel } from './format';
 
 export function Choices(props: {
   name: string;
@@ -150,6 +151,8 @@ export function SlotPicker(props: {
     if (more && firstHidden.current) document.getElementById(`day-${firstHidden.current}`)?.focus();
   }, [more]);
   const shown = more ? days : days.slice(0, FIRST_DAYS);
+  const today = dayKey(new Date().toISOString());
+  const tomorrow = dayKey(new Date(Date.now() + 86_400_000).toISOString());
   return (
     <div class="slot-picker">
       <fieldset aria-invalid={props.error ? 'true' : undefined}>
@@ -165,7 +168,8 @@ export function SlotPicker(props: {
               aria-pressed={k === day}
               onClick={() => setDay(k)}
             >
-              {shortDay(list[0]!.startsAt)}
+              <span class="dow">{k === today ? 'Today' : k === tomorrow ? 'Tomorrow' : weekday(list[0]!.startsAt)}</span>{' '}
+              <span class="dnum">{monthDay(list[0]!.startsAt)}</span>
             </button>
           ))}
         </div>
@@ -178,6 +182,7 @@ export function SlotPicker(props: {
               setMore(true);
             }}
           >
+            <Icon name="plus" size={18} />
             Show more days
           </button>
         )}

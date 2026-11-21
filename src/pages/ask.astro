@@ -1,58 +1,47 @@
 ---
 import Base from '../layouts/Base.astro';
+import AskCard from '../components/AskCard.astro';
+import Icon from '../components/Icon.astro';
+import PageHero from '../components/PageHero.astro';
 import AskApp from '../assistant/AskApp';
 import '../styles/booking.css';
 import { facts, telHref } from '../facts';
+import { topArticles } from '../help/load';
+
+// A few of the most asked questions to start from. (None may contain the word on the Ask button.)
+const starters = topArticles()
+  .map((a) => a.question)
+  .filter((q) => !/ask/i.test(q) && q.length <= 60)
+  .slice(0, 4);
 ---
 
 <Base title="Ask a question" description="An automated assistant that answers from our help center.">
-  <section class="section">
-    <div class="wrap prose">
-      <h1>Ask a question</h1>
-      <AskApp client:load phone={facts.contact.phone} phoneHref={telHref()} bookLabel={facts.derived.bookLabel} />
-      <noscript><p>The assistant needs JavaScript. <a href="/help/">Search the help center</a> or call {facts.contact.phone}.</p></noscript>
-      <p class="muted small">Prefer to browse? <a href="/help/">All answers in the help center</a>.</p>
+  <PageHero title="Ask a question" lede="An automated assistant that answers from our help center." crumbs={[{ href: '/help/', label: 'Help center' }]} />
+
+  <div class="section tight">
+    <div class="wrap split">
+      <div class="tool">
+        <AskApp client:load phone={facts.contact.phone} phoneHref={telHref()} bookLabel={facts.derived.bookLabel} starters={starters} />
+        <noscript><p>The assistant needs JavaScript. <a href="/help/">Search the help center</a> or call {facts.contact.phone}.</p></noscript>
+        <p class="browse">
+          <a class="more-link" href="/help/">
+            <Icon name="book-open" size={18} />
+            Prefer to browse? All answers in the help center
+          </a>
+        </p>
+      </div>
+      <aside class="side" aria-label="Talk to a person">
+        <AskCard heading="Rather talk to a person?" assistant={false} />
+      </aside>
     </div>
-  </section>
+  </div>
 </Base>
 
-<style is:global>
-  .chat {
-    list-style: none;
-    padding: 0;
-    display: grid;
-    gap: 0.75rem;
-    margin: 1.25rem 0;
+<style>
+  .tool {
+    max-width: 40rem;
   }
-  .chat li {
-    border-radius: var(--radius);
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--line);
-  }
-  .chat li.user {
-    background: var(--tint-blue);
-    margin-left: 2rem;
-  }
-  .chat li .who {
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin: 0 0 0.25rem;
-  }
-  .chat li p:last-of-type {
-    margin-bottom: 0.25rem;
-  }
-  .chat .reads {
-    padding-left: 1.1rem;
-    margin: 0.5rem 0 0;
-  }
-  .chat .reads a {
-    display: inline-flex;
-    min-height: 44px;
-    align-items: center;
-  }
-  .ask-form {
-    display: grid;
-    gap: 0.4rem;
+  .browse {
+    margin: 1.5rem 0 0;
   }
 </style>

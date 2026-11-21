@@ -1,5 +1,6 @@
 // "Ask a question": the automated assistant. A page, not a pop-up.
 import { useEffect, useRef, useState } from 'preact/hooks';
+import Icon from '../icons/Icon';
 
 interface Reply {
   answer: string;
@@ -19,12 +20,15 @@ interface Props {
   phone: string;
   phoneHref: string;
   bookLabel: string;
+  /** A few questions to start from, shown until the first one is asked. */
+  starters?: string[];
 }
 
 const KEY = 'assistant-chat-v1';
 const MAX_QUESTIONS = 8;
 
 export default function AskApp(props: Props) {
+  const p = props;
   const [turns, setTurns] = useState<Turn[]>([]);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -119,13 +123,19 @@ export default function AskApp(props: Props) {
       <ol class="chat" aria-label="Conversation">
         {turns.map((t, i) => (
           <li key={i} class={t.role}>
-            <p class="who">{t.role === 'user' ? 'You' : 'Assistant'}</p>
+            <p class="who">
+              {t.role === 'assistant' && <Icon name="bot" size={16} />}
+              {t.role === 'user' ? 'You' : 'Assistant'}
+            </p>
             <p>{t.text}</p>
             {t.reply && t.reply.links.length > 0 && (
               <ul class="reads">
                 {t.reply.links.map((l) => (
                   <li key={l.slug}>
-                    <a href={`/help/${l.slug}/`}>{l.question}</a>
+                    <a href={`/help/${l.slug}/`}>
+                      <Icon name="file-text" size={16} />
+                      {l.question}
+                    </a>
                   </li>
                 ))}
               </ul>
@@ -180,8 +190,33 @@ export default function AskApp(props: Props) {
           )}
           <button type="submit" class="btn" disabled={busy}>
             {busy ? 'Looking it up...' : 'Ask'}
+            {!busy && <Icon name="send" size={18} />}
           </button>
         </form>
+      )}
+      {turns.length === 0 && asked < MAX_QUESTIONS && (p.starters?.length ?? 0) > 0 && (
+        <>
+          <p class="starters-h" id="starters-h">
+            Or start with one of these
+          </p>
+          <ul class="starters" aria-labelledby="starters-h">
+            {p.starters!.map((q) => (
+              <li key={q}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setText(q);
+                    setError('');
+                    input.current?.focus();
+                  }}
+                >
+                  {q}
+                  <Icon name="plus" size={18} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
       {turns.length > 0 && (
         <button
