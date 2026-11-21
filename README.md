@@ -32,6 +32,16 @@ Supabase Postgres. The schema is in [`supabase/migrations/`](supabase/migrations
 
 Tests run the same migrations on plain Postgres 16 or newer, with a few stand-ins for what Supabase provides ([`supabase/test-shim.sql`](supabase/test-shim.sql)).
 
+## Texts and email
+
+Email goes through Resend, texts through Twilio. Every message is written to `wb.messages` first, then sent.
+
+- **No keys, no sending.** Without `RESEND_API_KEY` or the Twilio keys, messages are recorded as `logged` and never leave. The confirmation screen only says "we emailed" or "we texted" when one really went out.
+- **Customer:** confirmation (email always, text if they agreed), a reminder 6 to 9 pm the evening before and from 7:30 am the morning of, "on my way", and a note when the time changes or is cancelled.
+- **Owners:** a text and an email for every new, moved or cancelled booking. Until owners are set up in the app, alerts go to the business email in `facts.yaml`.
+- **Replies to our number** are kept, STOP and START are honored, and every reply is forwarded to the owners. Point the Twilio number's incoming webhook at `https://<site>/api/twilio/sms`.
+- **Every 15 minutes** `netlify/functions/every-15-minutes.mts` calls `/api/jobs` with `CRON_SECRET`: reminders, retries of failed messages, clean-up (gate codes after a week, unused photo uploads after two days).
+
 ## Test
 
 ```sh

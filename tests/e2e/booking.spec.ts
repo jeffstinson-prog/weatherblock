@@ -1,6 +1,7 @@
 // Booking end to end on a 320px phone: the whole flow, a refresh mid-way,
 // errors, two people racing for the last spot, and the manage link.
 import { expect, test, type Page } from '@playwright/test';
+import postgres from 'postgres';
 import { expectAccessible, expectNoSideScroll, watchErrors } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
@@ -90,6 +91,20 @@ test('books an inspection start to finish on a 320px phone', async ({ page }) =>
   expect(saved).toBeNull();
   // No personal data in the address bar at any point.
   expect(page.url()).not.toMatch(/Pat|example|555/);
+  // The confirmation text and email are on their way (logged, since tests have no keys),
+  // the business is alerted, and the screen doesn't claim anything was sent.
+  const ref = (await page.locator('.ref strong').innerText()).replace('-', '');
+  const sql = postgres(process.env.DATABASE_URL ?? 'postgres://postgres:postgres@127.0.0.1:5432/wb_e2e');
+  const sent = await sql`
+    select m.audience, m.channel, m.kind, m.status from wb.messages m join wb.bookings b on b.id = m.booking_id
+    where b.ref = ${ref} order by m.audience, m.channel`;
+  await sql.end();
+  expect(sent.map((r) => `${r.audience}:${r.channel}:${r.kind}:${r.status}`)).toEqual([
+    'customer:email:confirmation:logged',
+    'customer:sms:confirmation:logged',
+    'owner:email:owner_new:logged',
+  ]);
+  await expect(page.getByText(/We emailed|We texted/)).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
