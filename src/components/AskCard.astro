@@ -1,0 +1,113 @@
+---
+// The side card on answers and fine-print pages: the ways to ask a person, or the assistant.
+import Icon from './Icon.astro';
+import { facts, smsHref, telHref } from '../facts';
+
+interface Props {
+  heading?: string;
+  /** Leave the assistant out (on pages where it isn't the right next step). */
+  assistant?: boolean;
+}
+const { heading = 'Still have a question?', assistant = true } = Astro.props;
+const tel = telHref();
+const sms = smsHref();
+const email = facts.contact.email;
+const [emailUser = '', emailHost = ''] = email.split('@');
+---
+
+<div class="card ask-card">
+  <h2>{heading}</h2>
+  <ul>
+    {assistant && (
+      <li>
+        <a href="/ask/">
+          <span class="icon-badge"><Icon name="message-circle" size={20} /></span>
+          <span>
+            <strong>Ask a question</strong>
+            <span class="sub">An automated assistant answers from this site</span>
+          </span>
+        </a>
+      </li>
+    )}
+    {tel && (
+      <li>
+        <a href={tel}>
+          <span class="icon-badge"><Icon name="phone" size={20} /></span>
+          <span>
+            <strong>Call us</strong>
+            <span class="sub">{facts.contact.phone}</span>
+          </span>
+        </a>
+      </li>
+    )}
+    {sms && (
+      <li>
+        <a href={sms}>
+          <span class="icon-badge"><Icon name="message-square" size={20} /></span>
+          <span>
+            <strong>Text us</strong>
+            <span class="sub">{facts.contact.phone}</span>
+          </span>
+        </a>
+      </li>
+    )}
+    {email && (
+      <li>
+        <a href={`mailto:${email}`}>
+          <span class="icon-badge"><Icon name="mail" size={20} /></span>
+          <span>
+            <strong>Email us</strong>
+            <span class="sub">{emailUser}@<wbr />{emailHost}</span>
+          </span>
+        </a>
+      </li>
+    )}
+  </ul>
+</div>
+
+<style>
+  .ask-card {
+    padding: 1.25rem;
+  }
+  h2 {
+    font-size: var(--h3);
+    line-height: 1.2;
+    margin: 0.25rem 0.25rem 0.85rem;
+  }
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.15rem;
+  }
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-height: 3.5rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-m);
+    color: var(--ink);
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+  }
+  a:hover {
+    background: var(--brand-soft);
+  }
+  strong {
+    display: block;
+    line-height: 1.3;
+  }
+  .sub {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--muted);
+    line-height: 1.35;
+  }
+  .icon-badge {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 12px;
+  }
+</style>

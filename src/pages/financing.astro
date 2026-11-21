@@ -1,27 +1,60 @@
 ---
 import Base from '../layouts/Base.astro';
 import BookCall from '../components/BookCall.astro';
+import BookCard from '../components/BookCard.astro';
+import Icon from '../components/Icon.astro';
+import PageHero from '../components/PageHero.astro';
 import { facts } from '../facts';
 const { financing } = facts;
 if (!financing.url) return Astro.redirect('/');
 ---
 
 <Base title="Financing" description={`Check roof financing options through ${financing.provider}.`}>
-  <section class="section">
-    <div class="wrap prose">
-      <h1>Financing</h1>
-      <p class="lede">You can check financing options for a roof through {financing.provider}.</p>
-      <p><a class="btn" href={financing.url} rel="noopener">Check offers with {financing.provider}</a></p>
-      <div class="notice">
-        <p>{financing.disclosure}</p>
-      </div>
-      <h2>Good to know</h2>
-      <ul>
-        {financing.notes.map((note) => <li>{note}</li>)}
-        <li>{financing.provider} is a separate company. Its terms and privacy policy apply on its site.</li>
-        <li>You don't need financing to book {facts.derived.anInspection}.</li>
-      </ul>
+  <PageHero title="Financing" lede={`You can check financing options for a roof through ${financing.provider}.`}>
+    <div class="go">
+      <a class="btn lg" href={financing.url} rel="noopener">
+        Check offers with {financing.provider}
+        <Icon name="arrow-up-right" size={20} />
+      </a>
     </div>
-  </section>
+    <div class="notice disclosure">
+      <p>{financing.disclosure}</p>
+    </div>
+  </PageHero>
+
+  <div class="section tight">
+    <div class="wrap split">
+      <div class="prose">
+        <h2>Good to know</h2>
+        <ul>
+          {financing.notes.map((note) => <li>{note}</li>)}
+          <li>{financing.provider} is a separate company. Its terms and privacy policy apply on its site.</li>
+          <li>You don't need financing to book {facts.derived.anInspection}.</li>
+        </ul>
+      </div>
+      <aside class="side" aria-label="Book an inspection">
+        <BookCard />
+      </aside>
+    </div>
+  </div>
+
   <BookCall />
 </Base>
+
+<style>
+  .go {
+    margin-top: 1.5rem;
+  }
+  .disclosure {
+    max-width: 38rem;
+    margin-top: 1.25rem;
+    font-size: var(--text-s);
+    color: var(--ink-2);
+  }
+  @media (max-width: 30rem) {
+    .go .btn {
+      display: flex;
+      width: 100%;
+    }
+  }
+</style>

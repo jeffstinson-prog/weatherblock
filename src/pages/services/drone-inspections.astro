@@ -7,9 +7,9 @@ const { inspection } = facts;
 <ServicePage
   serviceKey="drone"
   description="Roof inspections by drone, with no foot traffic on your shingles."
+  lede="We inspect your roof by drone. It keeps foot traffic off your shingles until repairs or a replacement call for someone on the roof."
   questions={['drone-or-walk', 'be-home', 'after-inspection', 'cost']}
 >
-  <p class="lede">We inspect your roof by drone. It keeps foot traffic off your shingles until repairs or a replacement call for someone on the roof.</p>
   <h2>What you get</h2>
   <p>{inspection.deliverables && `You get ${inspection.deliverables}.`}{inspection.free && ' The inspection is free.'}</p>
   {inspection.homeNotRequired && <p>You don't have to be home. Tell us about gates and pets when you book.</p>}

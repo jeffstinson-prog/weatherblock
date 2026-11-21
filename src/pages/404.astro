@@ -1,19 +1,50 @@
 ---
 import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import PageHero from '../components/PageHero.astro';
 import { facts, telHref } from '../facts';
+const tel = telHref();
 ---
 
 <Base title="Page not found" description="That page isn't here." noindex>
-  <section class="section">
-    <div class="wrap prose">
-      <h1>That page isn't here</h1>
-      <p>It may have moved. Try one of these:</p>
-      <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="/book/">{facts.derived.bookLabel}</a></li>
-        <li><a href="/help/">Help center</a></li>
-        {telHref() && <li><a href={telHref()}>Call {facts.contact.phone}</a></li>}
+  <PageHero title="That page isn't here" lede="It may have moved. Try one of these." />
+
+  <div class="section tight">
+    <div class="wrap">
+      <ul class="rows">
+        <li>
+          <a href="/">
+            Home
+            <Icon name="chevron-right" size={20} />
+          </a>
+        </li>
+        <li>
+          <a href="/book/">
+            {facts.derived.bookLabel}
+            <Icon name="chevron-right" size={20} />
+          </a>
+        </li>
+        <li>
+          <a href="/help/">
+            Help center
+            <Icon name="chevron-right" size={20} />
+          </a>
+        </li>
+        {tel && (
+          <li>
+            <a href={tel}>
+              Call {facts.contact.phone}
+              <Icon name="chevron-right" size={20} />
+            </a>
+          </li>
+        )}
       </ul>
     </div>
-  </section>
+  </div>
 </Base>
+
+<style>
+  .rows {
+    max-width: var(--measure);
+  }
+</style>

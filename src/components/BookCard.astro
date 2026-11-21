@@ -1,0 +1,63 @@
+---
+// The side card on service pages: what an inspection is, and the button to book one.
+// Every line comes from the facts file, so nothing shows that isn't true yet.
+import Icon from './Icon.astro';
+import { facts, telHref } from '../facts';
+
+const { inspection } = facts;
+const tel = telHref();
+const points = [
+  ...(inspection.free ? ['Free'] : []),
+  ...(inspection.byDrone ? ['By drone, with no foot traffic on your shingles'] : []),
+  ...(inspection.homeNotRequired ? ["You don't have to be home"] : []),
+  ...(inspection.deliverables ? [`You get ${inspection.deliverables}`] : []),
+];
+---
+
+<div class="card book-card">
+  <p class="eyebrow">{inspection.free ? 'Free inspection' : 'Inspection'}</p>
+  <h2>Start with {facts.derived.anInspection}</h2>
+  {points.length > 0 && (
+    <ul class="ticks">
+      {points.map((p) => (
+        <li>
+          <Icon name="check" size={18} stroke={2.5} />
+          <span>{p}</span>
+        </li>
+      ))}
+    </ul>
+  )}
+  <a class="btn block" href="/book/">
+    {facts.derived.bookLabel}
+    <Icon name="arrow-right" size={18} />
+  </a>
+  {tel && (
+    <p class="or small muted">
+      Or call <a href={tel}>{facts.contact.phone}</a>
+    </p>
+  )}
+</div>
+
+<style>
+  .book-card {
+    padding: 1.5rem;
+    border-top: 4px solid var(--logo-green);
+    box-shadow: var(--shadow-2);
+  }
+  h2 {
+    font-size: var(--h3);
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+  .ticks {
+    font-size: var(--text-s);
+    margin-bottom: 1.35rem;
+  }
+  .or {
+    margin: 0.85rem 0 0;
+    text-align: center;
+  }
+  .or a {
+    font-weight: 650;
+  }
+</style>
