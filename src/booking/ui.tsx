@@ -118,6 +118,9 @@ export function Notice(props: { children: ComponentChildren; tone?: 'ok' | 'info
   return <div class={`notice ${props.tone === 'ok' ? 'ok' : ''}`}>{props.children}</div>;
 }
 
+/** Days shown before "Show more days", so the soonest windows sit right under them. */
+const FIRST_DAYS = 6;
+
 /** Pick a day, then a window. Used when booking and when rescheduling. */
 export function SlotPicker(props: {
   slots: Slot[];
@@ -139,13 +142,21 @@ export function SlotPicker(props: {
     if (!days.some(([k]) => k === day) && days[0]) setDay(days[0][0]);
   }, [days]);
   const windows = days.find(([k]) => k === day)?.[1] ?? [];
+  const chosenIndex = days.findIndex(([k]) => k === day);
+  const [more, setMore] = useState(chosenIndex >= FIRST_DAYS);
+  const firstHidden = useRef<string | null>(null);
+  useEffect(() => {
+    // Keep keyboard and screen reader users in place: the button goes away, focus moves to the next day.
+    if (more && firstHidden.current) document.getElementById(`day-${firstHidden.current}`)?.focus();
+  }, [more]);
+  const shown = more ? days : days.slice(0, FIRST_DAYS);
   return (
     <div class="slot-picker">
       <fieldset aria-invalid={props.error ? 'true' : undefined}>
         <legend>Day</legend>
         {props.error && <p class="error" id="slot-error">{props.error}</p>}
         <div class="days" role="group">
-          {days.map(([k, list]) => (
+          {shown.map(([k, list]) => (
             <button
               type="button"
               key={k}
@@ -158,6 +169,18 @@ export function SlotPicker(props: {
             </button>
           ))}
         </div>
+        {!more && days.length > FIRST_DAYS && (
+          <button
+            type="button"
+            class="link-btn more-days"
+            onClick={() => {
+              firstHidden.current = days[FIRST_DAYS]![0];
+              setMore(true);
+            }}
+          >
+            Show more days
+          </button>
+        )}
       </fieldset>
       <fieldset>
         <legend>Arrival window</legend>
