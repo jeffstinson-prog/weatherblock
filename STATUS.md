@@ -35,7 +35,7 @@ Updated 2026-11-21.
 
 ## Next
 
-1. Review the pull requests and merge them in order, starting with the site. Pull request 9 (the redesign) goes last.
+1. All nine pull requests are merged into `main` (November 21), the redesign included. One setting is left: Netlify still builds the test site from the `8-pipeline` branch, so it shows the old design until its Production branch is switched to `main` (steps in [`LAUNCH.md`](LAUNCH.md), section 1).
 2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase: tables loaded and sign-ups off (November 19). The sign-in code email waits for Resend, since Supabase only allows template edits with custom SMTP.
 3. Supabase has the new tables for estimates, crews and roof jobs (loaded November 20).
 4. Facts for the automation (LAUNCH.md section 3): a mailing address, the Google review link, when estimates are ready, and whether $450 per square is for the measured roof or includes waste.
