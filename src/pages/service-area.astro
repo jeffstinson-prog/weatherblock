@@ -1,0 +1,16 @@
+---
+import Base from '../layouts/Base.astro';
+import BookCall from '../components/BookCall.astro';
+import { facts, telHref } from '../facts';
+---
+
+<Base title="Service area" description={`We serve ${facts.serviceArea.summary}.`}>
+  <section class="section">
+    <div class="wrap prose">
+      <h1>Service area</h1>
+      <p class="lede">We serve {facts.serviceArea.summary}.</p>
+      <p>Not sure if your home is in our area? {telHref() ? <>Call or text <a href={telHref()}>{facts.contact.phone}</a>.</> : 'Ask us.'}</p>
+    </div>
+  </section>
+  <BookCall />
+</Base>

@@ -1,0 +1,25 @@
+---
+// The two ways to get started, shown at the end of most pages.
+import { facts, smsHref, telHref } from '../facts';
+
+interface Props {
+  heading?: string;
+  text?: string;
+}
+const { heading = 'Book a free inspection', text } = Astro.props;
+const tel = telHref();
+const sms = smsHref();
+const free = facts.inspection.free;
+---
+
+<section class="section tint-blue book-call">
+  <div class="wrap">
+    <h2>{free ? heading : 'Book an inspection'}</h2>
+    {text && <p class="lede">{text}</p>}
+    <div class="actions">
+      <a class="btn" href="/book/">{free ? 'Book a free inspection' : 'Book an inspection'}</a>
+      {tel && <a class="btn secondary" href={tel}>Call {facts.contact.phone}</a>}
+      {sms && <a class="btn secondary" href={sms}>Text us</a>}
+    </div>
+  </div>
+</section>

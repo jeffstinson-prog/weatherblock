@@ -1,0 +1,78 @@
+---
+import Base from '../../layouts/Base.astro';
+import BookCall from '../../components/BookCall.astro';
+import { getArticle, helpArticles } from '../../help/load';
+
+export function getStaticPaths() {
+  return helpArticles.map((a) => ({ params: { slug: a.slug } }));
+}
+
+const article = getArticle(Astro.params.slug!)!;
+const related = article.related.map((s) => getArticle(s)!).filter(Boolean);
+const description = article.text.split('\n')[0]!.slice(0, 155);
+---
+
+<Base title={article.question} description={description}>
+  <article class="section">
+    <div class="wrap prose">
+      <p class="crumbs small"><a href="/help/">Help center</a> <span aria-hidden="true">/</span> {article.topic}</p>
+      <div>
+        <h1>{article.question}</h1>
+        <div class="answer" set:html={article.html} />
+      </div>
+      {article.sources.length > 0 && (
+        <aside class="sources" aria-labelledby="sources-h">
+          <h2 id="sources-h" class="h3">Sources</h2>
+          <ul>
+            {article.sources.map((s) => (
+              <li><a href={s.url} rel="noopener">{s.label}</a></li>
+            ))}
+          </ul>
+        </aside>
+      )}
+      {related.length > 0 && (
+        <nav class="related" aria-labelledby="related-h">
+          <h2 id="related-h" class="h3">Related questions</h2>
+          <ul>
+            {related.map((r) => (
+              <li><a href={`/help/${r.slug}/`}>{r.question}</a></li>
+            ))}
+          </ul>
+        </nav>
+      )}
+      <p class="small muted"><a href="/help/">All questions</a></p>
+    </div>
+  </article>
+  <BookCall heading="Want us to take a look?" />
+</Base>
+
+<style>
+  .crumbs {
+    margin-bottom: 0.75rem;
+    color: var(--muted);
+  }
+  .answer :global(ul),
+  .answer :global(ol) {
+    padding-left: 1.25rem;
+  }
+  .answer :global(li) {
+    margin-bottom: 0.4rem;
+  }
+  .h3 {
+    font-size: 1.15rem;
+  }
+  .sources,
+  .related {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+  }
+  .sources ul,
+  .related ul {
+    padding-left: 1.25rem;
+  }
+  .related li,
+  .sources li {
+    margin-bottom: 0.5rem;
+  }
+</style>

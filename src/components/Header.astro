@@ -1,0 +1,150 @@
+---
+import { Image } from 'astro:assets';
+import logo from '../assets/logo.png';
+import { facts, telHref } from '../facts';
+
+const here = Astro.url.pathname;
+const links = [
+  { href: '/book/', label: facts.derived.bookLabel },
+  { href: '/services/', label: 'Services' },
+  { href: '/help/', label: 'Help' },
+  { href: '/financing/', label: 'Financing' },
+  { href: '/about/', label: 'About' },
+  { href: '/contact/', label: 'Contact' },
+];
+const current = (href: string) => (here === href || (href !== '/' && here.startsWith(href)) ? 'page' : undefined);
+const tel = telHref();
+---
+
+<header class="site-header">
+  <div class="wrap bar">
+    <a href="/" class="brand">
+      <Image src={logo} alt={`${facts.business.name}, home`} width={136} height={72} loading="eager" fetchpriority="high" densities={[1, 2]} />
+    </a>
+    <nav class="wide-nav" aria-label="Main">
+      <ul>
+        {links.map((l) => (
+          <li><a href={l.href} aria-current={current(l.href)}>{l.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+    <div class="bar-actions">
+      {tel && <a class="btn secondary" href={tel}>Call</a>}
+      <details class="menu">
+        <summary class="btn secondary">Menu</summary>
+        <nav aria-label="Main">
+          <ul>
+            {links.map((l) => (
+              <li><a href={l.href} aria-current={current(l.href)}>{l.label}</a></li>
+            ))}
+          </ul>
+        </nav>
+      </details>
+    </div>
+  </div>
+  <hr class="lines" />
+</header>
+
+<style>
+  .site-header {
+    background: var(--bg);
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-block: 0.6rem;
+    position: relative;
+  }
+  .brand {
+    display: block;
+    line-height: 0;
+    border-radius: 6px;
+    flex: none;
+  }
+  .brand img {
+    width: 136px;
+    height: auto;
+  }
+  .bar-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .bar-actions .btn {
+    padding-inline: 1rem;
+  }
+  .menu summary {
+    list-style: none;
+  }
+  .menu summary::-webkit-details-marker {
+    display: none;
+  }
+  .menu nav {
+    position: absolute;
+    right: 1rem;
+    left: 1rem;
+    top: calc(100% + 0.25rem);
+    z-index: 50;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.18);
+    padding: 0.5rem;
+  }
+  .menu ul,
+  .wide-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .menu a {
+    display: flex;
+    align-items: center;
+    min-height: var(--tap);
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .menu a:hover,
+  .menu a[aria-current='page'] {
+    background: var(--tint-blue);
+  }
+  .wide-nav {
+    display: none;
+  }
+  @media (min-width: 64rem) {
+    .menu {
+      display: none;
+    }
+    .wide-nav {
+      display: block;
+    }
+    .wide-nav ul {
+      display: flex;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+    }
+    .wide-nav a {
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--tap);
+      padding: 0.25rem 0.7rem;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+    }
+    .wide-nav a[aria-current='page'] {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+    }
+    .wide-nav li:first-child a {
+      background: var(--btn-bg);
+      color: var(--btn-fg);
+      border-radius: 999px;
+      padding-inline: 1rem;
+    }
+  }
+</style>

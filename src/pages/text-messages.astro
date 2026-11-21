@@ -1,0 +1,29 @@
+---
+import Legal from '../components/Legal.astro';
+import { facts } from '../facts';
+const { business, contact, texts } = facts;
+---
+
+<Legal title="Text message terms" description={`How ${business.name} appointment texts work.`} updated="2026-11-19">
+  <p>When you book an inspection, you can choose to get text messages about your appointment from {business.name}. Texting is optional. You can book without it.</p>
+
+  <h2>What we send</h2>
+  <ul>
+    <li>Your booking confirmation</li>
+    <li>A reminder the day before and the morning of</li>
+    <li>A note when we're on the way</li>
+    <li>A message if your appointment changes</li>
+  </ul>
+  <p>Usually no more than {texts.maxPerBooking} messages per booking. We don't send marketing texts.</p>
+
+  <h2>The fine print</h2>
+  <ul>
+    <li>Message and data rates may apply.</li>
+    <li>Message frequency varies.</li>
+    <li>Reply <strong>STOP</strong> to stop getting texts. Reply <strong>HELP</strong> for help.</li>
+    <li>Carriers are not liable for delayed or undelivered messages.</li>
+    <li>Questions: call {contact.phone} or email <a href={`mailto:${contact.email}`}>{contact.email}</a>.</li>
+  </ul>
+
+  <p>We never share your mobile number or your consent with anyone for marketing. See our <a href="/privacy/">privacy page</a>.</p>
+</Legal>

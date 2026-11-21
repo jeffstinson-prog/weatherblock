@@ -1,0 +1,25 @@
+---
+import ServicePage from '../../components/ServicePage.astro';
+import { facts } from '../../facts';
+---
+
+<ServicePage
+  serviceKey="replacement"
+  description="A new roof explained before you decide: materials, installation and a written estimate."
+  questions={['repair-or-replace', 'replacement-cost', 'coastal-materials', 'financing']}
+>
+  <p class="lede">A new roof is a big decision. We walk you through the materials and the installation before you choose.</p>
+  <h2>What changes the price</h2>
+  <ul>
+    <li>How big and how steep the roof is</li>
+    <li>How easy it is to reach</li>
+    <li>The material you choose</li>
+    <li>Tearing off the old roof</li>
+    <li>Flashing and ventilation</li>
+    <li>The condition of the wood decking under the shingles</li>
+  </ul>
+  <p>Ask which of these your estimate includes, and how damage found under the old roof will be priced.</p>
+  <h2>How it starts</h2>
+  <p>With {facts.derived.anInspection}. You get {facts.inspection.deliverables}.</p>
+  {facts.financing.url && <p>Want to spread out the cost? <a href="/financing/">See financing</a>.</p>}
+</ServicePage>

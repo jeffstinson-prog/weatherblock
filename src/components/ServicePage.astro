@@ -1,0 +1,67 @@
+---
+// Shared frame for the four service pages.
+import Base from '../layouts/Base.astro';
+import BookCall from './BookCall.astro';
+import { facts } from '../facts';
+import { getArticle } from '../help/load';
+
+interface Props {
+  serviceKey: string;
+  description: string;
+  /** Help answers to link at the bottom, by slug. Hidden answers are skipped. */
+  questions?: string[];
+}
+const { serviceKey, description, questions = [] } = Astro.props;
+const service = facts.services.find((s) => s.key === serviceKey);
+if (!service) throw new Error(`No service "${serviceKey}" in facts.yaml`);
+const others = facts.services.filter((s) => s.key !== serviceKey);
+const answers = questions.map((slug) => getArticle(slug)).filter((a) => a !== undefined);
+---
+
+<Base title={service.name} description={description}>
+  <article class="section">
+    <div class="wrap prose">
+      <p class="crumbs small"><a href="/services/">Services</a></p>
+      <h1>{service.name}</h1>
+      <slot />
+      {answers.length > 0 && (
+        <section aria-labelledby="sq-h" class="more">
+          <h2 id="sq-h">Questions people ask</h2>
+          <ul>
+            {answers.map((a) => <li><a href={`/help/${a.slug}/`}>{a.question}</a></li>)}
+          </ul>
+        </section>
+      )}
+      <nav aria-label="Other services" class="more">
+        <h2>Other services</h2>
+        <ul>
+          {others.map((s) => <li><a href={s.path}>{s.name}</a></li>)}
+        </ul>
+      </nav>
+    </div>
+  </article>
+  <BookCall />
+</Base>
+
+<style>
+  .crumbs {
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+  .more {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+  }
+  .more h2 {
+    font-size: 1.2rem;
+  }
+  .more ul {
+    padding-left: 1.25rem;
+  }
+  .more a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+</style>
