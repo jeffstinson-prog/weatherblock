@@ -1,6 +1,7 @@
 // The owner app: sign in, then Today, Upcoming, Estimates, Jobs and More.
 // One page; the part after # says which screen (nothing personal in it).
 import { useEffect, useState } from 'preact/hooks';
+import Icon, { type IconName } from '../icons/Icon';
 import { auth, whenSignedOut } from './api';
 import Availability from './Availability';
 import BookingView from './BookingView';
@@ -29,12 +30,12 @@ export function go(path: string) {
   location.hash = path;
 }
 
-const TABS = [
-  { view: 'today', label: 'Today', href: '#/today' },
-  { view: 'upcoming', label: 'Upcoming', href: '#/upcoming' },
-  { view: 'estimates', label: 'Estimates', href: '#/estimates' },
-  { view: 'jobs', label: 'Jobs', href: '#/jobs' },
-  { view: 'more', label: 'More', href: '#/more' },
+const TABS: { view: string; label: string; href: string; icon: IconName }[] = [
+  { view: 'today', label: 'Today', href: '#/today', icon: 'sun' },
+  { view: 'upcoming', label: 'Upcoming', href: '#/upcoming', icon: 'calendar-days' },
+  { view: 'estimates', label: 'Estimates', href: '#/estimates', icon: 'file-text' },
+  { view: 'jobs', label: 'Jobs', href: '#/jobs', icon: 'hammer' },
+  { view: 'more', label: 'More', href: '#/more', icon: 'menu' },
 ];
 
 /** Which tab lights up for a screen that isn't a tab itself. */
@@ -97,6 +98,7 @@ export default function OwnerApp(props: AppProps) {
       <nav class="tabs" aria-label="Owner app">
         {TABS.map((t) => (
           <a key={t.view} href={t.href} aria-current={tab === t.view ? 'page' : undefined}>
+            <Icon name={t.icon} size={22} />
             {t.label}
           </a>
         ))}
