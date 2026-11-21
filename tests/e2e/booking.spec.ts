@@ -297,8 +297,9 @@ test.describe('dark mode', () => {
   test.beforeEach(({}, testInfo) => {
     test.skip(testInfo.project.name !== 'phone-390-dark', 'dark mode check');
   });
-  test('every booking step passes accessibility checks in dark mode', async ({ page }) => {
+  test('on a phone set to dark mode the site stays light, and every booking step passes accessibility checks', async ({ page }) => {
     await page.goto('/book/');
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)).toBe('rgb(250, 249, 246)');
     await expectAccessible(page);
     await stepHome(page, 'Test Main', /404 Test Main/);
     await expectAccessible(page);

@@ -9,7 +9,8 @@
   light for small text, so text, links and buttons use a deeper blue (6.5:1 on
   white). The logo colors stay for fills, lines and large shapes. The page is a
   warm paper white with white cards; dark sections are a deep ocean ink.
-  Dark mode follows the phone.
+  One light design for everyone: the site does not switch to dark colors when a
+  phone is set to dark mode (the owner's call).
 */
 
 @font-face {
@@ -60,7 +61,8 @@
 }
 
 :root {
-  color-scheme: light dark;
+  /* "only" also tells browsers that darken pages on their own to leave this one alone. */
+  color-scheme: only light;
 
   --logo-blue: #268ebc;
   --logo-green: #80bbae;
@@ -152,44 +154,6 @@
   line-height: 1.6;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #071a22;
-    --card: #0d2530;
-    --sand: #0f2a36;
-    --mist: #0d2b3a;
-    --foam: #0c2b28;
-
-    --ink: #eaf2f4;
-    --ink-2: #cbd8dd;
-    --muted: #9fb4bd;
-
-    --line: #1c3947;
-    --line-strong: #2a4a5a;
-    --field-line: #64828f;
-
-    --brand: #8ccdf0;
-    --brand-hover: #b3def5;
-    --brand-soft: #143747;
-    --on-brand: #06202b;
-    --link: #8ccdf0;
-    --ok: #93d3c6;
-    --ok-soft: #0f2f2b;
-    --danger: #fda29b;
-    --danger-soft: #3a1512;
-    --gold: #f0b93a;
-    --focus: #8ccdf0;
-
-    --night: #0b2733;
-    --night-2: #103b4c;
-    --night-line: rgb(255 255 255 / 0.12);
-
-    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.3);
-    --shadow-2: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 28px -12px rgb(0 0 0 / 0.5);
-    --shadow-3: 0 2px 4px rgb(0 0 0 / 0.3), 0 28px 56px -20px rgb(0 0 0 / 0.6);
-  }
 }
 
 *,

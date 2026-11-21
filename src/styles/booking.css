@@ -859,11 +859,6 @@ details.field summary {
   white-space: nowrap;
   color: #5e5e5e;
 }
-@media (prefers-color-scheme: dark) {
-  .gmp-attribution {
-    color: #ffffff;
-  }
-}
 
 /* ---- The assistant ---- */
 .chat {
