@@ -274,6 +274,25 @@ test('a referral link fills in the code', async ({ page }) => {
   await page.evaluate(() => localStorage.clear());
 });
 
+test('a time tapped on the home page is already picked in the booking form', async ({ page }) => {
+  // Other tests book times while this one runs, so both pages get one fixed list of open times.
+  const open = await (await page.request.get('/api/slots')).text();
+  await page.route('**/api/slots', (route) => route.fulfill({ contentType: 'application/json', body: open }));
+  await page.goto('/');
+  const first = page.locator('[data-next-times] a[data-slot]').first();
+  await expect(first).toBeVisible();
+  const slot = JSON.parse((await first.getAttribute('data-slot'))!) as { id: string };
+  await first.click();
+  await expect(page).toHaveURL(/\/book\/$/);
+  await expect(page.getByText('Your pick. You can change it in step 3.')).toBeVisible();
+  await expectAccessible(page);
+  await stepHome(page);
+  await stepRoof(page);
+  await expect(page.getByRole('heading', { name: 'Pick a time' })).toBeFocused();
+  await expect(page.locator(`input[name="slot"][value="${slot.id}"]`)).toBeChecked();
+  await page.evaluate(() => localStorage.clear());
+});
+
 test.describe('dark mode', () => {
   test.beforeEach(({}, testInfo) => {
     test.skip(testInfo.project.name !== 'phone-390-dark', 'dark mode check');

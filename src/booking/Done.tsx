@@ -1,5 +1,6 @@
 // The confirmation screen.
 import { useEffect, useRef } from 'preact/hooks';
+import Icon from '../icons/Icon';
 import type { BookingProps } from './BookingApp';
 import { downloadIcs, googleCalendarUrl } from './calendar';
 import { refLabel, whenLabel } from './format';
@@ -29,6 +30,9 @@ export default function Done({ info, props }: { info: DoneInfo; props: BookingPr
   };
   return (
     <div class="booking done">
+      <div class="done-mark" aria-hidden="true">
+        <Icon name="check" size={30} stroke={3} />
+      </div>
       <h2 tabIndex={-1} ref={heading} class="step-title">
         You're booked{b.firstName ? `, ${b.firstName}` : ''}.
       </h2>
@@ -37,11 +41,17 @@ export default function Done({ info, props }: { info: DoneInfo; props: BookingPr
       </p>
       <dl class="summary">
         <div>
-          <dt>When</dt>
+          <dt>
+            <Icon name="calendar-check" size={16} />
+            When
+          </dt>
           <dd>{whenLabel(b.startsAt, b.endsAt)}</dd>
         </div>
         <div>
-          <dt>Where</dt>
+          <dt>
+            <Icon name="map-pin" size={16} />
+            Where
+          </dt>
           <dd>{b.address}</dd>
         </div>
       </dl>
@@ -53,23 +63,38 @@ export default function Done({ info, props }: { info: DoneInfo; props: BookingPr
         </p>
       )}
 
-      <h3>What happens next</h3>
-      <ul>
-        {props.byDrone && <li>We inspect your roof by drone during your window.</li>}
-        {props.deliverables && <li>You get {props.deliverables}.</li>}
-        <li>
-          Questions? Call or text <a href={props.phoneHref}>{props.phone}</a>.
-        </li>
-      </ul>
-
       <div class="actions">
         <button type="button" class="btn secondary" onClick={() => downloadIcs(event)}>
+          <Icon name="calendar-plus" size={18} />
           Add to Apple or Outlook calendar
         </button>
         <a class="btn secondary" href={googleCalendarUrl(event, props.phone)} target="_blank" rel="noopener">
+          <Icon name="calendar-plus" size={18} />
           Add to Google Calendar
         </a>
       </div>
+
+      <h3>What happens next</h3>
+      <ul class="ticks">
+        {props.byDrone && (
+          <li>
+            <Icon name="check" size={18} stroke={2.5} />
+            <span>We inspect your roof by drone during your window.</span>
+          </li>
+        )}
+        {props.deliverables && (
+          <li>
+            <Icon name="check" size={18} stroke={2.5} />
+            <span>You get {props.deliverables}.</span>
+          </li>
+        )}
+        <li>
+          <Icon name="check" size={18} stroke={2.5} />
+          <span>
+            Questions? Call or text <a href={props.phoneHref}>{props.phone}</a>.
+          </span>
+        </li>
+      </ul>
 
       <h3>Change or cancel</h3>
       <p>

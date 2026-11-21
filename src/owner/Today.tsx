@@ -1,5 +1,6 @@
 // A day's inspections in time order, with directions, call and text.
 import { useEffect, useState } from 'preact/hooks';
+import Icon from '../icons/Icon';
 import { ApiError, api } from './api';
 import { TZ, dayKey, longDay, windowLabel } from '../booking/format';
 import { formatMobile } from '../booking/rules';
@@ -63,9 +64,15 @@ export default function Today(props: { date: string | null }) {
       <h1>{isToday ? 'Today' : label}</h1>
       {isToday && <p class="muted">{label}</p>}
       <div class="day-nav">
-        <a class="btn secondary" href={`#/day/${shift(date, -1)}`}>Previous day</a>
+        <a class="btn secondary" href={`#/day/${shift(date, -1)}`}>
+          <Icon name="chevron-left" size={18} />
+          Previous day
+        </a>
         {!isToday && <a class="btn secondary" href="#/today">Today</a>}
-        <a class="btn secondary" href={`#/day/${shift(date, 1)}`}>Next day</a>
+        <a class="btn secondary" href={`#/day/${shift(date, 1)}`}>
+          Next day
+          <Icon name="chevron-right" size={18} />
+        </a>
       </div>
       {error && <p class="error-box" role="alert">{error}</p>}
       {rows === null && !error && <p aria-live="polite">Loading...</p>}
@@ -87,9 +94,18 @@ export default function Today(props: { date: string | null }) {
               </span>
             </a>
             <div class="visit-actions">
-              <a class="btn secondary" href={directions(r)} target="_blank" rel="noopener">Directions</a>
-              <a class="btn secondary" href={`tel:${r.mobile}`} aria-label={`Call ${r.name}, ${formatMobile(r.mobile)}`}>Call</a>
-              <a class="btn secondary" href={`sms:${r.mobile}`} aria-label={`Text ${r.name}`}>Text</a>
+              <a class="btn secondary" href={directions(r)} target="_blank" rel="noopener">
+                <Icon name="navigation" size={18} />
+                Directions
+              </a>
+              <a class="btn secondary" href={`tel:${r.mobile}`} aria-label={`Call ${r.name}, ${formatMobile(r.mobile)}`}>
+                <Icon name="phone" size={18} />
+                Call
+              </a>
+              <a class="btn secondary" href={`sms:${r.mobile}`} aria-label={`Text ${r.name}`}>
+                <Icon name="message-square" size={18} />
+                Text
+              </a>
             </div>
           </li>
         ))}

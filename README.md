@@ -79,6 +79,18 @@ At `/ask/`, a page (never a pop-up). One request to the Claude API per question,
 - **The same check runs over every built page** (`npm run test:content`).
 - **Live tests** (`npm run test:assistant`, needs `ANTHROPIC_API_KEY`): the top 30 questions and 15 attempts to break the rules. A separate workflow runs them when the facts, the help center or the assistant change, once the repository has the key as a secret.
 
+## Design
+
+One small system, in [`src/styles/global.css`](src/styles/global.css): type, color, space, buttons, cards, rows and forms. Every page is built from it.
+
+- **Type.** Fraunces for headings, Figtree for everything else. Both are open source (SIL Open Font License) and served from this site, not from a font service; the license files sit next to the fonts in `src/assets/fonts/`. System fonts sized to match show until they load, so the page doesn't jump.
+- **Color.** From the logo: blue `#268EBC` and sea green `#80BBAE`. Both are too light for small text, so text, links and buttons use a deeper blue. Warm paper background, white cards, deep ocean for the dark sections. Dark mode follows the phone. Every text pair is checked for WCAG AA contrast by the end-to-end tests.
+- **Icons.** A small set from [Lucide](https://lucide.dev) (ISC license), kept in `src/icons/data.ts`. To add one: add its name in `scripts/build-icons.mjs`, then `npm install --no-save lucide-static && node scripts/build-icons.mjs`.
+- **Page parts.** `Header` (stays in view; a phone gets a menu sheet), `PageHero` (the top of every inner page), `BookCall` (the closing section), `StickyCta` (a Book and Call bar on phones once the page's own buttons scroll away), `Footer`. Booking and the private link use a quiet header and a short footer (`focus` on the layout), so nothing pulls people out of the form.
+- **Flows.** `src/styles/booking.css` styles booking, the private link, the instant estimate and the assistant; `src/styles/owner.css` the owner app.
+- **Motion.** Short and small, and off for anyone whose device asks for reduced motion.
+- **No inline styles.** The site's content security policy blocks `style=""` attributes; use a class.
+
 ## Test
 
 ```sh
@@ -115,7 +127,9 @@ Netlify builds every pull request as a deploy preview and deploys `main` to prod
 | `supabase/migrations/` | Database schema |
 | `src/pages/` | Pages (one file per URL) |
 | `src/components/`, `src/layouts/` | Shared pieces |
-| `src/styles/global.css` | Colors from the logo, type, buttons, forms |
+| `src/styles/global.css` | The design system: type, color, buttons, cards, forms |
+| `src/styles/booking.css`, `src/styles/owner.css` | Booking and the other flows; the owner app |
+| `src/assets/fonts/`, `src/icons/` | The two typefaces and the icon set |
 | `tests/unit/`, `tests/e2e/` | Tests |
 
 See [`STATUS.md`](STATUS.md) for what's done and what's next, and [`LAUNCH.md`](LAUNCH.md) for what's left before launch.

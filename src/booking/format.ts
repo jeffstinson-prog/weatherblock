@@ -11,6 +11,10 @@ export function dayKey(iso: string): string {
 /** "Fri, Nov 20" */
 export const shortDay = (iso: string) => fmt({ weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(iso));
 
+/** "Fri" and "Nov 20", for a day button that stacks them. */
+export const weekday = (iso: string) => fmt({ weekday: 'short' }).format(new Date(iso));
+export const monthDay = (iso: string) => fmt({ month: 'short', day: 'numeric' }).format(new Date(iso));
+
 /** "Friday, November 20" */
 export const longDay = (iso: string) => fmt({ weekday: 'long', month: 'long', day: 'numeric' }).format(new Date(iso));
 

@@ -1,0 +1,30 @@
+---
+// One icon from the site's small set (src/icons/data.ts). Decorative by default:
+// the words next to it carry the meaning.
+import { ICONS, type IconName } from '../icons/data';
+
+interface Props {
+  name: IconName;
+  size?: number;
+  class?: string;
+  /** Line weight; 2 is the set's default, lighter reads calmer at large sizes. */
+  stroke?: number;
+}
+const { name, size = 20, class: cls, stroke = 2 } = Astro.props;
+---
+
+<svg
+  class:list={['icon', cls]}
+  xmlns="http://www.w3.org/2000/svg"
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width={stroke}
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  focusable="false"
+  set:html={ICONS[name]}
+/>

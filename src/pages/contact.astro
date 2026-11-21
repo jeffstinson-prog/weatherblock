@@ -1,42 +1,173 @@
 ---
 import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import PageHero from '../components/PageHero.astro';
 import { facts, has, smsHref, telHref } from '../facts';
 import { roofingContractor } from '../lib/schema-org';
 const tel = telHref();
 const sms = smsHref();
+const { contact, inspection } = facts;
+const [emailUser = '', emailHost = ''] = contact.email.split('@');
 ---
 
-<Base title="Contact" description={`Call or text ${facts.contact.phone}, or email ${facts.contact.email}.`} jsonLd={roofingContractor(Astro.site)}>
-  <section class="section">
-    <div class="wrap prose">
-      <h1>Contact</h1>
-      <div class="actions">
-        <a class="btn" href="/book/">{facts.derived.bookLabel}</a>
-        {tel && <a class="btn secondary" href={tel}>Call {facts.contact.phone}</a>}
-        {sms && <a class="btn secondary" href={sms}>Text {facts.contact.phone}</a>}
-        {facts.contact.email && <a class="btn secondary" href={`mailto:${facts.contact.email}`}>Email us</a>}
-      </div>
-      <dl class="facts">
-        {facts.contact.phone && (<><dt>Phone and text</dt><dd>{facts.contact.phone}</dd></>)}
-        {facts.contact.email && (<><dt>Email</dt><dd><a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a></dd></>)}
-        {has('contact.hours') && (<><dt>Phone hours</dt><dd>{facts.contact.hours}</dd></>)}
-        {facts.serviceArea.summary && (<><dt>Where we work</dt><dd>{facts.serviceArea.summary}</dd></>)}
+<Base title="Contact" description={`Call or text ${contact.phone}, or email ${contact.email}.`} jsonLd={roofingContractor(Astro.site)}>
+  <PageHero title="Contact" lede="Book online, or reach us directly." />
+
+  <div class="section tight">
+    <div class="wrap">
+      <ul class="ways">
+        <li class="card link book">
+          <span class="icon-badge"><Icon name="calendar-check" size={24} /></span>
+          <div>
+            <h2><a class="cover" href="/book/">{facts.derived.bookLabel}</a></h2>
+            <p>Pick a {inspection.windowHours} hour window that works for you. It takes about a minute.</p>
+          </div>
+          <Icon name="arrow-right" size={20} />
+        </li>
+        {tel && (
+          <li class="card link">
+            <span class="icon-badge"><Icon name="phone" size={24} /></span>
+            <div>
+              <h2><a class="cover" href={tel}>Call {contact.phone}</a></h2>
+              {has('contact.hours') && <p>{contact.hours}</p>}
+            </div>
+            <Icon name="arrow-right" size={20} />
+          </li>
+        )}
+        {sms && (
+          <li class="card link">
+            <span class="icon-badge"><Icon name="message-square" size={24} /></span>
+            <div>
+              <h2><a class="cover" href={sms}>Text {contact.phone}</a></h2>
+            </div>
+            <Icon name="arrow-right" size={20} />
+          </li>
+        )}
+        {contact.email && (
+          <li class="card link">
+            <span class="icon-badge"><Icon name="mail" size={24} /></span>
+            <div>
+              <h2><a class="cover" href={`mailto:${contact.email}`}>Email us</a></h2>
+              <p class="addr">{emailUser}@<wbr />{emailHost}</p>
+            </div>
+            <Icon name="arrow-right" size={20} />
+          </li>
+        )}
+      </ul>
+
+      <dl class="details">
+        {has('contact.hours') && (
+          <div>
+            <dt>Phone hours</dt>
+            <dd>{contact.hours}</dd>
+          </div>
+        )}
+        {facts.serviceArea.summary && (
+          <div>
+            <dt>Where we work</dt>
+            <dd>
+              {facts.serviceArea.summary}. <a href="/service-area/">Service area</a>
+            </dd>
+          </div>
+        )}
+        <div>
+          <dt>Have a question?</dt>
+          <dd>
+            <a href="/help/">The help center</a> has one plain answer per question.
+          </dd>
+        </div>
       </dl>
     </div>
-  </section>
+  </div>
 </Base>
 
 <style>
-  .facts {
-    display: grid;
-    gap: 0.25rem 1rem;
-    margin-top: 1.5rem;
-  }
-  .facts dt {
-    font-weight: 700;
-    margin-top: 0.75rem;
-  }
-  .facts dd {
+  .ways {
+    list-style: none;
+    padding: 0;
     margin: 0;
+    display: grid;
+    gap: 0.85rem;
+  }
+  .ways .card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1.1rem;
+    min-height: 5.5rem;
+    padding: 1.15rem 1.25rem;
+  }
+  .ways .icon-badge {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 16px;
+  }
+  h2 {
+    font-size: var(--h3);
+    line-height: 1.2;
+    margin: 0;
+  }
+  .ways p {
+    margin: 0.2rem 0 0;
+    font-size: var(--text-s);
+    color: var(--muted);
+  }
+  .ways .card > :global(.icon) {
+    color: var(--link);
+    transition: transform 0.2s ease;
+  }
+  .ways .card:hover > :global(.icon) {
+    transform: translateX(4px);
+  }
+  /* Booking is the first choice: the brand color, the others plain. */
+  .ways .book {
+    background: var(--brand);
+    border-color: transparent;
+    color: var(--on-brand);
+    box-shadow: var(--shadow-2);
+  }
+  .ways .book .icon-badge {
+    background: color-mix(in srgb, var(--on-brand) 16%, transparent);
+    color: var(--on-brand);
+  }
+  .ways .book p,
+  .ways .book > :global(.icon) {
+    color: var(--on-brand);
+  }
+  .ways .book:has(a.cover:focus-visible) {
+    outline-color: var(--ink);
+  }
+
+  .details {
+    display: grid;
+    gap: 1.25rem;
+    margin: 2.5rem 0 0;
+  }
+  .details dt {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.2rem;
+  }
+  .details dd {
+    margin: 0;
+    color: var(--ink-2);
+  }
+  @media (min-width: 48rem) {
+    .ways {
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    .ways .card {
+      padding: 1.5rem 1.75rem;
+    }
+    .details {
+      grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+      gap: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--line);
+    }
   }
 </style>

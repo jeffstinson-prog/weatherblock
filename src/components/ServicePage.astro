@@ -2,71 +2,192 @@
 // Shared frame for the four service pages.
 import Base from '../layouts/Base.astro';
 import BookCall from './BookCall.astro';
+import BookCard from './BookCard.astro';
+import Icon from './Icon.astro';
+import PageHero from './PageHero.astro';
 import { facts } from '../facts';
 import { getArticle } from '../help/load';
+import { serviceMeta } from '../lib/services';
 
 interface Props {
   serviceKey: string;
   description: string;
+  /** The one line under the page title. */
+  lede: string;
   /** Help answers to link at the bottom, by slug. Hidden answers are skipped. */
   questions?: string[];
 }
-const { serviceKey, description, questions = [] } = Astro.props;
+const { serviceKey, description, lede, questions = [] } = Astro.props;
 const service = facts.services.find((s) => s.key === serviceKey);
 if (!service) throw new Error(`No service "${serviceKey}" in facts.yaml`);
 const others = facts.services.filter((s) => s.key !== serviceKey);
 const answers = questions.map((slug) => getArticle(slug)).filter((a) => a !== undefined);
+const estimate = serviceKey === 'replacement' && facts.instantEstimate.on;
 ---
 
 <Base title={service.name} description={description}>
-  <article class="section">
-    <div class="wrap prose">
-      <p class="crumbs small"><a href="/services/">Services</a></p>
-      <h1>{service.name}</h1>
-      <slot />
-      {serviceKey === 'replacement' && facts.instantEstimate.on && (
-        <p>
-          <a href="/estimate/">See an instant estimate for a new roof</a>, from your house's outline seen from above.
-        </p>
-      )}
-      {answers.length > 0 && (
-        <section aria-labelledby="sq-h" class="more">
-          <h2 id="sq-h">Questions people ask</h2>
-          <ul>
-            {answers.map((a) => <li><a href={`/help/${a.slug}/`}>{a.question}</a></li>)}
-          </ul>
-        </section>
-      )}
-      <nav aria-label="Other services" class="more">
-        <h2>Other services</h2>
-        <ul>
-          {others.map((s) => <li><a href={s.path}>{s.name}</a></li>)}
-        </ul>
-      </nav>
+  <PageHero title={service.name} lede={lede} crumbs={[{ href: '/services/', label: 'Services' }]} />
+
+  <div class="section tight">
+    <div class="wrap split">
+      <article class="prose">
+        <slot />
+        {estimate && (
+          <a class="estimate-link" href="/estimate/">
+            <span class="icon-badge"><Icon name="ruler" size={22} /></span>
+            <span>
+              <strong>See an instant estimate for a new roof</strong>
+              <span class="sub">From your house's outline seen from above.</span>
+            </span>
+            <Icon name="arrow-right" size={20} />
+          </a>
+        )}
+      </article>
+      <aside class="side" aria-label="Book an inspection">
+        <BookCard />
+      </aside>
     </div>
-  </article>
+  </div>
+
+  {answers.length > 0 && (
+    <section class="section tight sand" aria-labelledby="sq-h">
+      <div class="wrap asked">
+        <div class="section-head">
+          <p class="eyebrow">Help center</p>
+          <h2 id="sq-h">Questions people ask</h2>
+        </div>
+        <ul class="rows">
+          {answers.map((a) => (
+            <li>
+              <a href={`/help/${a.slug}/`}>
+                {a.question}
+                <Icon name="chevron-right" size={20} />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <nav class="section tight" aria-labelledby="other-h">
+    <div class="wrap">
+      <h2 id="other-h" class="other-h">Other services</h2>
+      <ul class="others">
+        {others.map((s) => (
+          <li class="card link">
+            <span class="icon-badge"><Icon name={serviceMeta(s.key).icon} size={20} /></span>
+            <a class="cover" href={s.path}>{s.name}</a>
+            <Icon name="arrow-right" size={18} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  </nav>
+
   <BookCall />
 </Base>
 
 <style>
-  .crumbs {
-    color: var(--muted);
-    margin-bottom: 0.75rem;
+  .prose :global(.notice) {
+    margin-block: 1.5rem;
   }
-  .more {
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--line);
-  }
-  .more h2 {
-    font-size: 1.2rem;
-  }
-  .more ul {
-    padding-left: 1.25rem;
-  }
-  .more a {
-    display: inline-flex;
-    min-height: 44px;
+  /* The link to the instant estimate, on the page about new roofs. */
+  .estimate-link {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-l);
+    background: var(--card);
+    box-shadow: var(--shadow-1);
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+  }
+  .estimate-link:hover {
+    border-color: color-mix(in srgb, var(--brand) 40%, var(--line));
+    box-shadow: var(--shadow-2);
+    transform: translateY(-2px);
+  }
+  .estimate-link strong {
+    display: block;
+    line-height: 1.3;
+  }
+  .estimate-link .sub {
+    display: block;
+    font-size: var(--text-s);
+    color: var(--muted);
+  }
+  .estimate-link > :global(.icon) {
+    color: var(--link);
+  }
+
+  .asked {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .asked .section-head {
+    margin-bottom: 1rem;
+  }
+  .asked h2 {
+    font-size: var(--h2-s);
+  }
+  .asked .rows {
+    margin: 0;
+  }
+  @media (min-width: 62rem) {
+    .asked {
+      grid-template-columns: 0.8fr 1.2fr;
+      gap: 4rem;
+      align-items: start;
+    }
+  }
+
+  .other-h {
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .others {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  }
+  .others .card {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.85rem 1.1rem 0.85rem 0.85rem;
+    min-height: 4.25rem;
+    font-weight: 650;
+  }
+  .others .cover {
+    flex: 1;
+  }
+  .others :global(.icon-badge) {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 12px;
+  }
+  .others .card > :global(.icon) {
+    color: var(--link);
+    transition: transform 0.2s ease;
+  }
+  .others .card:hover > :global(.icon) {
+    transform: translateX(3px);
   }
 </style>

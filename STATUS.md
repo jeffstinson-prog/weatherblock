@@ -1,6 +1,6 @@
 # Status
 
-Updated 2026-11-20.
+Updated 2026-11-21.
 
 ## Done
 
@@ -23,11 +23,19 @@ Updated 2026-11-20.
 - **Instant estimate** at `/estimate/`: pick an address and Google measures the roof (area with the slope, and pitch) for a ballpark from `facts.yaml` ($450 per square installed for architectural shingles, $350 to $400 per square from 30 squares). Without Google data, Microsoft's open building outlines stand in; then the house's size. Google's Solar API runs on its own key (JT's call: Google's terms describe it for energy systems).
 - **Availability** comes from weekly windows, days off, number of inspectors and busy times from the calendar. Starting point until Justin changes it in the owner app: Monday to Saturday, 8 to 10, 10 to noon, noon to 2, 2 to 4, one inspector, bookable 12 hours to 21 days ahead.
 - **Protection.** Row level security on every table; the public can only call five narrow functions. Rate limits, a hidden bot field, at most 3 upcoming bookings per mobile number. Gate codes deleted a week after the visit.
-- **Checks on every pull request.** Unit tests, type check, database tests on Postgres, Playwright at 320px and 390px in light and dark with axe (WCAG 2.2 AA), the full booking flow, Lighthouse at phone settings. Locally: 100 in all four Lighthouse categories on all 9 pages checked, including the booking page.
+- **Redesign** (November 21, pull request 9). A full visual pass over every page and flow, after measuring twelve well-made sites (four roofing and exterior companies, plus Opendoor, Block, Lemonade, Tend, One Medical and others) for type, spacing and structure. What changed:
+  - Two typefaces served from our own site (Fraunces for headings, Figtree for the rest), a warm paper background with white cards, and deep ocean sections. Dark mode throughout.
+  - The home page opens with the next three open times, read from the calendar. Tapping one starts a booking with that time already picked.
+  - A header that stays in view, a menu sheet on phones, and on phones a Book and Call bar that appears once the page's own buttons scroll away. It never covers content and is not a pop-up.
+  - Booking: five dots across the top show where you are, Back and Continue stay in reach at the bottom, days and windows are large tiles, and the review is one card per section with its own Change link. Booking pages drop the menu and the long footer.
+  - Inner pages share one header block; service pages and answers carry a side card on wide screens (book an inspection, or ask us). The help center has a large search box, topic links and row lists.
+  - The owner app has icons on its tabs and cards for each visit.
+  - Typing an address before the page's script has loaded no longer loses the list of matches.
+- **Checks on every pull request.** Unit tests, type check, database tests on Postgres, Playwright at 320px and 390px in light and dark with axe (WCAG 2.2 AA), the full booking flow, Lighthouse at phone settings. Locally: 100 in all four Lighthouse categories on all 10 pages checked, including the booking page, with the new typefaces.
 
 ## Next
 
-1. Review the pull requests and merge them in order, starting with the site.
+1. Review the pull requests and merge them in order, starting with the site. Pull request 9 (the redesign) goes last.
 2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase: tables loaded and sign-ups off (November 19). The sign-in code email waits for Resend, since Supabase only allows template edits with custom SMTP.
 3. Supabase has the new tables for estimates, crews and roof jobs (loaded November 20).
 4. Facts for the automation (LAUNCH.md section 3): a mailing address, the Google review link, when estimates are ready, and whether $450 per square is for the measured roof or includes waste.

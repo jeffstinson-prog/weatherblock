@@ -1,6 +1,7 @@
 // Booking, start to finish: 1 home, 2 roof, 3 time, 4 you, 5 check and book.
 // Everything typed is kept on the phone, so a refresh or a closed tab doesn't lose it.
 import { useEffect, useRef, useState } from 'preact/hooks';
+import Icon from '../icons/Icon';
 import AddressField from './AddressField';
 import Done, { type DoneInfo } from './Done';
 import {
@@ -50,6 +51,8 @@ export interface BookingProps {
 }
 
 const TITLES = ['Your home', 'Your roof', 'Pick a time', 'Your details', 'Check and book'];
+// One word each, under the dots at the top.
+const SHORT = ['Home', 'Roof', 'Time', 'You', 'Book'];
 const MAX_PHOTOS = 6;
 
 // Where each error should send the cursor.
@@ -106,6 +109,21 @@ function takeEstimateHandoff(d: Draft): Draft {
   }
 }
 
+/** A time tapped on the home page ("Next open times") comes along as the pick. It's checked
+ *  against the open times again at step three, so a window that filled up since is dropped. */
+function takeSlotHandoff(d: Draft): Draft {
+  try {
+    const raw = sessionStorage.getItem('slot-handoff-v1');
+    if (!raw) return d;
+    sessionStorage.removeItem('slot-handoff-v1');
+    const s = JSON.parse(raw) as Partial<Slot>;
+    if (typeof s.id !== 'string' || typeof s.startsAt !== 'string' || typeof s.endsAt !== 'string') return d;
+    return { ...d, slot: { id: s.id, startsAt: s.startsAt, endsAt: s.endsAt } };
+  } catch {
+    return d;
+  }
+}
+
 /** A booking the assistant started: it leaves a few answers on the phone for us to pick up. */
 function takeAssistantHandoff(d: Draft): Draft {
   try {
@@ -152,12 +170,12 @@ export default function BookingApp(props: BookingProps) {
   useEffect(() => {
     const saved = loadSaved();
     if (saved) {
-      setDraft(takeEstimateHandoff(takeAssistantHandoff(saved.draft)));
+      setDraft(takeSlotHandoff(takeEstimateHandoff(takeAssistantHandoff(saved.draft))));
       setStep(Math.min(Math.max(saved.step, 0), 4));
       setSatellite(saved.satellite);
       setRestored(saved.step > 0 || saved.draft.address.text.length > 0);
     } else {
-      setDraft((d) => takeEstimateHandoff(takeAssistantHandoff(d)));
+      setDraft((d) => takeSlotHandoff(takeEstimateHandoff(takeAssistantHandoff(d))));
     }
     if (handoffSatellite) {
       setSatellite(handoffSatellite);
@@ -337,15 +355,30 @@ export default function BookingApp(props: BookingProps) {
 
   return (
     <div class="booking">
-      <div class="progress" aria-hidden="true">
-        <div class="bar" data-step={step + 1} />
-      </div>
+      <ol class="stepper" aria-hidden="true">
+        {SHORT.map((label, i) => (
+          <li key={label} class={i < step ? 'done' : i === step ? 'now' : undefined}>
+            <span class="dot">{i < step ? <Icon name="check" size={14} stroke={3} /> : i + 1}</span>
+            {label}
+          </li>
+        ))}
+      </ol>
       <p class="step-count">
         Step {step + 1} of {total}
       </p>
       <h2 tabIndex={-1} ref={heading} class="step-title">
         {TITLES[step]}
       </h2>
+
+      {draft.slot && step < 2 && (
+        <p class="picked-time">
+          <Icon name="calendar-check" size={18} />
+          <span>
+            <strong>{whenLabel(draft.slot.startsAt, draft.slot.endsAt)}</strong>
+            Your pick. You can change it in step 3.
+          </span>
+        </p>
+      )}
 
       {restored && step === 0 && (
         <div class="notice">
@@ -700,7 +733,10 @@ export default function BookingApp(props: BookingProps) {
               </fieldset>
             )}
             <p class="not-yet">
-              You're not booked yet. Check the details, then tap <strong>{bookLabel}</strong>.
+              <Icon name="info" size={18} />
+              <span>
+                You're not booked yet. Check the details, then tap <strong>{bookLabel}</strong>.
+              </span>
             </p>
             {satellite && draft.address.placeId ? (
               <figure class="satellite">
@@ -710,46 +746,61 @@ export default function BookingApp(props: BookingProps) {
             ) : null}
             <dl class="summary">
               <div>
-                <dt>Home</dt>
+                <dt>
+                  <Icon name="map-pin" size={16} />
+                  Home
+                </dt>
                 <dd>
                   {draft.address.text}
                   <br />
                   <span class="muted">{labelOf(RELATIONSHIPS, draft.relationship)}</span>
                 </dd>
-                <dd>
+                <dd class="edit">
                   <button type="button" class="link-btn" onClick={() => edit(0)}>
+                    <Icon name="pencil" size={16} />
                     Change the address
                   </button>
                 </dd>
               </div>
               <div>
-                <dt>Roof</dt>
+                <dt>
+                  <Icon name="layers" size={16} />
+                  Roof
+                </dt>
                 <dd>
                   {labelOf(MATERIALS, draft.roof.material)}, {labelOf(AGES, draft.roof.age).toLowerCase()}.{' '}
                   {labelOf(REASONS, draft.roof.reason)}.
                   {draft.photos.length > 0 && ` ${draft.photos.length} ${draft.photos.length === 1 ? 'photo' : 'photos'}.`}
                 </dd>
-                <dd>
+                <dd class="edit">
                   <button type="button" class="link-btn" onClick={() => edit(1)}>
+                    <Icon name="pencil" size={16} />
                     Change roof details
                   </button>
                 </dd>
               </div>
               <div>
-                <dt>Time</dt>
+                <dt>
+                  <Icon name="calendar-days" size={16} />
+                  Time
+                </dt>
                 <dd>
                   {draft.slot ? whenLabel(draft.slot.startsAt, draft.slot.endsAt) : 'Not picked yet'}
                   <br />
                   <span class="muted">Someone home: {labelOf(SOMEONE_HOME, draft.visit.someoneHome).toLowerCase()}</span>
                 </dd>
-                <dd>
+                <dd class="edit">
                   <button type="button" class="link-btn" onClick={() => edit(2)}>
+                    <Icon name="pencil" size={16} />
                     Change the time
                   </button>
                 </dd>
               </div>
               <div>
-                <dt>You</dt>
+                <dt>
+                  <Icon name="user" size={16} />
+                  You
+                </dt>
                 <dd>
                   {draft.contact.name}
                   <br />
@@ -759,8 +810,9 @@ export default function BookingApp(props: BookingProps) {
                   <br />
                   <span class="muted">{draft.contact.smsConsent ? 'Texts: yes' : 'Texts: no'}</span>
                 </dd>
-                <dd>
+                <dd class="edit">
                   <button type="button" class="link-btn" onClick={() => edit(3)}>
+                    <Icon name="pencil" size={16} />
                     Change your details
                   </button>
                 </dd>
@@ -772,6 +824,7 @@ export default function BookingApp(props: BookingProps) {
         <div class="step-actions">
           {step > 0 && !(fromReview && name !== 'review') && (
             <button type="button" class="btn secondary" onClick={() => goTo(step - 1)}>
+              <Icon name="arrow-left" size={18} />
               Back
             </button>
           )}
@@ -782,6 +835,7 @@ export default function BookingApp(props: BookingProps) {
           ) : (
             <button type="submit" class="btn">
               {fromReview ? 'Back to review' : 'Continue'}
+              <Icon name="arrow-right" size={18} />
             </button>
           )}
         </div>

@@ -1,5 +1,8 @@
 ---
+// Shared frame for the fine-print pages.
 import Base from '../layouts/Base.astro';
+import AskCard from './AskCard.astro';
+import PageHero from './PageHero.astro';
 import { formatDate } from '../facts';
 
 interface Props {
@@ -11,24 +14,37 @@ const { title, description, updated } = Astro.props;
 ---
 
 <Base title={title} description={description}>
-  <article class="section">
-    <div class="wrap prose legal">
-      <h1>{title}</h1>
-      <p class="muted small">Last updated {formatDate(updated)}</p>
-      <slot />
+  <PageHero title={title}>
+    <p class="updated">Last updated {formatDate(updated)}</p>
+  </PageHero>
+
+  <div class="section tight">
+    <div class="wrap split">
+      <article class="prose legal">
+        <slot />
+      </article>
+      <aside class="side" aria-label="Ask us">
+        <AskCard heading="Questions about this page?" assistant={false} />
+      </aside>
     </div>
-  </article>
+  </div>
 </Base>
 
 <style>
+  .updated {
+    margin: 0;
+    font-size: var(--text-s);
+    color: var(--muted);
+  }
+  .legal {
+    color: var(--ink-2);
+  }
+  .legal :global(h2),
+  .legal :global(strong) {
+    color: var(--ink);
+  }
   .legal :global(h2) {
-    font-size: 1.3rem;
-    margin-top: 2rem;
-  }
-  .legal :global(ul) {
-    padding-left: 1.25rem;
-  }
-  .legal :global(li) {
-    margin-bottom: 0.35rem;
+    font-size: clamp(1.3rem, 1.15rem + 0.6vw, 1.55rem);
+    margin-top: 2em;
   }
 </style>

@@ -1,6 +1,7 @@
 // Address with suggestions as you type (an accessible combobox).
 // If lookup is down or the address isn't listed, "Use the address I typed" still works.
 import { useEffect, useRef, useState } from 'preact/hooks';
+import Icon from '../icons/Icon';
 import { post, uuid, type Place, type Suggestion } from './client';
 
 interface Props {
@@ -24,8 +25,19 @@ export default function AddressField(props: Props) {
   const session = useRef<string>(uuid());
   const timer = useRef<number | undefined>(undefined);
   const latest = useRef(0);
+  const box = useRef<HTMLInputElement>(null);
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  // Someone can start typing before the page's script is ready. Pick up what's
+  // already in the box, so the list of matches still shows.
+  useEffect(() => {
+    const typed = box.current?.value ?? '';
+    if (typed && typed !== props.value) {
+      props.onText(typed);
+      lookup(typed);
+    }
+  }, []);
 
   function lookup(text: string) {
     window.clearTimeout(timer.current);
@@ -106,7 +118,9 @@ export default function AddressField(props: Props) {
       <label for="address">Address of the home</label>
       <p class="hint" id="address-hint">Start typing, then pick it from the list.</p>
       <div class="combo">
+        <Icon name="map-pin" size={20} />
         <input
+          ref={box}
           id="address"
           name="address"
           type="text"
@@ -149,8 +163,18 @@ export default function AddressField(props: Props) {
       <p class="hint" aria-live="polite">
         {checking ? 'Checking the address...' : status}
       </p>
-      {props.selected && !props.outOfArea && <p class="ok-line">Found it.</p>}
-      {props.typed && !props.selected && <p class="ok-line">We'll use the address as you typed it.</p>}
+      {props.selected && !props.outOfArea && (
+        <p class="ok-line">
+          <Icon name="circle-check" size={18} />
+          Found it.
+        </p>
+      )}
+      {props.typed && !props.selected && (
+        <p class="ok-line">
+          <Icon name="circle-check" size={18} />
+          We'll use the address as you typed it.
+        </p>
+      )}
       {!props.selected && !props.typed && props.value.trim().length >= 5 && (
         <button type="button" class="btn secondary small-btn" onClick={props.onUseTyped}>
           Use the address I typed

@@ -2,6 +2,7 @@
 // visit, the same link shows the estimate (and takes the answer), then the job.
 // The token sits after # in the link, so it's never sent in a URL to any server.
 import { useEffect, useRef, useState } from 'preact/hooks';
+import Icon from '../icons/Icon';
 import { RequestFailed, getSlots, post, type Slot } from './client';
 import { downloadIcs, googleCalendarUrl } from './calendar';
 import { dateLong, longDay, money, refLabel, whenLabel } from './format';
@@ -155,7 +156,13 @@ export default function ManageApp(props: Props) {
     }
   }
 
-  if (loading) return <p aria-live="polite">Looking up your booking...</p>;
+  if (loading) {
+    return (
+      <p class="measuring" aria-live="polite">
+        Looking up your booking...
+      </p>
+    );
+  }
 
   if (!booking) {
     return (
@@ -227,6 +234,7 @@ export default function ManageApp(props: Props) {
           {fileUrl && (
             <p>
               <a class="btn secondary" href={fileUrl} target="_blank" rel="noopener">
+                <Icon name="file-text" size={18} />
                 Open the full estimate (PDF)
               </a>
             </p>
@@ -238,6 +246,7 @@ export default function ManageApp(props: Props) {
               {est.askedAt && <p>We got your question and will get back to you.</p>}
               <div class="actions">
                 <button type="button" class="btn" onClick={() => { setMode('accept'); setMessage(''); setError(''); }}>
+                  <Icon name="check" size={18} stroke={2.5} />
                   Yes, let's do it
                 </button>
                 <button type="button" class="btn secondary" onClick={() => { setMode('question'); setMessage(''); setError(''); }}>
@@ -311,21 +320,29 @@ export default function ManageApp(props: Props) {
       )}
 
       {(est || job) && <h2 class="visit-h">The inspection</h2>}
+      <p class="status-line">
+        <span class={`chip ${booking.status}`}>{statusText[booking.status]}</span>
+      </p>
       <dl class="summary">
         <div>
-          <dt>Status</dt>
-          <dd>{statusText[booking.status]}</dd>
-        </div>
-        <div>
-          <dt>When</dt>
+          <dt>
+            <Icon name="calendar-days" size={16} />
+            When
+          </dt>
           <dd>{whenLabel(booking.startsAt, booking.endsAt)}</dd>
         </div>
         <div>
-          <dt>Where</dt>
+          <dt>
+            <Icon name="map-pin" size={16} />
+            Where
+          </dt>
           <dd>{booking.address}</dd>
         </div>
         <div>
-          <dt>Reference</dt>
+          <dt>
+            <Icon name="receipt-text" size={16} />
+            Reference
+          </dt>
           <dd>{refLabel(booking.ref)}</dd>
         </div>
       </dl>
@@ -339,9 +356,11 @@ export default function ManageApp(props: Props) {
       {mode === 'view' && booking.canChange && (
         <div class="actions">
           <button type="button" class="btn" onClick={() => void startReschedule()}>
+            <Icon name="calendar-clock" size={18} />
             Change the time
           </button>
           <button type="button" class="btn secondary" onClick={() => { setMode('cancel'); setMessage(''); setError(''); }}>
+            <Icon name="calendar-x" size={18} />
             Cancel the inspection
           </button>
         </div>
@@ -350,9 +369,11 @@ export default function ManageApp(props: Props) {
       {mode === 'view' && booking.status === 'booked' && (
         <div class="actions">
           <button type="button" class="btn secondary" onClick={() => downloadIcs(event)}>
+            <Icon name="calendar-plus" size={18} />
             Add to Apple or Outlook calendar
           </button>
           <a class="btn secondary" href={googleCalendarUrl(event, props.phone)} target="_blank" rel="noopener">
+            <Icon name="calendar-plus" size={18} />
             Add to Google Calendar
           </a>
         </div>

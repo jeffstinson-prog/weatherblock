@@ -1,0 +1,97 @@
+---
+// On phones: a slim bar with the two things people came to do. It appears once
+// the page's own buttons have scrolled away and steps aside whenever another
+// set of them (the closing section, the footer) is on screen. It never covers
+// content, never moves on its own, and isn't there at all on desktop.
+import Icon from './Icon.astro';
+import { facts, telHref } from '../facts';
+
+const tel = telHref();
+---
+
+<div class="sticky-cta" data-sticky-cta inert>
+  <a class="btn" href="/book/">{facts.derived.bookLabel}</a>
+  {tel && (
+    <a class="btn secondary call" href={tel} aria-label={`Call ${facts.contact.phone}`}>
+      <Icon name="phone" size={20} />
+      <span>Call</span>
+    </a>
+  )}
+</div>
+<span class="sticky-cta-mark" data-sticky-cta-mark aria-hidden="true"></span>
+
+<script>
+  const bar = document.querySelector<HTMLElement>('[data-sticky-cta]');
+  const mark = document.querySelector<HTMLElement>('[data-sticky-cta-mark]');
+  if (bar && mark && 'IntersectionObserver' in window) {
+    let past = false;
+    const onScreen = new Set<Element>();
+    const update = () => {
+      const show = past && onScreen.size === 0;
+      bar.toggleAttribute('data-show', show);
+      bar.inert = !show;
+    };
+    // The mark sits one screen down the page: once it's above the viewport, the first screen is behind us.
+    new IntersectionObserver(([entry]) => {
+      past = !entry!.isIntersecting && entry!.boundingClientRect.top < 0;
+      update();
+    }).observe(mark);
+    const zones = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) onScreen.add(e.target);
+        else onScreen.delete(e.target);
+      }
+      update();
+    });
+    document.querySelectorAll('[data-cta-zone], .site-footer').forEach((el) => zones.observe(el));
+  }
+</script>
+
+<style>
+  .sticky-cta-mark {
+    position: absolute;
+    top: 100vh;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+  }
+  .sticky-cta {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.65rem var(--gutter) calc(0.65rem + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    -webkit-backdrop-filter: saturate(1.5) blur(14px);
+    backdrop-filter: saturate(1.5) blur(14px);
+    border-top: 1px solid var(--line);
+    transform: translateY(110%);
+    visibility: hidden;
+    transition:
+      transform 0.25s ease,
+      visibility 0s linear 0.25s;
+  }
+  .sticky-cta[data-show] {
+    transform: none;
+    visibility: visible;
+    transition:
+      transform 0.25s ease,
+      visibility 0s;
+  }
+  .sticky-cta .btn {
+    flex: 1;
+  }
+  .sticky-cta .call {
+    flex: 0 0 auto;
+  }
+  @media (min-width: 64rem) {
+    .sticky-cta,
+    .sticky-cta-mark {
+      display: none;
+    }
+  }
+</style>

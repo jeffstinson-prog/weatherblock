@@ -1,0 +1,132 @@
+---
+// The steps from booking to a written estimate. Built from the facts, so a step
+// that isn't true yet doesn't show. A numbered line on a phone, cards on a desktop.
+import Icon from './Icon.astro';
+import type { IconName } from '../icons/data';
+import { facts } from '../facts';
+
+const { inspection } = facts;
+
+const steps: { icon: IconName; title: string; text: string }[] = [
+  { icon: 'calendar-check', title: 'Book online', text: `Pick a ${inspection.windowHours} hour window that works for you. It takes about a minute.` },
+  inspection.byDrone
+    ? {
+        icon: 'drone',
+        title: 'We inspect by drone',
+        text: `No foot traffic on your shingles until repairs or a replacement call for it.${inspection.homeNotRequired ? " You don't have to be home." : ''}`,
+      }
+    : { icon: 'search', title: 'We inspect your roof', text: inspection.homeNotRequired ? "You don't have to be home." : 'We look at the whole roof.' },
+  ...(inspection.deliverables
+    ? [{ icon: 'file-text' as IconName, title: `You get ${inspection.deliverables}`, text: inspection.free ? 'The inspection is free.' : 'Clear and in writing.' }]
+    : []),
+];
+---
+
+<ol class="how">
+  {steps.map((s, i) => (
+    <li>
+      <span class="how-num" aria-hidden="true">{i + 1}</span>
+      <span class="icon-badge"><Icon name={s.icon} size={22} /></span>
+      <div class="how-text">
+        <h3>{s.title}</h3>
+        <p>{s.text}</p>
+      </div>
+    </li>
+  ))}
+</ol>
+
+<style>
+  /* Phone: a numbered line down the left. */
+  .how {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+  }
+  .how li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.75rem 1fr;
+    column-gap: 1rem;
+    padding-bottom: 1.85rem;
+  }
+  .how li:last-child {
+    padding-bottom: 0;
+  }
+  .how li:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: calc(1.375rem - 1px);
+    top: 3.1rem;
+    bottom: 0.35rem;
+    width: 2px;
+    border-radius: 2px;
+    background: linear-gradient(var(--logo-blue), var(--logo-green));
+    opacity: 0.45;
+  }
+  .how-num {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background: var(--card);
+    border: 1.5px solid color-mix(in srgb, var(--logo-blue) 45%, var(--line));
+    color: var(--link);
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 600;
+    line-height: 1;
+    box-shadow: var(--shadow-1);
+  }
+  .icon-badge {
+    display: none;
+  }
+  .how h3 {
+    margin: 0.5rem 0 0.25rem;
+  }
+  .how p {
+    margin: 0;
+    color: var(--ink-2);
+  }
+
+  /* Desktop: one card per step, with the number large and quiet in the corner. */
+  @media (min-width: 62rem) {
+    .how {
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    }
+    .how li,
+    .how li:last-child {
+      display: block;
+      overflow: hidden;
+      padding: 1.5rem;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-l);
+      box-shadow: var(--shadow-1);
+    }
+    .how li:not(:last-child)::before {
+      content: none;
+    }
+    .how-num {
+      position: absolute;
+      top: 0.4rem;
+      right: 1.15rem;
+      width: auto;
+      height: auto;
+      border: 0;
+      background: none;
+      box-shadow: none;
+      font-size: 4.5rem;
+      color: color-mix(in srgb, var(--logo-blue) 16%, transparent);
+    }
+    .icon-badge {
+      display: grid;
+    }
+    .how h3 {
+      margin: 1rem 0 0.35rem;
+      max-width: 14ch;
+    }
+  }
+</style>

@@ -1,0 +1,93 @@
+---
+// The top of every inner page: where you are, the page's title, and one line about it.
+import Icon from './Icon.astro';
+
+interface Props {
+  title: string;
+  lede?: string;
+  /** Links back up the site, in order. An entry without an href is plain text. */
+  crumbs?: { href?: string; label: string }[];
+}
+const { title, lede, crumbs = [] } = Astro.props;
+const long = title.length > 34;
+---
+
+<header class="page-hero">
+  <div class="wrap">
+    {crumbs.length > 0 && (
+      <nav aria-label="Breadcrumb" class="crumbs">
+        <ol>
+          {crumbs.map((c) => (
+            <li>
+              {c.href ? <a href={c.href}>{c.label}</a> : <span>{c.label}</span>}
+              <Icon name="chevron-right" size={14} />
+            </li>
+          ))}
+        </ol>
+      </nav>
+    )}
+    <h1 class:list={[{ long }]}>{title}</h1>
+    {lede && <p class="lede">{lede}</p>}
+    <slot />
+  </div>
+</header>
+
+<style>
+  .page-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding-block: clamp(2.25rem, 6vw, 4.5rem) clamp(1.75rem, 4vw, 3rem);
+    background: linear-gradient(180deg, var(--mist), var(--paper));
+  }
+  /* A corner of standing seams, like a metal roof. */
+  .page-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: repeating-linear-gradient(112deg, color-mix(in srgb, var(--logo-blue) 16%, transparent) 0 1.5px, transparent 1.5px 34px);
+    -webkit-mask-image: radial-gradient(60rem 26rem at 100% 0%, #000 0%, transparent 70%);
+    mask-image: radial-gradient(60rem 26rem at 100% 0%, #000 0%, transparent 70%);
+  }
+  h1 {
+    max-width: 20ch;
+    margin-bottom: 0.35em;
+  }
+  h1.long {
+    font-size: clamp(1.8rem, 1.3rem + 2.6vw, 2.75rem);
+    max-width: 24ch;
+  }
+  .lede {
+    margin-bottom: 0;
+  }
+  .crumbs ol {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.15rem 0.35rem;
+    padding: 0;
+    margin: 0 0 1rem;
+    font-size: var(--text-s);
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .crumbs li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .crumbs a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+  .crumbs li:last-child :global(.icon) {
+    display: none;
+  }
+</style>

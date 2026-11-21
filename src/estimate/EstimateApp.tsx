@@ -3,6 +3,7 @@
 // its outline in open building data stands in; when that's missing too, the
 // house's size typed in. A rough guide, never a quote.
 import { useRef, useState } from 'preact/hooks';
+import Icon from '../icons/Icon';
 import AddressField from '../booking/AddressField';
 import { post, type Place } from '../booking/client';
 import {
@@ -187,7 +188,11 @@ export default function EstimateApp(p: Props) {
             setManual(true);
           }}
         />
-        {busy && <p aria-live="polite">Measuring your roof...</p>}
+        {busy && (
+          <p class="measuring" aria-live="polite">
+            Measuring your roof...
+          </p>
+        )}
       </div>
 
       {error && (
@@ -197,7 +202,7 @@ export default function EstimateApp(p: Props) {
       )}
 
       {found?.source === 'google' && !manualResult && (
-        <section class="estimate-card" aria-labelledby="est-found-h">
+        <section class="estimate-card found" aria-labelledby="est-found-h">
           <h2 id="est-found-h">{place?.text}</h2>
           {found.image && (
             <figure class="aerial">
@@ -223,7 +228,7 @@ export default function EstimateApp(p: Props) {
       )}
 
       {found?.source === 'outline' && house && !manualResult && (
-        <section class="estimate-card" aria-labelledby="est-found-h">
+        <section class="estimate-card found" aria-labelledby="est-found-h">
           <h2 id="est-found-h">{place?.text}</h2>
           <figure class="aerial">
             <div class="aerial-frame">
@@ -248,7 +253,7 @@ export default function EstimateApp(p: Props) {
       )}
 
       {result && (
-        <section class="estimate-card" aria-labelledby="est-result-h">
+        <section class="estimate-card result" aria-labelledby="est-result-h">
           <h2 id="est-result-h">Ballpark for a new roof</h2>
           {result.price ? (
             <p class="price">
@@ -289,8 +294,10 @@ export default function EstimateApp(p: Props) {
           <div class="actions">
             <button type="button" class="btn" onClick={book}>
               {p.bookLabel}
+              <Icon name="arrow-right" size={18} />
             </button>
             <a class="btn secondary" href={p.phoneHref}>
+              <Icon name="phone" size={18} />
               Call {p.phone}
             </a>
           </div>

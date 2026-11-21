@@ -1,0 +1,48 @@
+---
+// Five stars for a rating out of 5, to the nearest half. Decorative: the number
+// and the words next to it say the same thing.
+import { ICONS } from '../icons/data';
+
+interface Props {
+  rating: number;
+  size?: number;
+}
+const { rating, size = 20 } = Astro.props;
+const kinds = [1, 2, 3, 4, 5].map((i) => (rating >= i - 0.25 ? 'full' : rating >= i - 0.75 ? 'half' : 'empty'));
+---
+
+<span class="stars" aria-hidden="true">
+  {kinds.map((kind) => (
+    <svg class={kind} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" stroke-width="1.5" stroke-linejoin="round" focusable="false">
+      {kind === 'half' && (
+        <defs>
+          <linearGradient id="half-star">
+            <stop offset="50%" stop-color="currentColor" />
+            <stop offset="50%" stop-color="currentColor" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+      )}
+      <Fragment set:html={ICONS.star} />
+    </svg>
+  ))}
+</span>
+
+<style>
+  .stars {
+    display: inline-flex;
+    gap: 0.1rem;
+    color: var(--gold);
+    vertical-align: middle;
+  }
+  svg {
+    stroke: currentColor;
+    fill: currentColor;
+  }
+  svg.half {
+    fill: url(#half-star);
+  }
+  svg.empty {
+    fill: none;
+    stroke: var(--line-strong);
+  }
+</style>

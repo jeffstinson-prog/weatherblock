@@ -13,14 +13,18 @@ const props = {
 };
 ---
 
-<Base title="Your inspection" description="See, change or cancel your inspection." noindex>
-  <section class="section">
+<Base title="Your inspection" description="See, change or cancel your inspection." noindex focus>
+  <div class="flow">
     <div class="wrap">
-      <h1>Your inspection</h1>
-      <ManageApp client:load {...props} />
-      <noscript>
-        <p>This page needs JavaScript. Call or text {facts.contact.phone} to change or cancel.</p>
-      </noscript>
+      <div class="flow-main">
+        <header class="flow-head">
+          <h1>Your inspection</h1>
+        </header>
+        <ManageApp client:load {...props} />
+        <noscript>
+          <p>This page needs JavaScript. Call or text {facts.contact.phone} to change or cancel.</p>
+        </noscript>
+      </div>
     </div>
-  </section>
+  </div>
 </Base>

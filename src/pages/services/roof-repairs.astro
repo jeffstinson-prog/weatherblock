@@ -6,13 +6,13 @@ import { facts, telHref } from '../../facts';
 <ServicePage
   serviceKey="repair"
   description="Roof repairs for leaks, damaged shingles and problem spots."
+  lede="Leaks, damaged shingles and problem spots. Tell us what you're seeing, and we'll find the cause and the next step."
   questions={['leak-now', 'repair-or-replace', 'storm-damage-signs']}
 >
-  <p class="lede">Leaks, damaged shingles and problem spots. Tell us what you're seeing, and we'll find the cause and the next step.</p>
   <h2>Repair or replace?</h2>
   <p>A problem in one spot can often be repaired. Wear across the whole roof, repeated leaks, or damage to the wood under the shingles can make a new roof worth a look. We base the advice on the inspection, not on the roof's age alone.</p>
   {telHref() && (
-    <div class="notice">
+    <div class="notice urgent">
       <p><strong>Leaking right now?</strong> Call <a href={telHref()}>{facts.contact.phone}</a>.</p>
     </div>
   )}

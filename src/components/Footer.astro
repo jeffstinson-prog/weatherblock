@@ -1,75 +1,153 @@
 ---
+import Icon from './Icon.astro';
 import { copyrightLine, facts, has, smsHref, telHref } from '../facts';
 
 const tel = telHref();
 const sms = smsHref();
-const { lines, verse } = facts.business;
+const { lines, verse, name } = facts.business;
+const explore = [
+  { href: '/book/', label: facts.derived.bookLabel },
+  ...(facts.instantEstimate.on ? [{ href: '/estimate/', label: 'Instant estimate' }] : []),
+  { href: '/services/', label: 'Services' },
+  { href: '/help/', label: 'Help center' },
+  { href: '/ask/', label: 'Ask a question' },
+  ...(facts.financing.url ? [{ href: '/financing/', label: 'Financing' }] : []),
+  { href: '/about/', label: 'About us' },
+  { href: '/service-area/', label: 'Service area' },
+];
+const finePrint = [
+  { href: '/privacy/', label: 'Privacy' },
+  { href: '/terms/', label: 'Terms' },
+  { href: '/text-messages/', label: 'Text messages' },
+  { href: '/accessibility/', label: 'Accessibility' },
+];
+const [emailUser = '', emailHost = ''] = facts.contact.email.split('@');
+
+interface Props {
+  /** One-job pages (booking, a private link) get the fine print only. */
+  focus?: boolean;
+}
+const { focus = false } = Astro.props;
 ---
 
-<footer class="site-footer">
-  <hr class="lines" />
+<footer class:list={['site-footer', { slim: focus }]}>
+  {focus && (
+    <div class="wrap slim-row">
+      <p class="small quiet">{copyrightLine()}</p>
+      <ul class="slim-links">
+        {finePrint.slice(0, 3).map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+    </div>
+  )}
+  {!focus && (
   <div class="wrap grid">
-    <div>
-      {lines.map((line) => <p class="line">{line}</p>)}
+    <div class="about">
+      <p class="name">{name}</p>
+      {lines[0] && <p class="line">{lines[0]}</p>}
       {verse.text && (
         <p class="verse">
-          {verse.text} <span class="muted">{verse.ref}</span>
+          {verse.text} <span class="ref">{verse.ref}</span>
         </p>
       )}
     </div>
     <div>
       <h2 class="h">Reach us</h2>
       <ul class="plain">
-        {tel && <li><a href={tel}>Call {facts.contact.phone}</a></li>}
-        {sms && <li><a href={sms}>Text {facts.contact.phone}</a></li>}
-        {facts.contact.email && <li><a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a></li>}
-        {has('contact.hours') && <li class="muted">{facts.contact.hours}</li>}
+        {tel && (
+          <li>
+            <a href={tel}><Icon name="phone" size={18} /> Call {facts.contact.phone}</a>
+          </li>
+        )}
+        {sms && (
+          <li>
+            <a href={sms}><Icon name="message-square" size={18} /> Text {facts.contact.phone}</a>
+          </li>
+        )}
+        {facts.contact.email && (
+          <li>
+            <a href={`mailto:${facts.contact.email}`}>
+              <Icon name="mail" size={18} />
+              <span class="addr">{emailUser}@<wbr />{emailHost}</span>
+            </a>
+          </li>
+        )}
+        {has('contact.hours') && <li class="quiet">{facts.contact.hours}</li>}
       </ul>
-      {facts.serviceArea.summary && <p class="muted small">Serving {facts.serviceArea.summary}.</p>}
+      {facts.serviceArea.summary && <p class="quiet small">Serving {facts.serviceArea.summary}.</p>}
     </div>
     <nav aria-label="Footer" class="footer-links">
-      <h2 class="h">More</h2>
+      <h2 class="h">Explore</h2>
       <ul class="plain">
-        <li><a href="/book/">Book a free inspection</a></li>
-        <li><a href="/help/">Help center</a></li>
-        <li><a href="/service-area/">Service area</a></li>
-        <li><a href="/privacy/">Privacy</a></li>
-        <li><a href="/terms/">Terms</a></li>
-        <li><a href="/text-messages/">Text messages</a></li>
-        <li><a href="/accessibility/">Accessibility</a></li>
+        {explore.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+    <nav aria-label="Fine print" class="footer-links">
+      <h2 class="h">Fine print</h2>
+      <ul class="plain">
+        {finePrint.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
       </ul>
     </nav>
   </div>
+  )}
+  {!focus && (
   <div class="wrap legal">
-    <p class="small muted">{copyrightLine()}</p>
+    <p class="small quiet">{copyrightLine()}</p>
   </div>
+  )}
 </footer>
 
 <style>
   .site-footer {
-    background: var(--surface);
-    margin-top: 2rem;
+    background: var(--night);
+    color: var(--on-night);
+    border-top: 3px solid transparent;
+    border-image: linear-gradient(90deg, var(--logo-blue), var(--logo-green)) 1;
   }
   .grid {
     display: grid;
-    gap: 1.5rem;
-    padding-block: 2rem 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 2.25rem 2rem;
+    padding-block: 3.5rem 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  }
+  @media (min-width: 60rem) {
+    .grid {
+      grid-template-columns: 1.6fr 1.3fr 1fr 0.8fr;
+    }
+  }
+  .name {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
   }
   .line {
-    font-weight: 700;
-    font-size: 1.15rem;
-    margin-bottom: 0.25rem;
+    color: var(--on-night-muted);
+    margin-bottom: 1.25rem;
   }
   .verse {
-    margin-top: 0.75rem;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    line-height: 1.4;
+    padding-left: 1rem;
+    border-left: 2px solid var(--logo-green);
+    max-width: 22rem;
+  }
+  .verse .ref {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: var(--text-s);
+    color: var(--on-night-muted);
+    margin-top: 0.25rem;
   }
   .h {
-    font-size: 1rem;
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--muted);
-    margin-bottom: 0.5rem;
+    letter-spacing: 0.12em;
+    color: var(--on-night-muted);
+    margin-bottom: 0.6rem;
   }
   .plain {
     list-style: none;
@@ -79,9 +157,63 @@ const { lines, verse } = facts.business;
   .plain a {
     display: inline-flex;
     align-items: center;
+    gap: 0.55rem;
     min-height: 44px;
+    color: var(--on-night);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .plain a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  .plain a :global(.icon) {
+    color: var(--logo-green);
+  }
+  .quiet {
+    color: var(--on-night-muted);
   }
   .legal {
-    padding-block: 0.5rem 2rem;
+    border-top: 1px solid var(--night-line);
+    padding-block: 1.25rem 2rem;
+    /* Room for the phone action bar, so it never covers the last line. */
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  }
+  .legal p {
+    margin: 0;
+  }
+  .site-footer :global(:focus-visible) {
+    outline-color: #9bd6f5;
+  }
+  .slim-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem 1.5rem;
+    padding-block: 1rem calc(1rem + env(safe-area-inset-bottom));
+  }
+  .slim-row p {
+    margin: 0;
+  }
+  .slim-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.25rem;
+    font-size: var(--text-s);
+  }
+  .slim-links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--on-night);
+    text-decoration: none;
+  }
+  .slim-links a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
 </style>

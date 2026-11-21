@@ -1,5 +1,6 @@
 // Export, referral codes, your alerts, sign out.
 import { useEffect, useState } from 'preact/hooks';
+import Icon from '../icons/Icon';
 import { ApiError, api, auth, download } from './api';
 import { dayKey } from '../booking/format';
 
@@ -58,10 +59,21 @@ export default function More(props: { businessName: string }) {
       {flash && <p class="notice ok" role="status">{flash}</p>}
       {error && <p class="error-box" role="alert">{error}</p>}
 
-      <p><a class="btn secondary block" href="#/availability">Inspection availability</a></p>
-      <p><a class="btn secondary block" href="#/crews">Crews</a></p>
-      <p><a class="btn secondary block" href="#/referrals">Referral codes</a></p>
-      <p><a class="btn secondary block" href="#/questions">Questions people asked the assistant</a></p>
+      <ul class="rows">
+        {[
+          { href: '#/availability', label: 'Inspection availability' },
+          { href: '#/crews', label: 'Crews' },
+          { href: '#/referrals', label: 'Referral codes' },
+          { href: '#/questions', label: 'Questions people asked the assistant' },
+        ].map((l) => (
+          <li key={l.href}>
+            <a href={l.href}>
+              {l.label}
+              <Icon name="chevron-right" size={20} />
+            </a>
+          </li>
+        ))}
+      </ul>
 
       <h2>Export bookings</h2>
       <form onSubmit={exportCsv} noValidate class="export">
@@ -106,6 +118,7 @@ export default function More(props: { businessName: string }) {
 
       <p>
         <button type="button" class="btn secondary" onClick={() => void auth?.signOut()}>
+          <Icon name="log-out" size={18} />
           Sign out
         </button>
       </p>

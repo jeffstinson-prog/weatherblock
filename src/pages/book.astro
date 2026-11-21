@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
 import BookingApp from '../booking/BookingApp';
 import '../styles/booking.css';
 import { facts, telHref, smsHref } from '../facts';
@@ -19,17 +20,46 @@ const props = {
 };
 const tel = telHref();
 const sms = smsHref();
+const { inspection } = facts;
+// Only what the facts file backs up.
+const expect = [
+  ...(inspection.free ? ['The inspection is free'] : []),
+  `You pick a ${inspection.windowHours} hour arrival window`,
+  ...(inspection.byDrone ? ['We inspect by drone, with no foot traffic on your shingles'] : []),
+  ...(inspection.homeNotRequired ? ["You don't have to be home"] : []),
+  ...(inspection.deliverables ? [`You get ${inspection.deliverables}`] : []),
+];
 ---
 
-<Base title={facts.derived.bookLabel} description={`${facts.derived.bookLabel} in ${facts.serviceArea.short}. Pick a two-hour window online.`}>
-  <section class="section">
-    <div class="wrap">
-      <h1>{facts.derived.bookLabel}</h1>
-      <p class="muted">About a minute. Prefer to talk? {tel && <a href={tel}>Call {facts.contact.phone}</a>}{sms && <> or <a href={sms}>text us</a></>}.</p>
-      <BookingApp client:load {...props} />
-      <noscript>
-        <p>Online booking needs JavaScript. Call or text {facts.contact.phone} and we'll book it for you.</p>
-      </noscript>
+<Base title={facts.derived.bookLabel} description={`${facts.derived.bookLabel} in ${facts.serviceArea.short}. Pick a two-hour window online.`} focus>
+  <div class="flow">
+    <div class="wrap flow-grid">
+      <div class="flow-main">
+        <header class="flow-head">
+          <h1>{facts.derived.bookLabel}</h1>
+          <p>About a minute. Prefer to talk? {tel && <a href={tel}>Call {facts.contact.phone}</a>}{sms && <> or <a href={sms}>text us</a></>}.</p>
+        </header>
+        <BookingApp client:load {...props} />
+        <noscript>
+          <p>Online booking needs JavaScript. Call or text {facts.contact.phone} and we'll book it for you.</p>
+        </noscript>
+      </div>
+      <aside class="flow-side" aria-label="What to expect">
+        <div class="card">
+          <h2>What to expect</h2>
+          <ul class="ticks">
+            {expect.map((line) => (
+              <li>
+                <Icon name="check" size={18} stroke={2.5} />
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p class="talk">
+          After you book, we send you a private link to change or cancel.
+        </p>
+      </aside>
     </div>
-  </section>
+  </div>
 </Base>

@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import BookCall from '../components/BookCall.astro';
+import PageHero from '../components/PageHero.astro';
 import EstimateApp from '../estimate/EstimateApp';
 import '../styles/booking.css';
 import { facts, telHref } from '../facts';
@@ -16,32 +17,73 @@ const props = {
   phoneHref: telHref(),
   serviceAreaShort: facts.serviceArea.short,
 };
+const lede = on
+  ? `A ballpark for a new roof with ${e.material}, from your house's outline seen from above. It takes about ten seconds.`
+  : `Prices come in a written estimate after ${facts.derived.theInspection}.`;
 ---
 
 <Base title="Instant roof estimate" description={`A ballpark for a new roof in ${facts.serviceArea.short}, from your house's outline seen from above.`}>
-  <section class="section">
-    <div class="wrap">
-      <h1>Instant roof estimate</h1>
-      {
-        on ? (
-          <>
-            <p class="lede">A ballpark for a new roof with {e.material}, from your house's outline seen from above. It takes about ten seconds.</p>
-            <EstimateApp client:load {...props} />
-            <noscript>
-              <p>This page needs JavaScript. Call or text {facts.contact.phone} for a price.</p>
-            </noscript>
-            <p class="small muted sources">
-              Addresses and roof measurements: <span class="gmp-attribution" translate="no">Google Maps</span>. When Google has no data for a house:
-              building outlines from Microsoft, under the Open Database License (our copy is at{' '}
-              <a href="/data/outlines/LICENSE.txt">/data/outlines</a>), and aerial photos from the USDA National Agriculture Imagery Program,
-              via the U.S. Geological Survey.
-            </p>
-          </>
-        ) : (
-          <p class="lede">Prices come in a written estimate after {facts.derived.theInspection}.</p>
-        )
-      }
+  <PageHero title="Instant roof estimate" lede={lede} />
+
+  {on && (
+    <div class="section tight">
+      <div class="wrap split">
+        <div class="tool">
+          <EstimateApp client:load {...props} />
+          <noscript>
+            <p>This page needs JavaScript. Call or text {facts.contact.phone} for a price.</p>
+          </noscript>
+          <p class="small muted sources">
+            Addresses and roof measurements: <span class="gmp-attribution" translate="no">Google Maps</span>. When Google has no data for a house:
+            building outlines from Microsoft, under the Open Database License (our copy is at{' '}
+            <a href="/data/outlines/LICENSE.txt">/data/outlines</a>), and aerial photos from the USDA National Agriculture Imagery Program,
+            via the U.S. Geological Survey.
+          </p>
+        </div>
+        <aside class="side" aria-label="How the estimate works">
+          <div class="card how">
+            <h2>How it works</h2>
+            <ol class="steps">
+              <li>Pick your address from the list.</li>
+              <li>We measure your roof from above.</li>
+              <li>You see a rough price range for a new roof with {e.material}.</li>
+            </ol>
+          </div>
+          <p class="note">
+            A rough guide, not a quote. Your price is the one in your written estimate after {facts.derived.theInspection}.
+          </p>
+        </aside>
+      </div>
     </div>
-  </section>
+  )}
+
   <BookCall />
 </Base>
+
+<style>
+  .tool {
+    max-width: 40rem;
+  }
+  .how {
+    padding: 1.5rem;
+  }
+  .how h2 {
+    font-size: var(--h3);
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+  .how .steps {
+    margin: 0;
+    font-size: var(--text-s);
+  }
+  .how .steps li {
+    min-height: 2.1rem;
+    display: flex;
+    align-items: center;
+  }
+  .note {
+    margin: 0;
+    font-size: var(--text-s);
+    color: var(--muted);
+  }
+</style>
