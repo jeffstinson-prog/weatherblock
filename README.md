@@ -23,7 +23,7 @@ npm run dev          # http://localhost:4321
 
 ## Database
 
-Supabase Postgres. The schema is in [`supabase/migrations/`](supabase/migrations/), applied in order.
+Supabase Postgres. The schema is in [`supabase/migrations/`](supabase/migrations/), applied in order. For a new, empty project, `npm run --silent db:setup-sql` prints them all as one file to paste into the SQL Editor.
 
 - `wb` holds the tables. The public can't read them.
 - `wb_api` holds the only functions the public can call: open windows, book, the manage link.
@@ -104,4 +104,4 @@ Netlify builds every pull request as a deploy preview and deploys `main` to prod
 | `src/styles/global.css` | Colors from the logo, type, buttons, forms |
 | `tests/unit/`, `tests/e2e/` | Tests |
 
-See [`STATUS.md`](STATUS.md) for what's done and what's next.
+See [`STATUS.md`](STATUS.md) for what's done and what's next, and [`LAUNCH.md`](LAUNCH.md) for what's left before launch.
