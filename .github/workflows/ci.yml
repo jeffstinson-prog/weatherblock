@@ -74,11 +74,17 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/wb_e2e
           APP_ENV: test
 
+      - name: What Lighthouse measured
+        if: always()
+        run: node scripts/lighthouse-summary.mjs
+
       - name: Keep reports when something fails
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: reports
+          # .lighthouseci starts with a dot, so it's left out unless hidden files are included.
+          include-hidden-files: true
           path: |
             playwright-report/
             test-results/

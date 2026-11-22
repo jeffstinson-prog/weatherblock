@@ -141,16 +141,6 @@ const sms = smsHref();
     width: clamp(100px, 30vw, 132px);
     height: auto;
   }
-  /* The logo is drawn for a light background, so in dark mode it sits on a light plate. */
-  @media (prefers-color-scheme: dark) {
-    .brand {
-      background: #f7f9f9;
-      padding: 0.3rem 0.55rem;
-    }
-    .brand img {
-      width: clamp(88px, 26vw, 116px);
-    }
-  }
   .bar-actions {
     display: flex;
     gap: 0.35rem;

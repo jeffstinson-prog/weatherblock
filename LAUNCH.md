@@ -14,8 +14,9 @@ Netlify's environment settings (and GitHub secrets for tests), never in the repo
 The full list of settings is in `.env.example`.
 
 - [x] **GitHub**: the private repo `weatherblock` (done November 19, 2026).
-  - [ ] Turn on GitHub Actions, so the tests run on every pull request: in the repo, Settings, Actions, General, "Allow all actions and reusable workflows", Save.
-- [x] **Netlify** (done November 20, 2026): the project `heartfelt-profiterole-59a6a3`, connected to the repo, building the `8-pipeline` branch until the pull requests are merged (then switch Production branch to `main`). Test site: https://heartfelt-profiterole-59a6a3.netlify.app. Booking checked end to end on it.
+  - [x] GitHub Actions is on (November 21, 2026), so the tests run on every pull request and on `main`.
+- [x] **Netlify** (done November 20, 2026): the project `heartfelt-profiterole-59a6a3`, connected to the repo. Test site: https://heartfelt-profiterole-59a6a3.netlify.app. Booking checked end to end on it.
+  - [x] Netlify builds from `main` (switched November 21, 2026, after all nine pull requests were merged). The redesign is live on the test site, and booking was checked end to end on it again: a time tapped on the home page, a made-up booking, then cancelled from its private link.
 - [ ] **Supabase**: the project is WeatherBlock Roofing (`fsyrlkpzxljwhqpfxofh`). It signs owner logins with published keys (ES256), which the site checks, so no JWT secret is needed.
   - [x] Load the tables (done November 19, 2026), and the update for estimates, crews and roof jobs (done November 20, 2026). `npm run --silent db:setup-sql` prints every migration as one file to paste into the SQL Editor; `-- --after <version>` prints only the newer ones. Each runs as one transaction and ends with a summary line to check.
   - [x] Sign-ups off (done November 19, 2026).

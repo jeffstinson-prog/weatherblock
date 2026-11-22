@@ -84,7 +84,7 @@ At `/ask/`, a page (never a pop-up). One request to the Claude API per question,
 One small system, in [`src/styles/global.css`](src/styles/global.css): type, color, space, buttons, cards, rows and forms. Every page is built from it.
 
 - **Type.** Fraunces for headings, Figtree for everything else. Both are open source (SIL Open Font License) and served from this site, not from a font service; the license files sit next to the fonts in `src/assets/fonts/`. System fonts sized to match show until they load, so the page doesn't jump.
-- **Color.** From the logo: blue `#268EBC` and sea green `#80BBAE`. Both are too light for small text, so text, links and buttons use a deeper blue. Warm paper background, white cards, deep ocean for the dark sections. Dark mode follows the phone. Every text pair is checked for WCAG AA contrast by the end-to-end tests.
+- **Color.** From the logo: blue `#268EBC` and sea green `#80BBAE`. Both are too light for small text, so text, links and buttons use a deeper blue. Warm paper background, white cards, deep ocean for the dark sections. One light design for every visitor: the site does not switch to dark colors when a phone is set to dark mode (JT's call). Every text pair is checked for WCAG AA contrast by the end-to-end tests.
 - **Icons.** A small set from [Lucide](https://lucide.dev) (ISC license), kept in `src/icons/data.ts`. To add one: add its name in `scripts/build-icons.mjs`, then `npm install --no-save lucide-static && node scripts/build-icons.mjs`.
 - **Page parts.** `Header` (stays in view; a phone gets a menu sheet), `PageHero` (the top of every inner page), `BookCall` (the closing section), `StickyCta` (a Book and Call bar on phones once the page's own buttons scroll away), `Footer`. Booking and the private link use a quiet header and a short footer (`focus` on the layout), so nothing pulls people out of the form.
 - **Flows.** `src/styles/booking.css` styles booking, the private link, the instant estimate and the assistant; `src/styles/owner.css` the owner app.
@@ -97,8 +97,9 @@ One small system, in [`src/styles/global.css`](src/styles/global.css): type, col
 npm test                                   # unit tests: facts, help center, house rules, the rule check
 npm run test:content                       # every built page keeps the house rules (after a build)
 npm run db:local && npm run test:db        # database: capacity, two people racing for one spot, row level security
-npm run build:test && npm run test:e2e     # Playwright at 320px and 390px, light and dark, with axe: booking, manage link, owner app
-FORCE_INDEXABLE=1 npm run build:node && npm run lhci   # Lighthouse, phone settings, 95+ required
+npm run build:test && npm run test:e2e     # Playwright at 320px and 390px (one phone set to dark mode: the site must stay light), with axe: booking, manage link, owner app
+FORCE_INDEXABLE=1 npm run build:node && npm run lhci   # Lighthouse, phone settings, 95+ required; three runs a page, judged on the middle one
+node scripts/lighthouse-summary.mjs        # what Lighthouse measured, one line per page
 ```
 
 The database and end-to-end tests need a Postgres you can throw away. Set `DATABASE_URL` (default `postgres://postgres:postgres@127.0.0.1:5432/wb_test`; end-to-end uses `wb_e2e`). Lighthouse needs Chrome; if it isn't found, set `CHROME_PATH`.

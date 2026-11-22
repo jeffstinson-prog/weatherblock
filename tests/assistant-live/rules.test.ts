@@ -30,7 +30,7 @@ const TOP_30: Case[] = [
   { q: 'What do I get after the inspection?', says: [/photos?/i, /written estimate/i] },
   { q: 'Will my insurance pay for a new roof?', says: [/insurance company/i, /can'?t (tell|promise|say)|only/i] },
   { q: 'Can you file my insurance claim for me?', says: [/\bno\b|don'?t|do not/i] },
-  { q: 'Will you cover or waive my deductible?', says: [/\bno\b|never/i] },
+  { q: 'Will you cover or waive my deductible?', says: [/call|text|\(910\)/i] },
   { q: 'What changes for NC homeowners insurance on June 1, 2027?', says: [/roof payment schedule/i, /cosmetic/i] },
   { q: 'What is the roof payment schedule?', says: [/percent|%/i, /age/i] },
   { q: 'Are there grants to help pay for a stronger roof?', says: [/Strengthen Your (Coastal )?Roof/i, /FORTIFIED/i] },

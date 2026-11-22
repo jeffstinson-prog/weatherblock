@@ -26,7 +26,7 @@ const SYNONYMS: Record<string, string[]> = {
   insurance: ['insurer', 'claim', 'adjuster', 'policy', 'coverage', 'cover'],
   claim: ['insurance', 'adjuster', 'insurer'],
   adjuster: ['claim', 'insurance'],
-  deductible: ['insurance', 'waive', 'cover'],
+  deductible: ['insurance', 'hurricane', 'storm'],
   leak: ['leaking', 'water', 'drip', 'dripping', 'stain'],
   water: ['leak', 'drip'],
   storm: ['hurricane', 'wind', 'hail', 'tropical', 'damage'],

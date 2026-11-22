@@ -107,6 +107,18 @@ test('home page has RoofingContractor structured data', async ({ page }) => {
   expect(data.aggregateRating).toBeUndefined();
 });
 
+test('the site stays light when the phone is set to dark mode', async ({ browser }) => {
+  const context = await browser.newContext({ colorScheme: 'dark' });
+  const page = await context.newPage();
+  await page.goto('/');
+  const colors = await page.evaluate(() => ({
+    page: getComputedStyle(document.documentElement).backgroundColor,
+    text: getComputedStyle(document.body).color,
+  }));
+  expect(colors).toEqual({ page: 'rgb(250, 249, 246)', text: 'rgb(11, 37, 48)' });
+  await context.close();
+});
+
 test('reduced motion is respected', async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: 'reduce' });
   const page = await context.newPage();

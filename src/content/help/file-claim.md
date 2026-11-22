@@ -10,7 +10,7 @@ sources:
     url: https://www.ncdoi.gov/consumer-guide-public-adjusters/open
   - label: NC Department of Insurance, March 20, 2026
     url: https://www.ncdoi.gov/blog/2026/03/20/make-sure-you-dont-fall-scammers-schemes
-related: [insurance-pay, deductible, after-inspection]
+related: [insurance-pay, after-inspection]
 keywords: [file, claim, adjuster, negotiate, insurance company, public adjuster, settle]
 ---
 No. {{insuranceClaims.youDo}} We don't file, handle or negotiate claims.

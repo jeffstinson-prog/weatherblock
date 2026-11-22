@@ -27,6 +27,7 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], viewport: { width: 320, height: 640 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 },
     },
     {
+      // A phone set to dark mode. The site stays light, and must still pass every check.
       name: 'phone-390-dark',
       use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1, colorScheme: 'dark' },
     },
