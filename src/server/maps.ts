@@ -167,7 +167,8 @@ export function satelliteUrl(lat: number, lng: number): string | null {
 type Box = { sw: { lat: number; lng: number }; ne: { lat: number; lng: number } };
 
 /**
- * The closest zoom at which a roof's box still takes up about half of a picture this size.
+ * The closest zoom at which a roof's box still fits in a picture this size with room around it
+ * (it takes between about a third and three quarters of the frame).
  * Left to itself Google picks a zoom that shows the whole neighborhood, with the house a speck.
  * Zoom 20 is the closest satellite view we can count on; 16 is a few blocks.
  */
@@ -176,7 +177,7 @@ export function zoomToFit(box: Box, size = { width: 640, height: 400 }): number 
   const cos = Math.cos((lat * Math.PI) / 180);
   const widthM = Math.abs(box.ne.lng - box.sw.lng) * 111_320 * cos;
   const heightM = Math.abs(box.ne.lat - box.sw.lat) * 110_540;
-  const metersPerPixel = Math.max(widthM / (size.width * 0.5), heightM / (size.height * 0.5), 0.01);
+  const metersPerPixel = Math.max(widthM / (size.width * 0.75), heightM / (size.height * 0.75), 0.01);
   const zoom = Math.floor(Math.log2((156_543.03392 * cos) / metersPerPixel));
   return Math.min(20, Math.max(16, zoom));
 }
