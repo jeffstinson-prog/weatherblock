@@ -265,6 +265,8 @@ export default function EstimateApp(p: Props) {
               inspection.
             </p>
           )}
+          {/* Too big to price: say so and stop. Its size and the range would only contradict that. */}
+          {result.price && (
           <ul class="plain">
             {found?.source === 'google' && !manualResult ? (
               <>
@@ -287,10 +289,13 @@ export default function EstimateApp(p: Props) {
             )}
             <li>For {p.material}, installed.</li>
           </ul>
+          )}
+          {result.price && (
           <p class="small muted">
             A rough guide, not a quote. A photo from above can't show how many layers are on the roof, rotten wood, or every skylight
             and chimney. {p.priceText} Your price is the one in your written estimate after the free inspection.
           </p>
+          )}
           <div class="actions">
             <button type="button" class="btn" onClick={book}>
               {p.bookLabel}
