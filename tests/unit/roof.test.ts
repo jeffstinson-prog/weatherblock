@@ -109,6 +109,14 @@ describe("the owners' roof sheet", () => {
     expect(roofSummary(sheet)).toMatch(/^Roof about [\d.]+ to [\d.]+ squares, from the building's outline\. Slope not known\. Ballpark \$9,400 to \$11,200\.$/);
   });
 
+  it("doesn't keep the owners' alert waiting: past its time budget, the measurement gives up", async () => {
+    process.env.APP_ENV = 'test';
+    vi.stubGlobal('fetch', () => new Promise(() => {})); // a lookup that never answers
+    const started = Date.now();
+    expect(await measureRoof(33.974452, -78.379911, 50)).toBeNull();
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
+
   it('gives nothing, without failing, when neither has the house or the lookup is down', async () => {
     process.env.APP_ENV = 'test';
     vi.stubGlobal('fetch', async () => {

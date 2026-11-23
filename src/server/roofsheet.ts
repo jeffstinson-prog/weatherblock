@@ -49,12 +49,31 @@ async function outlineNear(lat: number, lng: number): Promise<Candidate | null> 
   return candidates(lists.flat(), lat, lng)[0] ?? null;
 }
 
+/** A promise's answer if it comes within `ms`, otherwise null. */
+async function within<T>(ms: number, work: Promise<T | null>): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), ms);
+  });
+  try {
+    return await Promise.race([work, late]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /**
  * Measure the roof at a point. Google first; when Google has no building there,
- * the outline in open building data; null when neither has it. Never throws:
- * a request or a booking must not fail because a measurement did.
+ * the outline in open building data; null when neither has it, or when it takes
+ * longer than `budgetMs`. Never throws: a request or a booking must not fail, or
+ * keep the owners waiting for their alert, because a measurement did.
+ * Owners can measure again from the app.
  */
-export async function measureRoof(lat: number, lng: number): Promise<RoofSheet | null> {
+export function measureRoof(lat: number, lng: number, budgetMs = 5000): Promise<RoofSheet | null> {
+  return within(budgetMs, measure(lat, lng));
+}
+
+async function measure(lat: number, lng: number): Promise<RoofSheet | null> {
   const cfg = priceConfig();
   const solar = await roofFromSolar(lat, lng).catch((err) => {
     console.error('solar lookup failed', err);

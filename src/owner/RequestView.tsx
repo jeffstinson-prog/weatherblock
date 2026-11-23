@@ -140,8 +140,8 @@ export default function RequestView(props: { id: string; businessName: string })
               </a>
             </div>
             <p class="muted small">
-              "Book a time for them" opens the booking form with their address and details filled in. The text opens in your own messages
-              with the link ready to send.
+              "Book a time for them" opens the booking form with their address and details filled in. Tick the box for texts only if they
+              say yes to texts. "Text them the booking link" opens your own messages with the link ready to send.
             </p>
           </>
         )}

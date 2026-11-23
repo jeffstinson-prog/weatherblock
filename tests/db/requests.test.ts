@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { facts } from '../../src/facts';
 import type { Owner } from '../../src/server/auth';
-import { createBooking, getByToken, openSlots } from '../../src/server/booking';
+import { createBooking, customerView, getByToken, openSlots } from '../../src/server/booking';
 import { asOwner, asPublic, asService, closeDatabase, db, useDatabase } from '../../src/server/db';
 import { details, verifyPlace } from '../../src/server/maps';
 import * as o from '../../src/server/owner';
@@ -266,6 +266,18 @@ describe('from request to booking', () => {
     if (!plain.ok) throw new Error('not found');
     expect(plain.booking.estimate).toMatchObject({ roofSqft: 1800, roofPitch: null });
     expect(plain.booking.roofPicture ?? null).toBeNull();
+  });
+
+  it("the roof picture stays on the customer's estimate after they answer", async () => {
+    process.env.GOOGLE_MAPS_STATIC_KEY = 'test-static-key';
+    const booked = await book(nextMobile(), await picked());
+    expect(await o.setStatus(owner, booked.booking.id, 'done', false)).toEqual({ ok: true });
+    expect(await p.saveEstimate(owner, booked.booking.id, { amountCents: 1_100_000, roofSqft: 2250, roofPitch: 6, send: true })).toEqual({ ok: true, sent: true });
+    const answered = await p.customerAnswer(booked.token, 'accept', '');
+    if (!answered.ok) throw new Error(answered.message);
+    const view = customerView(answered.booking as Record<string, unknown>);
+    expect(view.estimate).toMatchObject({ status: 'accepted', roofSqft: 2250, roofPitch: 6 });
+    expect(view.roofPicture).toContain(`center=${encodeURIComponent(TEST_HOUSE)}`);
   });
 });
 

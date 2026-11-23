@@ -369,7 +369,8 @@ export async function remeasureRequest(owner: Owner, id: string): Promise<Action
   }
   if (!at) return { ok: false, status: 409, message: "This address was typed by hand, so there's no spot on the map to measure. Measure it at the visit." };
   const spot = at;
-  const roof = await measureRoof(spot.lat, spot.lng);
+  // The owner is waiting on the screen, and nobody else is: give Google a little longer.
+  const roof = await measureRoof(spot.lat, spot.lng, 9000);
   if (!roof) return { ok: false, status: 409, message: 'No roof data for this address. Measure it at the visit.' };
   await asOwner(
     owner.userId,

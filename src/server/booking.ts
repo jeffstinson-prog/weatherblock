@@ -324,18 +324,22 @@ const NOT_FOUND: ManageResult = {
   message: `We couldn't find that booking. The link may be old. Call ${facts.contact.phone} and we'll help.`,
 };
 
-export async function getByToken(token: string): Promise<ManageResult> {
-  const row = await asPublic(async (tx) => {
-    const [r] = await tx`select wb_api.manage_get(${tokenHash(token)}) as booking`;
-    return r?.booking as Record<string, unknown> | null;
-  });
-  if (!row) return NOT_FOUND;
+/** What the customer's private page shows, from the database's summary of their booking. */
+export function customerView(row: Record<string, unknown>): BookingSummary {
   const booking = toSummary(row);
   // A satellite view of the home goes with an estimate that states the roof's size. Google finds the
   // spot from the address when the picture loads, so no map position is kept for it. Only for an
   // address picked from the list: one typed by hand could land on the wrong house.
   if (booking.estimate?.roofSqft && row.has_place) booking.roofPicture = satelliteByAddress(booking.address);
-  return { ok: true, booking };
+  return booking;
+}
+
+export async function getByToken(token: string): Promise<ManageResult> {
+  const row = await asPublic(async (tx) => {
+    const [r] = await tx`select wb_api.manage_get(${tokenHash(token)}) as booking`;
+    return r?.booking as Record<string, unknown> | null;
+  });
+  return row ? { ok: true, booking: customerView(row) } : NOT_FOUND;
 }
 
 export async function rescheduleByToken(token: string, slotId: string): Promise<ManageResult> {
