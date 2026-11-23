@@ -6,7 +6,8 @@ import { formatMobile } from '../booking/rules';
 import { SlotPicker } from '../booking/ui';
 import type { Slot } from '../booking/client';
 import { STATUS_LABEL, directions } from './Today';
-import EstimatePanel, { type CrewInfo, type EstimateInfo, type JobInfo } from './EstimatePanel';
+import EstimatePanel, { type CrewInfo, type EstimateInfo, type JobInfo, type RoofSuggestion } from './EstimatePanel';
+import RoofPanel, { type RoofSheet } from './RoofPanel';
 
 interface Detail {
   id: string;
@@ -44,6 +45,10 @@ interface Detail {
   job: JobInfo | null;
   crews: CrewInfo[];
   followUpsHeld: boolean;
+  roofSuggestion: RoofSuggestion | null;
+  roofSheet: RoofSheet | null;
+  roofPicture: string | null;
+  request: { id: string; ref: string; createdAt: string } | null;
 }
 
 const MINUTES = [10, 15, 20, 30, 45, 60];
@@ -113,9 +118,16 @@ export default function BookingView(props: { id: string }) {
         <a class="btn secondary" href={`sms:${b.mobile}`}>Text</a>
       </div>
 
+      {b.request && (
+        <p class="small">
+          Started as an <a href={`#/request/${b.request.id}`}>estimate request</a> on the website.
+        </p>
+      )}
+
       {(b.status === 'done' || b.estimate) && (
         <EstimatePanel
           bookingId={b.id}
+          roofSuggestion={b.roofSuggestion}
           bookingStatus={b.status}
           firstName={b.name.split(' ')[0] ?? ''}
           smsConsent={b.smsConsent}
@@ -149,6 +161,8 @@ export default function BookingView(props: { id: string }) {
           )}
         </section>
       )}
+
+      {b.roofSheet && <RoofPanel roof={b.roofSheet} picture={b.roofPicture} address={b.address} />}
 
       <section aria-labelledby="who-h" class="panel">
         <h2 id="who-h">Customer</h2>

@@ -72,8 +72,10 @@ export const FactsSchema = z.strictObject({
   prices: z
     .array(z.strictObject({ label: z.string().trim().min(1), amount: z.string().trim().min(1) }))
     .default([]),
-  instantEstimate: z.strictObject({
+  estimate: z.strictObject({
     on: z.boolean().default(false),
+    callback: text(),
+    showBallpark: z.boolean().default(false),
     material: text(),
     pricePerSquare: z.number().positive(),
     largeRoof: z.strictObject({
@@ -125,8 +127,18 @@ export interface Derived {
   theInspection: string;
   /** "Book a free inspection" or "Book an inspection" */
   bookLabel: string;
-  /** "$450 per square (100 square feet) for architectural shingles, installed. ..." or "" */
-  roofPriceText: string;
+  /** What the estimate page is called: "Free estimate", or "Instant estimate" when it shows a ballpark. */
+  estimateName: string;
+  /** The page's heading: "Free roof estimate" or "Instant roof estimate" */
+  estimateTitle: string;
+  /** "a free estimate", or "an instant estimate" when the page shows a ballpark */
+  anEstimate: string;
+  /** The button that sends a request: "Get my free estimate" */
+  estimateCta: string;
+  /** Booking a visit from the estimate page: "Book my free estimate" */
+  bookEstimateLabel: string;
+  /** When we call back about a request: the fact, or "soon" */
+  estimateCallback: string;
 }
 
 export type Facts = FactsInput & { derived: Derived };

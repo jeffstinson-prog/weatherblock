@@ -22,7 +22,7 @@ const service = facts.services.find((s) => s.key === serviceKey);
 if (!service) throw new Error(`No service "${serviceKey}" in facts.yaml`);
 const others = facts.services.filter((s) => s.key !== serviceKey);
 const answers = questions.map((slug) => getArticle(slug)).filter((a) => a !== undefined);
-const estimate = serviceKey === 'replacement' && facts.instantEstimate.on;
+const estimate = serviceKey === 'replacement' && facts.estimate.on;
 ---
 
 <Base title={service.name} description={description}>
@@ -36,8 +36,8 @@ const estimate = serviceKey === 'replacement' && facts.instantEstimate.on;
           <a class="estimate-link" href="/estimate/">
             <span class="icon-badge"><Icon name="ruler" size={22} /></span>
             <span>
-              <strong>See an instant estimate for a new roof</strong>
-              <span class="sub">From your house's outline seen from above.</span>
+              <strong>Ask for {facts.derived.anEstimate} for a new roof</strong>
+              <span class="sub">Start with your address. One of us calls you to set it up.</span>
             </span>
             <Icon name="arrow-right" size={20} />
           </a>
@@ -92,7 +92,7 @@ const estimate = serviceKey === 'replacement' && facts.instantEstimate.on;
   .prose :global(.notice) {
     margin-block: 1.5rem;
   }
-  /* The link to the instant estimate, on the page about new roofs. */
+  /* The link to the estimate page, on the page about new roofs. */
   .estimate-link {
     display: grid;
     grid-template-columns: auto 1fr auto;

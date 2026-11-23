@@ -27,12 +27,19 @@ export async function expectBigTapTargets(page: Page) {
   expect(small).toEqual([]);
 }
 
+// Chrome reports a skipped page-to-page fade as a page error. It skips the fade when the next
+// page's stylesheet isn't in its cache yet, and a test that intercepts requests runs with the
+// cache off. Nothing is broken: the next page just appears without the fade.
+const SKIPPED_FADE = /Transition was aborted because of invalid state/;
+
 /** Collect console errors and CSP violations while a test runs. */
 export function watchErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on('console', (msg) => {
     if (msg.type() === 'error') errors.push(msg.text());
   });
-  page.on('pageerror', (err) => errors.push(err.message));
+  page.on('pageerror', (err) => {
+    if (!SKIPPED_FADE.test(err.message)) errors.push(err.message);
+  });
   return errors;
 }

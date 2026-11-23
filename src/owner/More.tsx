@@ -61,6 +61,7 @@ export default function More(props: { businessName: string }) {
 
       <ul class="rows">
         {[
+          { href: '#/requests', label: 'Estimate requests' },
           { href: '#/availability', label: 'Inspection availability' },
           { href: '#/crews', label: 'Crews' },
           { href: '#/referrals', label: 'Referral codes' },

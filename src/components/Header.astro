@@ -14,7 +14,7 @@ const { focus = false } = Astro.props;
 const here = Astro.url.pathname;
 const pages = [
   { href: '/services/', label: 'Services' },
-  ...(facts.instantEstimate.on ? [{ href: '/estimate/', label: 'Instant estimate' }] : []),
+  ...(facts.estimate.on ? [{ href: '/estimate/', label: facts.derived.estimateName }] : []),
   { href: '/help/', label: 'Help' },
   ...(facts.financing.url ? [{ href: '/financing/', label: 'Financing' }] : []),
   { href: '/about/', label: 'About' },

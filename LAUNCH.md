@@ -18,7 +18,7 @@ The full list of settings is in `.env.example`.
 - [x] **Netlify** (done November 20, 2026): the project `heartfelt-profiterole-59a6a3`, connected to the repo. Test site: https://heartfelt-profiterole-59a6a3.netlify.app. Booking checked end to end on it.
   - [x] Netlify builds from `main` (switched November 21, 2026, after all nine pull requests were merged). The redesign is live on the test site, and booking was checked end to end on it again: a time tapped on the home page, a made-up booking, then cancelled from its private link.
 - [ ] **Supabase**: the project is WeatherBlock Roofing (`fsyrlkpzxljwhqpfxofh`). It signs owner logins with published keys (ES256), which the site checks, so no JWT secret is needed.
-  - [x] Load the tables (done November 19, 2026), and the update for estimates, crews and roof jobs (done November 20, 2026). `npm run --silent db:setup-sql` prints every migration as one file to paste into the SQL Editor; `-- --after <version>` prints only the newer ones. Each runs as one transaction and ends with a summary line to check.
+  - [x] Load the tables (done November 19, 2026), the update for estimates, crews and roof jobs (done November 20, 2026), and the update for estimate requests (November 23, 2026). `npm run --silent db:setup-sql` prints every migration as one file to paste into the SQL Editor; `-- --after <version>` prints only the newer ones. Each runs as one transaction and ends with a summary line to check.
   - [x] Sign-ups off (done November 19, 2026).
   - [ ] With the Resend step: send sign-in email through Resend (Authentication, SMTP settings), then change the "Magic Link" email template to include the 6-digit code, for example `Your sign-in code: {{ .Token }}`. Supabase only allows template edits once custom SMTP is set up, and its built-in email is only for testing. Until then, owners can't sign in to the owner app.
   - [ ] If it's on the free plan, move it to Pro ($25 a month) before real bookings. Free projects have no daily backups and pause after a quiet week.
@@ -30,7 +30,8 @@ The full list of settings is in `.env.example`.
   - A server key limited to Places API (New).
   - A browser key limited to Maps Static API and the site's domains, plus a URL signing secret.
   - A service account for the calendar. Put its email and private key in Netlify. Justin shares his calendar with the service account's email ("Make changes to events") and enters the calendar ID in the owner app (Availability).
-  - The instant estimate's roof data: a second Google Cloud project with the Solar API turned on, and a key limited to it, as `GOOGLE_SOLAR_KEY`. Keeping it separate means that if Google ever objects to roofing use (its terms describe the Solar API for energy systems), booking's address search isn't touched; the page falls back to the free outlines on its own. 10,000 lookups a month are free.
+  - The roof measurement that comes with each estimate request: a second Google Cloud project with the Solar API turned on, and a key limited to it, as `GOOGLE_SOLAR_KEY`. Keeping it separate means that if Google ever objects to roofing use (its terms describe the Solar API for energy systems), booking's address search isn't touched; requests fall back to the free outlines on their own. 10,000 lookups a month are free.
+  - The test site borrows keys from the StayOIB project (November 23, 2026). Before launch, make these three keys in a Google Cloud project that belongs to this business.
 - [ ] **Claude, for the assistant**: it already works on the test site through Netlify's built-in AI, billed to your Netlify credits, which all of your Netlify sites share. Before launch, add WeatherBlock's own Anthropic API key with a monthly spend limit as `ANTHROPIC_API_KEY` in Netlify (it takes over automatically), so its bill is separate and a busy month can't use up credits your other sites need. Also add it as a GitHub secret for the live assistant tests (step 5).
 - [ ] **Netlify settings** (me, once the accounts above exist). In place now: the database, the Supabase keys, `APP_ENV=preview`, and the three random secrets.
   - At launch: `APP_ENV=production` and the live keys.
@@ -59,7 +60,9 @@ Each of these is blank or unconfirmed, and the site hides whatever depends on it
 - [ ] A mailing address for the business (`business.mailingAddress`). A P.O. box works. Follow-up and review emails print it at the bottom, as the CAN-SPAM Act requires, and wait until it's set.
 - [ ] The Google review link (`pipeline.reviewUrl`): Google Business Profile, "Ask for reviews", copy the link.
 - [ ] When estimates are usually ready (`pipeline.estimateTurnaround`), for example "within 2 business days". It finishes the sentence in the thank-you after each visit.
-- [ ] Justin: is $450 per square for the roof as measured, or with waste added? The instant estimate shows Google's measured roof up to 15% more for waste (`measuredRange`). Also check the crews in the owner app (Jobs, Crews): names and jobs a day.
+- [ ] How fast you call back an estimate request (`estimate.callback`), for example "within one business hour". It finishes "One of us will call you ..." on the page and in the customer's email. Blank says "soon". Only promise what you'll keep.
+- [ ] Justin: is $450 per square for the roof as measured, or with waste added? The ballpark you get with each estimate request runs from Google's measured roof to 15% more for waste (`measuredRange`). Customers don't see it. Also check the crews in the owner app (Jobs, Crews): names and jobs a day.
+- [ ] Decide once more, when you run ads: keep prices off the site (`estimate.showBallpark: false`, the page is "Free estimate"), or show a rough range after someone sends their name and number (`true`, and the page becomes "Instant estimate"). Either is honest. A page called "instant estimate" that gives no estimate is not, and ad platforms reject it.
 - [ ] Phone hours. Also fix the Google Business Profile, which says "Open 24 hours".
 - [ ] NC license number, and whose name it's under.
 - [ ] Liability insurance (carrier and limit), workers' comp.
@@ -76,6 +79,16 @@ Each of these is blank or unconfirmed, and the site hides whatever depends on it
 - [ ] Acorn: their dealer agreement asks contractors to clear financing wording with them. Send them `/financing/`, and confirm the `d=QP3YO` link is yours.
 - [ ] Read every page and help answer once. Justin especially: materials, repair or replace, storm damage.
 - [ ] Have your attorney read `/privacy/` and `/terms/`.
+
+## 3b. Estimate requests and ads
+
+The estimate page is built to be the page an ad points to: one job, no menu, a phone number, and every request lands with you first.
+
+- [ ] Alerts need the accounts in section 1: Resend for email, Twilio for texts, and you two added as owners with your mobile numbers. Until then requests are saved and wait in the owner app.
+- [ ] Decide who calls, and how fast. A request nobody has called gets one reminder after half an hour, between 8 am and 8 pm.
+- [ ] Point each ad at the estimate page with a tag, so every request and booking shows where it came from: `https://weatherblockroofingnc.com/estimate/?utm_source=google&utm_medium=cpc&utm_campaign=roof-estimate` (use `facebook` and `paid_social` for Facebook and Instagram).
+- [ ] Ad wording that matches the page, so Google and Facebook approve it and people get what they were promised. For example: "Free roof estimate in Brunswick County. Start with your address." or "Thinking about a new roof? Enter your address and we'll call to set up a free estimate." Leave out "instant", "price in seconds" and anything about insurance paying, unless `estimate.showBallpark` is on and the page really shows a range.
+- [ ] Counting results inside Google Ads or Facebook takes their tracking code on the site. The site has none today, and the privacy page says so. Tell me when you want it: the privacy page and the site's security settings change with it.
 
 ## 4. Moving the domain off the temp site (DNS: I'll ask before each change)
 
@@ -107,7 +120,7 @@ is on (the MX and SPF records). Keep the email forwarding.
 | Twilio | about $12 at 100 bookings a month |
 | Resend | $0 (free up to 100 a day; $20 if a storm rush goes past that) |
 | Google Maps and Calendar | $0 under the free caps |
-| Instant estimate (Google roof data, first 10,000 a month; then 1 cent each) | $0 |
+| Roof measurements for estimate requests and bookings (Google, first 10,000 a month; then 1 cent each) | $0 |
 | Claude API (the assistant) | about 10 cents a conversation on Opus 5.5; on Netlify's built-in AI until you add your own key |
 
 ## Reviews, from day one

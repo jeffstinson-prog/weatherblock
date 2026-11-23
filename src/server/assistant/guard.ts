@@ -1,7 +1,7 @@
 // The house rules, checked in code on every assistant reply (and, in tests,
 // on every page of the site). A reply that breaks one is never shown.
 //
-//   price           no prices except facts.prices and the roof price per square (sourced grant amounts are fine)
+//   price           no prices except facts.prices (sourced grant amounts are fine)
 //   insurance       never promise or suggest insurance will pay
 //   claims          never say we file, handle or negotiate claims
 //   deductible      never offer to cover or waive a deductible
@@ -86,7 +86,8 @@ const CHECKS: Record<string, Check> = {
     return (
       /\b(cover|waive|pay|absorb|eat|rebate|refund|discount|credit|reduce|help (you )?with|take care of)\b.{0,30}\bdeductibles?\b/i.test(s) ||
       /\bdeductibles?\s+(is |will be |gets |can be )?(waived|covered|free|taken care of|on us)\b/i.test(s) ||
-      /\bfree (new )?roof\b(?!\s+inspection)/i.test(s)
+      // "A free roof" is the storm chaser's promise. A free roof inspection or estimate is not.
+      /\bfree (new )?roof\b(?!\s+(inspection|estimate))/i.test(s)
     );
   },
 

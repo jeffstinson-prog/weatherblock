@@ -1,4 +1,4 @@
-// The owner app: sign in, then Today, Upcoming, Estimates, Jobs and More.
+// The owner app: sign in, then Today (with the people to call), Upcoming, Estimates, Jobs and More.
 // One page; the part after # says which screen (nothing personal in it).
 import { useEffect, useState } from 'preact/hooks';
 import Icon, { type IconName } from '../icons/Icon';
@@ -10,6 +10,8 @@ import Estimates from './Estimates';
 import Jobs from './Jobs';
 import More from './More';
 import Referrals from './Referrals';
+import Requests from './Requests';
+import RequestView from './RequestView';
 import Questions from './Questions';
 import SignIn from './SignIn';
 import Today from './Today';
@@ -42,6 +44,8 @@ const TABS: { view: string; label: string; href: string; icon: IconName }[] = [
 const PARENT: Record<string, string> = {
   booking: 'today',
   day: 'today',
+  requests: 'today',
+  request: 'today',
   crews: 'jobs',
   availability: 'more',
   referrals: 'more',
@@ -87,6 +91,8 @@ export default function OwnerApp(props: AppProps) {
         {route.view === 'day' && <Today date={route.arg} />}
         {route.view === 'upcoming' && <Upcoming />}
         {route.view === 'booking' && <BookingView id={route.arg} />}
+        {route.view === 'requests' && <Requests />}
+        {route.view === 'request' && <RequestView id={route.arg} businessName={props.businessName} />}
         {route.view === 'estimates' && <Estimates />}
         {route.view === 'jobs' && <Jobs />}
         {route.view === 'crews' && <Crews />}

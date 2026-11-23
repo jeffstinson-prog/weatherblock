@@ -19,6 +19,16 @@ export interface EstimateInfo {
   followUpsSent: number;
   followUpsTotal: number;
   followUpsStoppedAt: string | null;
+  roofSqft: number | null;
+  roofPitch: number | null;
+}
+
+/** What the measurement from above says, to start the estimate's roof size and pitch from. */
+export interface RoofSuggestion {
+  sqft: number;
+  pitch: number | null;
+  source: 'google' | 'outline';
+  imagery: string;
 }
 
 export interface JobInfo {
@@ -45,6 +55,7 @@ interface Props {
   job: JobInfo | null;
   crews: CrewInfo[];
   followUpsHeld: boolean;
+  roofSuggestion: RoofSuggestion | null;
   onChanged: () => Promise<void>;
   /** The booking screen has one place for "done" and "that didn't work" messages. */
   onFlash: (message: string) => void;
@@ -67,6 +78,11 @@ export default function EstimatePanel(p: Props) {
   const editable = !e || e.status === 'draft' || e.status === 'sent' || e.status === 'withdrawn';
   const [amount, setAmount] = useState(e?.amountCents ? String(e.amountCents / 100) : '');
   const [summary, setSummary] = useState(e?.summary ?? '');
+  // The roof's size and pitch on the estimate. A new estimate starts from the measurement from above, for the owner to check.
+  const startSqft = e ? e.roofSqft : (p.roofSuggestion?.sqft ?? null);
+  const startPitch = e ? e.roofPitch : (p.roofSuggestion?.pitch ?? null);
+  const [roofSqft, setRoofSqft] = useState(startSqft === null ? '' : String(startSqft));
+  const [roofPitch, setRoofPitch] = useState(startPitch === null ? '' : String(startPitch));
   const [busy, setBusy] = useState(false);
   const setError = p.onError;
   const setFlash = p.onFlash;
@@ -78,6 +94,11 @@ export default function EstimatePanel(p: Props) {
     setAmount(e?.amountCents ? String(e.amountCents / 100) : '');
     setSummary(e?.summary ?? '');
   }, [e?.amountCents, e?.summary]);
+  useEffect(() => {
+    if (!e) return;
+    setRoofSqft(e.roofSqft === null ? '' : String(e.roofSqft));
+    setRoofPitch(e.roofPitch === null ? '' : String(e.roofPitch));
+  }, [e?.roofSqft, e?.roofPitch]);
 
   async function post(body: Record<string, unknown>, done: string): Promise<boolean> {
     setBusy(true);
@@ -105,7 +126,17 @@ export default function EstimatePanel(p: Props) {
       setError('Enter the price in dollars, like 12500.');
       return null;
     }
-    return { action: 'estimate_save', estimate: { amountCents: cents, summary, send } };
+    const sqft = roofSqft.trim() ? Number(roofSqft.replace(/[,\s]/g, '')) : null;
+    if (sqft !== null && (!Number.isInteger(sqft) || sqft < 100 || sqft > 200_000)) {
+      setError('Enter the roof size in square feet, like 2400. Or leave it blank.');
+      return null;
+    }
+    const pitch = roofPitch.trim() ? Number(roofPitch.trim().replace(/\/12$/, '')) : null;
+    if (pitch !== null && (!Number.isInteger(pitch) || pitch < 0 || pitch > 24)) {
+      setError('Enter the pitch as the rise per 12, like 6. Or leave it blank.');
+      return null;
+    }
+    return { action: 'estimate_save', estimate: { amountCents: cents, summary, roofSqft: sqft, roofPitch: sqft === null ? null : pitch, send } };
   }
 
   async function attach(file: File | undefined) {
@@ -189,6 +220,25 @@ export default function EstimatePanel(p: Props) {
             <label for="est-summary">What's included</label>
             <textarea id="est-summary" rows={5} maxLength={4000} value={summary} onInput={(ev) => setSummary((ev.currentTarget as HTMLTextAreaElement).value)} />
             <p class="muted small">The customer sees the price and this text on their private page. The email and text only say it's ready.</p>
+            <fieldset class="roof-fields">
+              <legend>The roof, on the estimate</legend>
+              <div class="roof-pair">
+                <div>
+                  <label for="est-roof-sqft">Size, square feet</label>
+                  <input id="est-roof-sqft" type="text" inputMode="numeric" autoComplete="off" placeholder="2400" value={roofSqft} onInput={(ev) => setRoofSqft((ev.currentTarget as HTMLInputElement).value)} />
+                </div>
+                <div>
+                  <label for="est-roof-pitch">Pitch, rise per 12</label>
+                  <input id="est-roof-pitch" type="text" inputMode="numeric" autoComplete="off" placeholder="6" value={roofPitch} onInput={(ev) => setRoofPitch((ev.currentTarget as HTMLInputElement).value)} />
+                </div>
+              </div>
+              <p class="muted small">
+                {p.roofSuggestion
+                  ? `From above: about ${p.roofSuggestion.sqft.toLocaleString('en-US')} square feet${p.roofSuggestion.pitch !== null ? `, ${p.roofSuggestion.pitch}/12` : ''}${p.roofSuggestion.imagery ? ` (Google's imagery, ${p.roofSuggestion.imagery})` : ''}. Check it against what you saw at the visit, and change it if it's off. `
+                  : ''}
+                The customer sees the size and pitch with a satellite picture of the home. Leave the size blank to leave the roof out.
+              </p>
+            </fieldset>
             <div class="file-row">
               {e?.fileUrl ? (
                 <p class="small">

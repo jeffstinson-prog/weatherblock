@@ -1,9 +1,11 @@
 // A day's inspections in time order, with directions, call and text.
+// Today also starts with the people who asked for an estimate and haven't been called.
 import { useEffect, useState } from 'preact/hooks';
 import Icon from '../icons/Icon';
 import { ApiError, api } from './api';
 import { TZ, dayKey, longDay, windowLabel } from '../booking/format';
 import { formatMobile } from '../booking/rules';
+import { ToCall, type RequestLists, type RequestRow } from './Requests';
 
 export interface Row {
   id: string;
@@ -40,6 +42,7 @@ const shift = (date: string, days: number) => {
 export default function Today(props: { date: string | null }) {
   const [date, setDate] = useState(props.date ?? dayKey(new Date().toISOString()));
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [toCall, setToCall] = useState<RequestRow[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -55,6 +58,14 @@ export default function Today(props: { date: string | null }) {
   }, [date]);
 
   const isToday = date === dayKey(new Date().toISOString());
+
+  // People waiting for a call come first, on today's screen only. If this fails, the day still shows.
+  useEffect(() => {
+    if (!isToday) return;
+    api<RequestLists>('requests')
+      .then((d) => setToCall(d.toCall))
+      .catch(() => setToCall([]));
+  }, [isToday]);
   const label = longDay(`${date}T17:00:00Z`);
   const active = rows?.filter((r) => r.status !== 'cancelled') ?? [];
   const cancelled = rows?.filter((r) => r.status === 'cancelled') ?? [];
@@ -75,6 +86,19 @@ export default function Today(props: { date: string | null }) {
         </a>
       </div>
       {error && <p class="error-box" role="alert">{error}</p>}
+      {isToday && toCall.length > 0 && (
+        <section aria-labelledby="to-call-h" class="to-call">
+          <h2 id="to-call-h">To call ({toCall.length})</h2>
+          <p class="muted small">They asked for an estimate on the website. The sooner the call, the better.</p>
+          <ToCall rows={toCall} />
+        </section>
+      )}
+      {isToday && (
+        <p class="small">
+          <a href="#/requests">All estimate requests</a>
+        </p>
+      )}
+      {isToday && toCall.length > 0 && <h2>Inspections</h2>}
       {rows === null && !error && <p aria-live="polite">Loading...</p>}
       {rows !== null && active.length === 0 && <p>No inspections booked.</p>}
       <ol class="visits">

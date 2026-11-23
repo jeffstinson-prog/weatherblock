@@ -102,14 +102,21 @@ reviews:
     asOf: "2026-11-19"
     url: https://share.google/wepCy5SeWsGcWvBwv
 
-# Any price the site or the assistant may state, besides the instant estimate below.
+# Any price the site or the assistant may state. Empty: the site states no prices.
 prices: []
 
-# The instant estimate on /estimate/: a ballpark for a new roof. Google measures the
-# roof from aerial imagery; when Google has no data for a house, the house's outline
-# in open building data stands in. Only what customers pay; never our costs.
-instantEstimate:
+# The estimate page at /estimate/. Someone enters their address and how to reach them,
+# and the request comes to the owners first, with the roof measured from above, so one
+# of you can call. The site shows no price for a roof (JT and Justin, November 23, 2026).
+estimate:
   on: true
+  # What people are told about the call back. It finishes "One of us will call you ...",
+  # for example "within one business hour". Blank: "soon". Only promise what you'll keep.
+  callback: ""
+  # false: no price anywhere on the site. true: after someone sends their name and number,
+  # the page shows them a rough price range, and the page is called "Instant estimate".
+  showBallpark: false
+  # The ballpark the owners see with each request. Only what customers pay; never our costs.
   material: architectural shingles
   pricePerSquare: 450 # installed, per square (100 square feet of roof)
   largeRoof:

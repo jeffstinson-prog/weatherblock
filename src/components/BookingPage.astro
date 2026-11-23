@@ -1,0 +1,82 @@
+---
+// The booking page. One form, two front doors: "Book a free inspection" from
+// the site, and "Book your free estimate" from an estimate request. Same
+// calendar, same visit: an estimate starts with an inspection.
+import Base from '../layouts/Base.astro';
+import Icon from './Icon.astro';
+import BookingApp from '../booking/BookingApp';
+import '../styles/booking.css';
+import { facts, telHref, smsHref } from '../facts';
+import { smsConsentText } from '../booking/rules';
+
+interface Props {
+  variant?: 'inspection' | 'estimate';
+}
+const { variant = 'inspection' } = Astro.props;
+const forEstimate = variant === 'estimate';
+const { inspection } = facts;
+
+const props = {
+  variant,
+  businessName: facts.business.name,
+  phone: facts.contact.phone,
+  phoneHref: telHref(),
+  consentText: smsConsentText(facts.business.name, facts.texts.maxPerBooking),
+  bookLabel: facts.derived.bookLabel,
+  bookEstimateLabel: facts.derived.bookEstimateLabel,
+  free: inspection.free,
+  serviceAreaShort: facts.serviceArea.short,
+  deliverables: inspection.deliverables,
+  byDrone: inspection.byDrone,
+  domain: facts.web.domain,
+};
+const tel = telHref();
+const sms = smsHref();
+const title = forEstimate ? (inspection.free ? 'Book your free estimate' : 'Book your estimate') : facts.derived.bookLabel;
+const description = forEstimate
+  ? `${title} in ${facts.serviceArea.short}. Pick a two-hour window online for the roof inspection.`
+  : `${facts.derived.bookLabel} in ${facts.serviceArea.short}. Pick a two-hour window online.`;
+// Only what the facts file backs up.
+const expect = [
+  ...(inspection.free ? [forEstimate ? 'The estimate is free. It starts with a roof inspection' : 'The inspection is free'] : []),
+  `You pick a ${inspection.windowHours} hour arrival window`,
+  ...(inspection.byDrone ? ['We inspect by drone, with no foot traffic on your shingles'] : []),
+  ...(inspection.homeNotRequired ? ["You don't have to be home"] : []),
+  ...(inspection.deliverables ? [`You get ${inspection.deliverables}`] : []),
+];
+---
+
+<Base title={title} description={description} focus noindex={forEstimate}>
+  <div class="flow">
+    <div class="wrap flow-grid">
+      <div class="flow-main">
+        <header class="flow-head">
+          <h1>{title}</h1>
+          <p>
+            {forEstimate ? 'Pick a time for the roof inspection your estimate starts with. About a minute.' : 'About a minute.'} Prefer to talk? {tel && <a href={tel}>Call {facts.contact.phone}</a>}{sms && <> or <a href={sms}>text us</a></>}.
+          </p>
+        </header>
+        <BookingApp client:load {...props} />
+        <noscript>
+          <p>Online booking needs JavaScript. Call or text {facts.contact.phone} and we'll book it for you.</p>
+        </noscript>
+      </div>
+      <aside class="flow-side" aria-label="What to expect">
+        <div class="card">
+          <h2>What to expect</h2>
+          <ul class="ticks">
+            {expect.map((line) => (
+              <li>
+                <Icon name="check" size={18} stroke={2.5} />
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p class="talk">
+          After you book, we send you a private link to change or cancel.
+        </p>
+      </aside>
+    </div>
+  </div>
+</Base>

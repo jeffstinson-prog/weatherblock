@@ -77,6 +77,7 @@ const FINE = [
   'The booking page shows the open times.',
   'Will you cover or waive my deductible?',
   'Book a free roof inspection online in about a minute.',
+  'Ask for a free roof estimate and one of us calls you to set it up.',
 ];
 
 describe('the rule check catches every way to break a rule', () => {

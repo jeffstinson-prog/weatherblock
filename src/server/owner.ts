@@ -7,6 +7,8 @@ import { asOwner, dbErrorCode } from './db';
 import { bookingChanged, onMyWay } from './notify';
 import { forBooking, inspected } from './pipeline';
 import { calendarApi, serviceAccountEmail, syncCalendar } from './calendar';
+import { roofImageUrl } from './maps';
+import { asRoofSheet } from './roofsheet';
 import { viewUrl } from './storage';
 import type { BookingSummary } from './booking';
 import type { Owner } from './auth';
@@ -70,21 +72,27 @@ export async function upcoming(owner: Owner, days = 14) {
 
 export async function detail(owner: Owner, id: string) {
   const found = await asOwner(owner.userId, async (tx) => {
-    const [r] = await tx`select l.*, b.gate_code from wb.booking_list l join wb.bookings b on b.id = l.id where l.id = ${id}`;
+    const [r] = await tx`select l.*, b.gate_code, b.roof from wb.booking_list l join wb.bookings b on b.id = l.id where l.id = ${id}`;
     if (!r) return null;
+    const [request] = await tx`select id, ref, created_at from wb.estimate_requests where booking_id = ${id} order by created_at desc limit 1`;
     const photos = await tx`select id, path from wb.booking_photos where booking_id = ${id} order by created_at`;
     const events = await tx`select at, actor, kind, detail from wb.booking_events where booking_id = ${id} order by at`;
     const messages = await tx`
       select created_at, channel, direction, audience, kind, status, to_addr, from_addr, coalesce(subject, body) as summary
       from wb.messages where booking_id = ${id} order by created_at`;
-    return { r, photos, events, messages };
+    return { r, photos, events, messages, request };
   });
   if (!found) return null;
-  const { r, photos, events, messages } = found;
+  const { r, photos, events, messages, request } = found;
   const after = await forBooking(owner, id);
+  const roofSheet = asRoofSheet(r.roof);
   return {
     ...after,
     ...row(r),
+    // The roof as measured from above, and a ballpark. For the owners only.
+    roofSheet,
+    roofPicture: roofSheet?.box ? roofImageUrl(roofSheet.box) : null,
+    request: request ? { id: request.id as string, ref: request.ref as string, createdAt: iso(request.created_at) } : null,
     gateCode: (r.gate_code as string | null) ?? '',
     relationship: labelOf(RELATIONSHIPS, r.relationship as string),
     roof: `${labelOf(MATERIALS, r.roof_material as string)}, ${labelOf(AGES, r.roof_age as string).toLowerCase()}`,

@@ -133,6 +133,67 @@ test('sign in, then work a booking from a phone', async ({ page }) => {
   await expectNoSideScroll(page);
 });
 
+test('estimate requests: who to call, the roof sheet, and booking a time for them', async ({ page, request }) => {
+  const { place } = (await (await request.post('/api/places/details', { data: { placeId: 'test-oib-1', sessionToken: 's' } })).json()) as { place: object };
+  const res = await request.post('/api/estimate-requests', {
+    data: {
+      key: crypto.randomUUID(),
+      startedAt: Date.now() - 60_000,
+      address: place,
+      contact: { name: 'Quinn Caller', mobile: '910 555 4301', email: '' },
+      source: { utm: { source: 'google', medium: 'cpc' } },
+    },
+  });
+  expect(res.status(), await res.text()).toBe(201);
+
+  // Today starts with the people to call.
+  await signIn(page);
+  const card = page.locator('.to-call .visit', { hasText: 'Quinn Caller' });
+  await expect(card).toBeVisible();
+  await expect(card.getByRole('link', { name: 'Call (910) 555-4301, Quinn Caller' })).toHaveAttribute('href', 'tel:+19105554301');
+  await expect(card).toContainText('Ballpark $10,100 to $11,700.');
+  await expectAccessible(page);
+  await expectNoSideScroll(page);
+
+  // One request: the roof from above, a ballpark only the owners see, and where they came from.
+  await card.locator('.visit-main').click();
+  await expect(page.getByRole('heading', { name: 'Quinn Caller', level: 1 })).toBeVisible();
+  await expect(page.locator('.roof-sheet')).toContainText('About 2,250 square feet, 22.5 squares');
+  await expect(page.locator('.roof-sheet')).toContainText('$10,100 to $11,700');
+  await expect(page.locator('.kv').getByText('google_cpc')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Text them the booking link' })).toHaveAttribute('href', /^sms:\+19105554301\?&body=.*estimate%2Fbook%2F%23r%3D/);
+  await expectAccessible(page);
+  await expectNoSideScroll(page);
+
+  await page.getByRole('button', { name: 'Mark called' }).click();
+  await expect(page.getByRole('status')).toHaveText('Marked called.');
+  await expect(page.locator('.lead-line .chip')).toHaveText('Called');
+
+  await page.getByRole('button', { name: 'Close it' }).click();
+  await page.getByLabel('Why?').selectOption('Not interested');
+  await page.getByRole('button', { name: 'Close the request' }).click();
+  await expect(page.getByRole('status')).toHaveText('Closed.');
+  await expect(page.getByText('Closed: Not interested.')).toBeVisible();
+  await page.getByRole('button', { name: 'Reopen' }).click();
+  await expect(page.getByRole('status')).toHaveText('Reopened.');
+
+  await page.getByRole('link', { name: 'Back to requests' }).click();
+  await expect(page.getByRole('heading', { name: 'Estimate requests', level: 1 })).toBeVisible();
+  const row = page.locator('.visit', { hasText: 'Quinn Caller' });
+  await expect(row).toBeVisible();
+  await expectAccessible(page);
+  await expectNoSideScroll(page);
+
+  // Book a time for them: the booking form opens with their address and details in.
+  await row.getByRole('link', { name: 'Open' }).click();
+  await page.getByRole('button', { name: 'Book a time for them' }).click();
+  await expect(page).toHaveURL(/\/estimate\/book\/$/);
+  await expect(page.getByRole('heading', { name: 'Book your free estimate', level: 1 })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Address of the home' })).toHaveValue('101 Test Beach Dr W, Ocean Isle Beach, NC 28469');
+  await expect(page.getByText('Found it.')).toBeVisible();
+  await page.evaluate(() => localStorage.clear());
+});
+
 test('availability: a day off, and a bad window is refused with a reason', async ({ page }) => {
   await signIn(page);
   await page.getByRole('link', { name: 'More' }).click();

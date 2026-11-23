@@ -1,4 +1,4 @@
-// The instant estimate's picture: close enough that the measured house fills the frame.
+// The roof picture on the estimate page and in the owner app: close enough that the measured house fills the frame.
 import { afterEach, describe, expect, it } from 'vitest';
 import { roofImageUrl, zoomToFit } from '../../src/server/maps';
 

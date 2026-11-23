@@ -36,6 +36,29 @@ function visibleText(html: string): string {
     .replace(/\s+/g, ' ');
 }
 
+function assets(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).flatMap((name) => {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) return assets(p);
+    return /\.(html|js|json|webmanifest)$/.test(name) ? [p] : [];
+  });
+}
+
+describe('nothing a browser is sent carries the roof price', () => {
+  // The price per square is in facts.yaml for the owners' ballpark. It must not ride along
+  // in a page, in the data a page hands its scripts, or in a script.
+  const files = assets(root).filter((f) => !f.includes('/data/outlines/'));
+  it('found the pages and scripts', () => {
+    expect(files.some((f) => f.endsWith('.js'))).toBe(true);
+    expect(files.some((f) => f.endsWith('/estimate/index.html'))).toBe(true);
+  });
+  it('no price table, no price per square', () => {
+    const table = /pricePerSquare|largeRoof|measuredRange|slopeFactor|per square \(100 square feet\)/;
+    expect(files.filter((f) => table.test(readFileSync(f, 'utf8'))).map((f) => f.replace(root, ''))).toEqual([]);
+  });
+});
+
 describe('the built site keeps the rules', () => {
   const files = pages(root);
   it('found the built pages', () => {

@@ -69,6 +69,9 @@ function check(p: Place): CheckedPlace {
   return { ...p, inArea: inServiceArea(p), sig: placeSignature(p) };
 }
 
+/** Sign a place we stored earlier (from a request someone made), so a booking can trust it again. */
+export const signPlace = (p: Place): CheckedPlace => check(p);
+
 export async function autocomplete(input: string, sessionToken: string): Promise<Suggestion[]> {
   const q = input.trim();
   if (q.length < 3) return [];
@@ -182,7 +185,12 @@ export function zoomToFit(box: Box, size = { width: 640, height: 400 }): number 
   return Math.min(20, Math.max(16, zoom));
 }
 
-/** The instant estimate's picture: the measured roof outlined in yellow on Google's satellite view, close up. */
+/** The same view from an address alone. Google finds the spot when the picture loads, so we keep no map position for it. */
+export function satelliteByAddress(address: string): string | null {
+  return signedStaticMap(`center=${encodeURIComponent(address)}&zoom=19&size=640x400&scale=2&maptype=satellite`);
+}
+
+/** The estimate page's picture: the measured roof outlined in yellow on Google's satellite view, close up. */
 export function roofImageUrl(box: Box): string | null {
   const c = (lat: number, lng: number) => `${lat.toFixed(6)},${lng.toFixed(6)}`;
   const { sw, ne } = box;

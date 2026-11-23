@@ -10,6 +10,8 @@ export type Outcome = 'sent' | 'logged' | 'failed' | 'duplicate' | 'opted_out' |
 
 export interface OutMessage {
   bookingId?: string | null;
+  /** For messages about an estimate request (no booking yet). */
+  requestId?: string | null;
   channel: Channel;
   audience: 'customer' | 'owner';
   kind: string;
@@ -105,8 +107,8 @@ export async function send(m: OutMessage): Promise<Outcome> {
   const provider = m.channel === 'sms' ? smsProvider() : emailProvider();
   const id = await asService(async (tx) => {
     const rows = await tx`
-      insert into wb.messages (booking_id, channel, audience, kind, to_addr, from_addr, subject, body, html, provider, dedupe_key)
-      values (${m.bookingId ?? null}, ${m.channel}, ${m.audience}, ${m.kind}, ${m.to},
+      insert into wb.messages (booking_id, request_id, channel, audience, kind, to_addr, from_addr, subject, body, html, provider, dedupe_key)
+      values (${m.bookingId ?? null}, ${m.requestId ?? null}, ${m.channel}, ${m.audience}, ${m.kind}, ${m.to},
               ${m.channel === 'email' ? emailFrom() : (read('TWILIO_FROM') ?? null)},
               ${m.subject ?? null}, ${m.text}, ${m.html ?? null}, ${provider}, ${m.dedupeKey ?? null})
       on conflict (dedupe_key) do nothing
