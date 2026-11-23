@@ -105,14 +105,23 @@ export async function send(m: OutMessage): Promise<Outcome> {
     return 'over_limit';
   }
   const provider = m.channel === 'sms' ? smsProvider() : emailProvider();
+  // Only the columns this message uses: a message about a booking doesn't mention request_id at all.
+  const row = {
+    booking_id: m.bookingId ?? null,
+    ...(m.requestId ? { request_id: m.requestId } : {}),
+    channel: m.channel,
+    audience: m.audience,
+    kind: m.kind,
+    to_addr: m.to,
+    from_addr: m.channel === 'email' ? emailFrom() : (read('TWILIO_FROM') ?? null),
+    subject: m.subject ?? null,
+    body: m.text,
+    html: m.html ?? null,
+    provider,
+    dedupe_key: m.dedupeKey ?? null,
+  };
   const id = await asService(async (tx) => {
-    const rows = await tx`
-      insert into wb.messages (booking_id, request_id, channel, audience, kind, to_addr, from_addr, subject, body, html, provider, dedupe_key)
-      values (${m.bookingId ?? null}, ${m.requestId ?? null}, ${m.channel}, ${m.audience}, ${m.kind}, ${m.to},
-              ${m.channel === 'email' ? emailFrom() : (read('TWILIO_FROM') ?? null)},
-              ${m.subject ?? null}, ${m.text}, ${m.html ?? null}, ${provider}, ${m.dedupeKey ?? null})
-      on conflict (dedupe_key) do nothing
-      returning id`;
+    const rows = await tx`insert into wb.messages ${tx(row)} on conflict (dedupe_key) do nothing returning id`;
     return rows[0]?.id as string | undefined;
   });
   if (!id) return 'duplicate';
