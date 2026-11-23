@@ -164,12 +164,33 @@ export function satelliteUrl(lat: number, lng: number): string | null {
   return signedStaticMap(`center=${center}&zoom=19&size=640x360&scale=2&maptype=satellite&markers=color:red%7C${center}`);
 }
 
-/** The instant estimate's picture: the measured roof outlined in yellow on Google's satellite view. */
-export function roofImageUrl(box: { sw: { lat: number; lng: number }; ne: { lat: number; lng: number } }): string | null {
+type Box = { sw: { lat: number; lng: number }; ne: { lat: number; lng: number } };
+
+/**
+ * The closest zoom at which a roof's box still fits in a picture this size with room around it
+ * (it takes between about a third and three quarters of the frame).
+ * Left to itself Google picks a zoom that shows the whole neighborhood, with the house a speck.
+ * Zoom 20 is the closest satellite view we can count on; 16 is a few blocks.
+ */
+export function zoomToFit(box: Box, size = { width: 640, height: 400 }): number {
+  const lat = (box.sw.lat + box.ne.lat) / 2;
+  const cos = Math.cos((lat * Math.PI) / 180);
+  const widthM = Math.abs(box.ne.lng - box.sw.lng) * 111_320 * cos;
+  const heightM = Math.abs(box.ne.lat - box.sw.lat) * 110_540;
+  const metersPerPixel = Math.max(widthM / (size.width * 0.75), heightM / (size.height * 0.75), 0.01);
+  const zoom = Math.floor(Math.log2((156_543.03392 * cos) / metersPerPixel));
+  return Math.min(20, Math.max(16, zoom));
+}
+
+/** The instant estimate's picture: the measured roof outlined in yellow on Google's satellite view, close up. */
+export function roofImageUrl(box: Box): string | null {
   const c = (lat: number, lng: number) => `${lat.toFixed(6)},${lng.toFixed(6)}`;
   const { sw, ne } = box;
   const ring = [c(sw.lat, sw.lng), c(sw.lat, ne.lng), c(ne.lat, ne.lng), c(ne.lat, sw.lng), c(sw.lat, sw.lng)].join('%7C');
-  return signedStaticMap(`size=640x400&scale=2&maptype=satellite&path=color:0xffd500ff%7Cweight:3%7Cfillcolor:0xffd50033%7C${ring}`);
+  const center = c((sw.lat + ne.lat) / 2, (sw.lng + ne.lng) / 2);
+  return signedStaticMap(
+    `center=${center}&zoom=${zoomToFit(box)}&size=640x400&scale=2&maptype=satellite&path=color:0xffd500ff%7Cweight:3%7Cfillcolor:0xffd50033%7C${ring}`,
+  );
 }
 
 function signedStaticMap(query: string): string | null {
