@@ -43,7 +43,7 @@ Updated 2026-11-23.
 
 1. Pull requests 1 to 11 are merged into `main`. Netlify builds the test site from `main`, and each merge publishes on its own. Pull request 12 (estimate requests) waits for JT's "merge".
 2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase: tables loaded and sign-ups off (November 19). The sign-in code email waits for Resend, since Supabase only allows template edits with custom SMTP.
-3. Supabase has the tables for estimates, crews and roof jobs (loaded November 20) and for estimate requests (November 23).
+3. Supabase has the tables for estimates, crews and roof jobs (loaded November 20). The update for estimate requests has to be loaded before pull request 12 is merged: one file, pasted into the SQL Editor (LAUNCH.md, section 1). It is safe to load while the current site is running.
 4. Facts for the automation (LAUNCH.md section 3): a mailing address, the Google review link, when estimates are ready, how fast you call back an estimate request, and whether $450 per square is for the measured roof or includes waste.
 5. Estimate requests only reach your phones once email (Resend) and texts (Twilio) are set up and you two are added as owners. Until then they are saved and wait in the owner app, which also needs Resend for its sign-in code.
 6. Run the live assistant tests once there's an Anthropic key: `npm run test:assistant` (top 30 questions and 15 attempts to break the rules). Not run yet; no key in this environment.
