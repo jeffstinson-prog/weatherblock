@@ -11,14 +11,12 @@ Do the steps in order. Steps 0 to 3 take about an hour and work the same day. St
 
 Keys and passwords go into Netlify or Supabase, typed in by you. Never paste them into our chat or an email.
 
-## Step 0. Finish the domain (5 minutes)
+## Step 0. The domain (5 minutes)
 
-The domain now points at the new site: its DNS is on Netlify, and it's the site's main address. When I checked on November 24, Netlify hadn't issued the HTTPS certificate yet, so browsers showed a warning instead of the site.
+The domain points at the new site: its DNS is on Netlify, and it's the site's main address. On November 24 it worked: every page loads securely, www goes to the main address, and the roof pictures show.
 
-1. Netlify, project `heartfelt-profiterole-59a6a3`: **Domain management**, then **HTTPS**. Click **Verify DNS configuration**, then **Provision certificate**. It can take up to an hour after a DNS change.
-2. Check: https://weatherblockroofingnc.com opens with the lock icon and shows the new site.
-3. **Site configuration**, **Environment variables**, **Add a variable**: `SITE_URL` = `https://weatherblockroofingnc.com`. Links in emails and texts, and the check on replies to our number, use it.
-4. **Deploys**, **Trigger deploy**, **Deploy site**. A new variable only takes effect after a deploy.
+1. Netlify, project `heartfelt-profiterole-59a6a3`: **Site configuration**, **Environment variables**, **Add a variable**: `SITE_URL` = `https://weatherblockroofingnc.com`. Links in emails and texts, and the check on replies to our number, use it.
+2. **Deploys**, **Trigger deploy**, **Deploy site**. A new variable only takes effect after a deploy.
 
 The new site is now what people see at your address. It's still in test mode (hidden from Google), and nobody hears about a booking until step 1 is done. So do step 1 soon.
 

@@ -42,7 +42,7 @@ Updated 2026-11-24.
 ## Next
 
 1. Pull requests 1 to 12 are merged into `main` (estimate requests on November 24, with its database update loaded). Netlify builds the site from `main`, and each merge publishes on its own.
-2. The domain points at this site now (its DNS moved to Netlify by November 24), but Netlify's HTTPS certificate wasn't issued yet when checked. Finish it, then email, the owner app's sign-in and texts, in order: [`SETUP-EMAIL-AND-TEXTS.md`](SETUP-EMAIL-AND-TEXTS.md).
+2. The domain points at this site now, with HTTPS (its DNS moved to Netlify by November 24; checked: every page, www, the roof pictures). It's still in test mode: hidden from search engines, and nobody hears about a booking until email is set up. Next, in order: `SITE_URL`, email, the owner app's sign-in, owners, texts: [`SETUP-EMAIL-AND-TEXTS.md`](SETUP-EMAIL-AND-TEXTS.md).
 3. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase: tables loaded and sign-ups off (November 19). The sign-in code email waits for Resend, since Supabase only allows template edits with custom SMTP.
 4. Supabase has every table, estimate requests included (loaded November 24).
 5. Facts for the automation (LAUNCH.md section 3): a mailing address, the Google review link, when estimates are ready, and whether $450 per square is for the measured roof or includes waste. The call-back promise is set: "within one business hour".

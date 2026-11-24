@@ -95,11 +95,12 @@ The estimate page is built to be the page an ad points to: one job, no menu, a p
 ## 4. Moving the domain off the temp site (DNS: I'll ask before each change)
 
 `weatherblockroofingnc.com` is registered at Namecheap. By November 24 its DNS
-had moved to Netlify, and it's this site's main address. Namecheap's email
-forwarding ended with the move: the domain has no mail records now.
+had moved to Netlify, it's this site's main address, and HTTPS works. Namecheap's
+email forwarding ended with the move: the domain has no mail records now.
 
 - [x] In Netlify, add the custom domain, with Netlify's DNS (by November 24).
-- [ ] Netlify's HTTPS certificate: not issued when checked on November 24. Domain management, HTTPS, Verify DNS configuration, Provision certificate. Then set `SITE_URL=https://weatherblockroofingnc.com` and redeploy ([`SETUP-EMAIL-AND-TEXTS.md`](SETUP-EMAIL-AND-TEXTS.md), step 0).
+- [x] Netlify's HTTPS certificate (working November 24: every page, www to the main address, the roof pictures).
+- [ ] Set `SITE_URL=https://weatherblockroofingnc.com` and redeploy ([`SETUP-EMAIL-AND-TEXTS.md`](SETUP-EMAIL-AND-TEXTS.md), step 0).
 - [ ] Add Resend's DNS records in Netlify ([`SETUP-EMAIL-AND-TEXTS.md`](SETUP-EMAIL-AND-TEXTS.md), step 1).
 - [ ] If anyone used an @weatherblockroofingnc.com address: set up forwarding again (one more record in Netlify).
 - [ ] Remove the domain from the temp site's builder, and stop paying for it.
