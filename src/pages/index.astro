@@ -158,11 +158,11 @@ const trust: { icon: IconName; text: string }[] = [
             {estimate.showBallpark ? (
               <p>
                 Enter your address and how to reach you, and see a rough price range for a new roof with {estimate.material}. Then one of us
-                calls to set up your written estimate.
+                calls {facts.derived.estimateCallback} to set up your written estimate.
               </p>
             ) : (
               <p>
-                Enter your address and we find your roof from above. Then one of us calls you to set up your{' '}
+                Enter your address and we find your roof from above. Then one of us calls you {facts.derived.estimateCallback} to set up your{' '}
                 {inspection.free ? 'free ' : ''}estimate: a roof inspection, then a written price.
               </p>
             )}

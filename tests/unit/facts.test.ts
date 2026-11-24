@@ -37,14 +37,15 @@ describe('facts.yaml', () => {
     expect(facts.derived.anEstimate).toBe('a free estimate');
     expect(facts.derived.estimateCta).toBe('Get my free estimate');
     expect(facts.derived.bookEstimateLabel).toBe('Book my free estimate');
-    expect(facts.derived.estimateCallback).toBe('soon');
+    expect(facts.derived.estimateCallback).toBe('within one business hour');
 
     const ballpark = parseFacts(yamlText.replace('showBallpark: false', 'showBallpark: true'));
     expect(ballpark.derived.estimateName).toBe('Instant estimate');
     expect(ballpark.derived.estimateCta).toBe('Get my instant estimate');
 
-    const promise = parseFacts(yamlText.replace('callback: ""', 'callback: "within one business hour"'));
-    expect(promise.derived.estimateCallback).toBe('within one business hour');
+    // No promise in the facts file: the site says "soon".
+    const none = parseFacts(yamlText.replace('callback: within one business hour', 'callback: ""'));
+    expect(none.derived.estimateCallback).toBe('soon');
 
     const paid = parseFacts(yamlText.replace('  free: true', '  free: false'));
     expect(paid.derived.estimateName).toBe('Estimate');

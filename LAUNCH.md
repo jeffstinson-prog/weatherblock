@@ -19,13 +19,13 @@ The full list of settings is in `.env.example`.
   - [x] Netlify builds from `main` (switched November 21, 2026, after all nine pull requests were merged). The redesign is live on the test site, and booking was checked end to end on it again: a time tapped on the home page, a made-up booking, then cancelled from its private link.
 - [ ] **Supabase**: the project is WeatherBlock Roofing (`fsyrlkpzxljwhqpfxofh`). It signs owner logins with published keys (ES256), which the site checks, so no JWT secret is needed.
   - [x] Load the tables (done November 19, 2026), and the update for estimates, crews and roof jobs (done November 20, 2026).
-  - [ ] Load the update for estimate requests, before pull request 12 is merged: `npm run --silent db:setup-sql -- --after 20261120120000` prints it (I sent the file too). Paste it into the SQL Editor and Run. The summary line should read tables 18, tables_without_row_security 0, migrations 1. It only adds things, so the site that's live keeps working. `npm run --silent db:setup-sql` prints every migration as one file to paste into the SQL Editor; `-- --after <version>` prints only the newer ones. Each runs as one transaction and ends with a summary line to check.
+  - [x] Load the update for estimate requests (done November 24, 2026). `npm run --silent db:setup-sql` prints every migration as one file to paste into the SQL Editor; `-- --after <version>` prints only the newer ones. Each runs as one transaction and ends with a summary line to check.
   - [x] Sign-ups off (done November 19, 2026).
   - [ ] With the Resend step: send sign-in email through Resend (Authentication, SMTP settings), then change the "Magic Link" email template to include the 6-digit code, for example `Your sign-in code: {{ .Token }}`. Supabase only allows template edits once custom SMTP is set up, and its built-in email is only for testing. Until then, owners can't sign in to the owner app.
   - [ ] If it's on the free plan, move it to Pro ($25 a month) before real bookings. Free projects have no daily backups and pause after a quiet week.
   - Deploy previews share this project until launch, so their test bookings land here too (cleared on launch day).
-- [ ] **Resend** (free up to 100 emails a day): verify the domain (DNS, step 4), create an API key, then finish the Supabase sign-in email (above).
-- [ ] **Twilio**: buy a local 910 number, create a Messaging Service, and point incoming messages at `https://weatherblockroofingnc.com/api/twilio/sms`. Then 10DLC (step 2).
+- [ ] **Resend** (free up to 100 emails a day): verify the domain, create an API key, then the Supabase sign-in email (above). Step by step: [`SETUP-EMAIL-AND-TEXTS.md`](SETUP-EMAIL-AND-TEXTS.md), steps 1 and 2.
+- [ ] **Twilio**: buy a local 910 number, create a Messaging Service, and point incoming messages at `https://weatherblockroofingnc.com/api/twilio/sms`. Then 10DLC (section 2). Step by step: [`SETUP-EMAIL-AND-TEXTS.md`](SETUP-EMAIL-AND-TEXTS.md), step 4.
 - [ ] **Google Cloud** (needs a card on file; this traffic stays inside the free monthly caps):
   - Turn on Places API (New), Maps Static API and Google Calendar API.
   - A server key limited to Places API (New).
@@ -45,7 +45,8 @@ The full list of settings is in `.env.example`.
 US carriers block business texts from unregistered numbers. Registration takes
 days to a few weeks and needs the live site, with its privacy and text message
 pages, on the real domain. Until it's approved, texts are recorded in the owner
-app and not sent; email works from day one.
+app and not sent; email works from day one. The form's boxes, ready to paste, are
+in [`SETUP-EMAIL-AND-TEXTS.md`](SETUP-EMAIL-AND-TEXTS.md), step 4.
 
 - [ ] **Brand**: WeatherBlock Roofing Incorporated, EIN, the principal office address on file with the state, website, contact.
 - [ ] **Campaign**: "Low volume mixed" (about $1.50 a month), or "Customer care" if Twilio steers you there. One-time fees run about $20 (brand plus vetting).
@@ -61,7 +62,7 @@ Each of these is blank or unconfirmed, and the site hides whatever depends on it
 - [ ] A mailing address for the business (`business.mailingAddress`). A P.O. box works. Follow-up and review emails print it at the bottom, as the CAN-SPAM Act requires, and wait until it's set.
 - [ ] The Google review link (`pipeline.reviewUrl`): Google Business Profile, "Ask for reviews", copy the link.
 - [ ] When estimates are usually ready (`pipeline.estimateTurnaround`), for example "within 2 business days". It finishes the sentence in the thank-you after each visit.
-- [ ] How fast you call back an estimate request (`estimate.callback`), for example "within one business hour". It finishes "One of us will call you ..." on the page and in the customer's email. Blank says "soon". Only promise what you'll keep.
+- [x] How fast you call back an estimate request (`estimate.callback`): "within one business hour" (JT, November 24). The estimate page, the customer's email, the help answer and the assistant say it, and your alerts show what was promised. The site nudges you once if nobody has called after half an hour.
 - [ ] Justin: is $450 per square for the roof as measured, or with waste added? The ballpark you get with each estimate request runs from Google's measured roof to 15% more for waste (`measuredRange`). Customers don't see it. Also check the crews in the owner app (Jobs, Crews): names and jobs a day.
 - [ ] Decide once more, when you run ads: keep prices off the site (`estimate.showBallpark: false`, the page is "Free estimate"), or show a rough range after someone sends their name and number (`true`, and the page becomes "Instant estimate"). Either is honest. A page called "instant estimate" that gives no estimate is not, and ad platforms reject it.
 - [ ] Phone hours. Also fix the Google Business Profile, which says "Open 24 hours".
@@ -93,15 +94,15 @@ The estimate page is built to be the page an ad points to: one job, no menu, a p
 
 ## 4. Moving the domain off the temp site (DNS: I'll ask before each change)
 
-Today `weatherblockroofingnc.com` is registered at Namecheap, which also runs
-its DNS. The domain points at the temp site, and Namecheap's email forwarding
-is on (the MX and SPF records). Keep the email forwarding.
+`weatherblockroofingnc.com` is registered at Namecheap. By November 24 its DNS
+had moved to Netlify, and it's this site's main address. Namecheap's email
+forwarding ended with the move: the domain has no mail records now.
 
-- [ ] In Netlify, add the custom domain (`weatherblockroofingnc.com` and `www`).
-- [ ] At Namecheap, point the bare domain and `www` at Netlify, per Netlify's instructions at the time. Leave the MX and SPF records alone.
-- [ ] Add Resend's DNS records (DKIM, and the `send` subdomain's records).
-- [ ] Wait for Netlify's HTTPS certificate, then set `SITE_URL=https://weatherblockroofingnc.com`.
-- [ ] Remove the domain from the temp site's builder.
+- [x] In Netlify, add the custom domain, with Netlify's DNS (by November 24).
+- [ ] Netlify's HTTPS certificate: not issued when checked on November 24. Domain management, HTTPS, Verify DNS configuration, Provision certificate. Then set `SITE_URL=https://weatherblockroofingnc.com` and redeploy ([`SETUP-EMAIL-AND-TEXTS.md`](SETUP-EMAIL-AND-TEXTS.md), step 0).
+- [ ] Add Resend's DNS records in Netlify ([`SETUP-EMAIL-AND-TEXTS.md`](SETUP-EMAIL-AND-TEXTS.md), step 1).
+- [ ] If anyone used an @weatherblockroofingnc.com address: set up forwarding again (one more record in Netlify).
+- [ ] Remove the domain from the temp site's builder, and stop paying for it.
 - [ ] Point the Google Business Profile's website link at `https://weatherblockroofingnc.com/?utm_source=google&utm_medium=gbp`, so those bookings show where they came from.
 
 ## 5. Launch day

@@ -41,7 +41,7 @@ function factLines(): string[] {
   if (f.estimate.on) {
     add(
       'Getting a price',
-      `We don't give prices here. Anyone in the service area can ask for ${f.derived.anEstimate} on the estimate page at /estimate/: they enter their address and a phone number, and one of us calls to set up a roof inspection and a written estimate. The written estimate is the price.`,
+      `We don't give prices here. Anyone in the service area can ask for ${f.derived.anEstimate} on the estimate page at /estimate/: they enter their address and a phone number, and one of us calls ${f.derived.estimateCallback} to set up a roof inspection and a written estimate. The written estimate is the price.`,
     );
   }
   add('Financing', f.financing.provider && `${f.financing.provider}. ${f.financing.disclosure} ${f.financing.notes.join(' ')}`);
