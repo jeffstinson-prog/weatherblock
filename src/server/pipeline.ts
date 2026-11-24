@@ -12,6 +12,7 @@ import { send, type Outcome } from './messaging/send';
 import type { Email } from './messaging/templates';
 import * as t from './messaging/pipeline-templates';
 import { ownerRecipients } from './notify';
+import { asRoofSheet, imageryMonth } from './roofsheet';
 import { createUpload, viewUrl } from './storage';
 import { looksLikeToken, manageToken, manageUrl, tokenHash } from './tokens';
 import type { Owner } from './auth';
@@ -87,6 +88,17 @@ export interface EstimateInfo {
   followUpsSent: number;
   followUpsTotal: number;
   followUpsStoppedAt: string | null;
+  /** The roof's size and pitch as this estimate states them (rise in inches per 12). */
+  roofSqft: number | null;
+  roofPitch: number | null;
+}
+
+/** What the measurement from above says, as a starting point for the estimate's roof size and pitch. */
+export interface RoofSuggestion {
+  sqft: number;
+  pitch: number | null;
+  source: 'google' | 'outline';
+  imagery: string;
 }
 
 export interface JobInfo {
@@ -113,14 +125,19 @@ const crewRow = (r: Record<string, unknown>): CrewInfo => ({
 
 /** The estimate, the job and the crews, for one booking in the owner app. */
 export async function forBooking(owner: Owner, bookingId: string) {
-  const { e, j, crews } = await asOwner(owner.userId, async (tx) => {
+  const { e, j, crews, roof } = await asOwner(owner.userId, async (tx) => {
     const [e] = await tx`select * from wb.estimates where booking_id = ${bookingId}`;
+    const [b] = await tx`select roof from wb.bookings where id = ${bookingId}`;
     const [j] = await tx`
       select j.status, j.crew_id, c.name as crew_name, to_char(j.day, 'YYYY-MM-DD') as day, j.done_at
       from wb.jobs j left join wb.crews c on c.id = j.crew_id where j.booking_id = ${bookingId}`;
     const crews = await tx`select * from wb.crews order by sort, created_at`;
-    return { e, j, crews };
+    return { e, j, crews, roof: asRoofSheet(b?.roof) };
   });
+  const rise = roof?.pitch ? Number(roof.pitch.split('/')[0]) : NaN;
+  const roofSuggestion: RoofSuggestion | null = roof
+    ? { sqft: roof.sqft[0], pitch: Number.isFinite(rise) ? rise : null, source: roof.source, imagery: imageryMonth(roof.imageryDate) }
+    : null;
   const estimate: EstimateInfo | null = e
     ? {
         status: e.status,
@@ -137,12 +154,14 @@ export async function forBooking(owner: Owner, bookingId: string) {
         followUpsSent: e.followups_sent,
         followUpsTotal: facts.pipeline.followUpDays.length,
         followUpsStoppedAt: iso(e.followups_stopped_at),
+        roofSqft: (e.roof_sqft as number | null) ?? null,
+        roofPitch: (e.roof_pitch as number | null) ?? null,
       }
     : null;
   const job: JobInfo | null = j
     ? { status: j.status, crewId: j.crew_id, crewName: j.crew_name ?? '', day: j.day, doneAt: iso(j.done_at) }
     : null;
-  return { estimate, job, crews: crews.map(crewRow), followUpsHeld: followUpsHeld() };
+  return { estimate, job, crews: crews.map(crewRow), followUpsHeld: followUpsHeld(), roofSuggestion };
 }
 
 const EstimateInput = z.object({
@@ -150,13 +169,20 @@ const EstimateInput = z.object({
   summary: z.string().max(4000).optional(),
   filePath: z.string().regex(/^estimates\/[0-9a-f-]{36}\.pdf$/).nullable().optional(),
   fileName: z.string().max(200).nullable().optional(),
+  roofSqft: z.number().int().min(100).max(200_000).nullable().optional(),
+  roofPitch: z.number().int().min(0).max(24).nullable().optional(),
   send: z.boolean().optional(),
 });
 
 /** Save the estimate, and send it when asked. Sending again sends the updated estimate and restarts follow-ups. */
 export async function saveEstimate(owner: Owner, bookingId: string, input: unknown): Promise<Result<{ sent: boolean }>> {
   const p = EstimateInput.safeParse(input);
-  if (!p.success) return fail(400, 'Check the price: whole dollars, like 12500.');
+  if (!p.success) {
+    const field = String(p.error.issues[0]?.path[0] ?? '');
+    if (field === 'roofSqft') return fail(400, 'Check the roof size: square feet, like 2400.');
+    if (field === 'roofPitch') return fail(400, 'Check the pitch: the rise per 12, from 0 to 24.');
+    return fail(400, 'Check the price: whole dollars, like 12500.');
+  }
   const v = p.data;
   const out = await asOwner(owner.userId, async (tx) => {
     const [b] = await tx`select status from wb.bookings where id = ${bookingId}`;
@@ -173,13 +199,16 @@ export async function saveEstimate(owner: Owner, bookingId: string, input: unkno
     const summary = v.summary === undefined ? (before?.summary ?? null) : v.summary.trim() || null;
     const filePath = v.filePath === undefined ? (before?.file_path ?? null) : v.filePath;
     const fileName = v.fileName === undefined ? (before?.file_name ?? null) : v.fileName;
+    const roofSqft = v.roofSqft === undefined ? (before?.roof_sqft ?? null) : v.roofSqft;
+    const roofPitch = v.roofPitch === undefined ? (before?.roof_pitch ?? null) : v.roofPitch;
     if (v.send && amount === null && filePath === null) return fail(400, 'Add the price or attach the estimate before sending.');
     await tx`
-      insert into wb.estimates (booking_id, amount_cents, summary, file_path, file_name)
-      values (${bookingId}, ${amount}, ${summary}, ${filePath}, ${fileName})
+      insert into wb.estimates (booking_id, amount_cents, summary, file_path, file_name, roof_sqft, roof_pitch)
+      values (${bookingId}, ${amount}, ${summary}, ${filePath}, ${fileName}, ${roofSqft}, ${roofPitch})
       on conflict (booking_id) do update
       set amount_cents = excluded.amount_cents, summary = excluded.summary,
           file_path = excluded.file_path, file_name = excluded.file_name,
+          roof_sqft = excluded.roof_sqft, roof_pitch = excluded.roof_pitch,
           status = case when wb.estimates.status = 'withdrawn' then 'draft' else wb.estimates.status end`;
     if (!v.send) return { ok: true as const, sent: false, sendCount: 0 };
     const [e] = await tx`

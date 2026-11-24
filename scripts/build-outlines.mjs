@@ -1,4 +1,4 @@
-// Builds the building-outline tiles the instant estimate reads, from Microsoft's
+// Builds the building-outline tiles the owners' roof sheet falls back on, from Microsoft's
 // Global ML Building Footprints (Open Data Commons ODbL).
 //
 //   1. Download the files that cover the service area (see dataset-links.csv at
@@ -118,7 +118,7 @@ for (const [key, list] of tiles) {
 writeFileSync(
   join(OUT, 'LICENSE.txt'),
   [
-    'Building outlines for the instant estimate, derived from Microsoft Global ML Building Footprints.',
+    'Building outlines for roof measurements, derived from Microsoft Global ML Building Footprints.',
     'Source: https://github.com/microsoft/GlobalMLBuildingFootprints',
     'This database is made available under the Open Database License: https://opendatacommons.org/licenses/odbl/1-0/',
     'Each file holds the buildings in one 0.01 degree square: center (millionths of a degree from the',

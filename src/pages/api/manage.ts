@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { cancelByToken, getByToken, rescheduleByToken, toSummary } from '../../server/booking';
+import { cancelByToken, customerView, getByToken, rescheduleByToken } from '../../server/booking';
 import { customerAnswer, customerEstimateFile } from '../../server/pipeline';
 import { BadRequest, json, rateOk, readJson, sameOrigin, serverError, tooMany } from '../../server/http';
 import { bookingChanged } from '../../server/notify';
@@ -31,7 +31,8 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       // The customer's answer to their estimate: go ahead, a question, or no thanks.
       const answered = await customerAnswer(body.token, body.answer, body.note);
       if (!answered.ok) return json(answered.status, { error: answered.code ?? 'failed', message: answered.message });
-      const { id: _id, ...booking } = toSummary(answered.booking as Record<string, unknown>);
+      // The same view as when the page loaded, so the estimate keeps its roof picture after an answer.
+      const { id: _id, ...booking } = customerView(answered.booking as Record<string, unknown>);
       return json(200, { booking });
     } else if (body.action === 'estimate_file') {
       const url = await customerEstimateFile(body.token);

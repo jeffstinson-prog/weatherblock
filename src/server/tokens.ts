@@ -22,6 +22,16 @@ export function manageUrl(siteUrl: string, token: string): string {
   return `${siteUrl}/b/#${token}`;
 }
 
+/** The link in an estimate request's email: it opens the booking form already filled in. */
+export function requestToken(key: string): string {
+  return createHmac('sha256', config.manageTokenSecret()).update(`request:${key}`).digest('base64url');
+}
+
+export function requestUrl(siteUrl: string, token: string): string {
+  // After #, like the manage link: never sent to a server or written to a log.
+  return `${siteUrl}/estimate/book/#r=${token}`;
+}
+
 export function sign(value: string, secret: string): string {
   return createHmac('sha256', secret).update(value).digest('base64url');
 }

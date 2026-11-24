@@ -31,6 +31,26 @@ describe('facts.yaml', () => {
     expect(facts.derived.bookLabel).toBe('Book a free inspection');
   });
 
+  it('names the estimate page for what it gives: free, and "instant" only when it shows a ballpark', () => {
+    expect(facts.derived.estimateName).toBe('Free estimate');
+    expect(facts.derived.estimateTitle).toBe('Free roof estimate');
+    expect(facts.derived.anEstimate).toBe('a free estimate');
+    expect(facts.derived.estimateCta).toBe('Get my free estimate');
+    expect(facts.derived.bookEstimateLabel).toBe('Book my free estimate');
+    expect(facts.derived.estimateCallback).toBe('soon');
+
+    const ballpark = parseFacts(yamlText.replace('showBallpark: false', 'showBallpark: true'));
+    expect(ballpark.derived.estimateName).toBe('Instant estimate');
+    expect(ballpark.derived.estimateCta).toBe('Get my instant estimate');
+
+    const promise = parseFacts(yamlText.replace('callback: ""', 'callback: "within one business hour"'));
+    expect(promise.derived.estimateCallback).toBe('within one business hour');
+
+    const paid = parseFacts(yamlText.replace('  free: true', '  free: false'));
+    expect(paid.derived.estimateName).toBe('Estimate');
+    expect(paid.derived.bookEstimateLabel).toBe('Book my estimate');
+  });
+
   it('footer line uses the legal name and the year', () => {
     expect(copyrightLine(2026)).toBe('© 2026 WeatherBlock Roofing Incorporated');
   });

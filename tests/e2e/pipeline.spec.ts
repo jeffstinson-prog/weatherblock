@@ -87,6 +87,12 @@ test('the owner finishes the visit and sends the estimate', async ({ page }) => 
   await expect(page.getByRole('alert')).toHaveText('Enter the price in dollars, like 12500.');
   await page.getByLabel('Price').fill('12,500');
   await page.getByLabel("What's included").fill('Tear off one layer, new architectural shingles, new drip edge and pipe boots.\n\nDumpster and cleanup included.');
+  // The roof's size and pitch go on the estimate too.
+  await page.getByLabel('Size, square feet').fill('23');
+  await page.getByRole('button', { name: 'Send estimate' }).click();
+  await expect(page.getByRole('alert')).toHaveText('Enter the roof size in square feet, like 2400. Or leave it blank.');
+  await page.getByLabel('Size, square feet').fill('2,300');
+  await page.getByLabel('Pitch, rise per 12').fill('6');
   await page.getByRole('button', { name: 'Send estimate' }).click();
   await expect(page.getByRole('status')).toHaveText('Sent to Casey.');
   await expect(page.getByText('Waiting on them')).toBeVisible();
@@ -107,6 +113,9 @@ test('the customer reads it on their private link and says yes', async ({ page }
   const card = page.locator('.estimate-card', { hasText: 'Your estimate' });
   await expect(card.getByText('$12,500')).toBeVisible();
   await expect(card.getByText('Dumpster and cleanup included.')).toBeVisible();
+  await expect(card.getByRole('heading', { name: 'Your roof' })).toBeVisible();
+  await expect(card.getByText('2,300 square feet (23 squares)')).toBeVisible();
+  await expect(card.getByText('6/12')).toBeVisible();
   await expectAccessible(page);
   await expectNoSideScroll(page);
   await card.getByRole('button', { name: "Yes, let's do it" }).click();

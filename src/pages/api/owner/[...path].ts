@@ -5,6 +5,7 @@ import { openSlots } from '../../../server/booking';
 import { BadRequest, json, readJson, serverError } from '../../../server/http';
 import * as o from '../../../server/owner';
 import * as p from '../../../server/pipeline';
+import * as q from '../../../server/requests';
 
 export const prerender = false;
 
@@ -14,7 +15,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const today = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
-function result(r: (o.ActionResult | p.Result) & Record<string, unknown>) {
+function result(r: (o.ActionResult | p.Result | q.ActionResult) & Record<string, unknown>) {
   return r.ok ? json(200, r) : json(r.status, { error: (r.code as string | undefined) ?? 'failed', message: r.message });
 }
 
@@ -56,6 +57,23 @@ async function route(owner: Owner, method: string, path: string[], url: URL, req
         return result(await p.scheduleJob(owner, id, body.job));
       case 'job_status':
         return result(await p.setJobStatus(owner, id, body.status));
+    }
+  }
+
+  // Estimate requests: people to call.
+  if (method === 'GET' && head === 'requests') return json(200, await q.listRequests(owner));
+  if (head === 'request' && id && UUID.test(id)) {
+    if (method === 'GET') {
+      const d = await q.requestDetail(owner, id);
+      return d ? json(200, d) : json(404, { error: 'not_found', message: 'Request not found.' });
+    }
+    switch (body.action) {
+      case 'status':
+        return result(await q.setRequestStatus(owner, id, body.status, body.reason));
+      case 'notes':
+        return result(await q.setRequestNotes(owner, id, body.notes));
+      case 'measure':
+        return result(await q.remeasureRequest(owner, id));
     }
   }
 

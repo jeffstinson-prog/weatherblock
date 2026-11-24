@@ -5,7 +5,7 @@ const { business, contact } = facts;
 const who = business.legalName || business.name;
 ---
 
-<Legal title="Privacy" description={`What ${business.name} collects, why, and who sees it.`} updated="2026-11-19">
+<Legal title="Privacy" description={`What ${business.name} collects, why, and who sees it.`} updated="2026-11-23">
   <p>{who} ("we") runs this website. This page says what we collect, why, and who sees it. Questions: <a href={`mailto:${contact.email}`}>{contact.email}</a> or {contact.phone}.</p>
 
   <h2>What we collect when you book</h2>
@@ -19,6 +19,15 @@ const who = business.legalName || business.name;
     <li>How you heard about us, and any referral code</li>
   </ul>
 
+  <h2>What we collect when you ask for an estimate</h2>
+  <ul>
+    <li>The address of the home and its spot on the map</li>
+    <li>Your name and mobile number, and your email if you give it</li>
+    <li>The size and slope of the roof, measured from aerial imagery</li>
+    <li>How you found us, if you came from a link with a campaign tag</li>
+  </ul>
+  <p>We use it to call or text you about your estimate. Asking for an estimate doesn't sign you up for anything else.</p>
+
   <h2>Other things we collect</h2>
   <ul>
     <li>Copies of the texts and emails we send you, and any texts you send to our number.</li>
@@ -27,7 +36,7 @@ const who = business.legalName || business.name;
   </ul>
 
   <h2>Why</h2>
-  <p>To schedule and do your inspection, contact you about it, prepare your estimate, keep business records, and answer questions better.</p>
+  <p>To schedule and do your inspection, contact you about it and about an estimate you asked for, prepare your estimate, keep business records, and answer questions better.</p>
 
   <h2>Who sees it</h2>
   <p>We don't sell your information, and we don't share it for anyone else's marketing. These companies process it for us so the site works:</p>
@@ -36,24 +45,25 @@ const who = business.legalName || business.name;
     <li>Supabase (database and photo storage)</li>
     <li>Resend (email)</li>
     <li>Twilio (text messages)</li>
-    <li>Google (address lookup, the satellite image of the home, and our calendar)</li>
+    <li>Google (address lookup, the satellite image of the home, the roof measurement from aerial imagery, and our calendar)</li>
     <li>Anthropic (runs the automated assistant and reads the questions you type into it)</li>
   </ul>
   <p>If you click through to {facts.financing.provider || 'a financing company'}, that company's own privacy policy applies to what you give them.</p>
 
   <h2>Text messages</h2>
-  <p>We text you only if you agree on the booking form. We do not share your mobile number or your consent to receive texts with any third party or affiliate for marketing or promotional purposes. Text message opt-in data and consent are never shared with third parties, except the companies that deliver our texts for us. Reply STOP to any text to stop. <a href="/text-messages/">Text message terms</a>.</p>
+  <p>We send automated texts only if you agree on the booking form. If you ask for an estimate, one of us may call or text the number you gave us about it. We do not share your mobile number or your consent to receive texts with any third party or affiliate for marketing or promotional purposes. Text message opt-in data and consent are never shared with third parties, except the companies that deliver our texts for us. Reply STOP to any text to stop. <a href="/text-messages/">Text message terms</a>.</p>
 
   <h2>Cookies and tracking</h2>
   <p>No ads, no tracking cookies, no analytics scripts.</p>
-  <p>If you arrive from a link with a campaign tag or a referral code, or from another website, your phone remembers that for 30 days so a booking can show how you found us. Nothing is sent to us unless you book.</p>
+  <p>If you arrive from a link with a campaign tag or a referral code, or from another website, your phone remembers that for 30 days so a booking can show how you found us. Nothing is sent to us unless you book or ask for an estimate.</p>
   <p>If you start a booking and leave, your phone keeps what you typed for up to 24 hours so you don't lose it. It is deleted when you finish booking.</p>
 
   <h2>How long we keep it</h2>
   <ul>
     <li>Gate and lockbox codes: deleted 7 days after the visit.</li>
+    <li>The home's spot on the map and the roof measurement from aerial imagery: deleted after 30 days. We keep the address.</li>
     <li>Assistant questions: 30 days.</li>
-    <li>Bookings, photos and messages: as long as we need them for the work and our business and tax records.</li>
+    <li>Bookings, estimate requests, photos and messages: as long as we need them for the work and our business and tax records.</li>
   </ul>
 
   <h2>Your choices</h2>

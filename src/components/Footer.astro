@@ -7,7 +7,7 @@ const sms = smsHref();
 const { lines, verse, name } = facts.business;
 const explore = [
   { href: '/book/', label: facts.derived.bookLabel },
-  ...(facts.instantEstimate.on ? [{ href: '/estimate/', label: 'Instant estimate' }] : []),
+  ...(facts.estimate.on ? [{ href: '/estimate/', label: facts.derived.estimateName }] : []),
   { href: '/services/', label: 'Services' },
   { href: '/help/', label: 'Help center' },
   { href: '/ask/', label: 'Ask a question' },

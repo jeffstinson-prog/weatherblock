@@ -1,6 +1,7 @@
-// The instant estimate's math: roof size from an outline, prices from facts.yaml, and finding the house.
+// Roof math and the owners' roof sheet: roof size from Google's measurement or an outline,
+// a ballpark from facts.yaml, and finding the house. All of it is for the owners.
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { facts } from '../../src/facts';
 import {
   candidates,
@@ -14,7 +15,8 @@ import {
   tilesAround,
   type Building,
   type PriceConfig,
-} from '../../src/estimate/roof';
+} from '../../src/server/roof';
+import { asRoofSheet, customerBallpark, imageryMonth, measureRoof, roofSummary } from '../../src/server/roofsheet';
 
 const cfg: PriceConfig = { pricePerSquare: 450, largeRoof: { minSquares: 30, pricePerSquare: [350, 400] }, measuredRange: [1.0, 1.15], slopeFactor: [1.1, 1.3] };
 
@@ -65,13 +67,79 @@ describe('roof size and price', () => {
     expect(pitchLabel(45)).toBe('12/12');
   });
 
-  it("uses the prices in facts.yaml, and the text says the same numbers", () => {
-    const e = facts.instantEstimate;
+  it('uses the prices in facts.yaml', () => {
+    const e = facts.estimate;
     expect(e.pricePerSquare).toBe(450);
     expect(e.largeRoof).toEqual({ minSquares: 30, pricePerSquare: [350, 400] });
-    expect(facts.derived.roofPriceText).toBe(
-      '$450 per square (100 square feet) for architectural shingles, installed. On roofs of 30 squares or more, $350 to $400 per square.',
-    );
+    expect(e.showBallpark).toBe(false);
+  });
+});
+
+describe("the owners' roof sheet", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    facts.estimate.showBallpark = false;
+  });
+
+  // The site's own outline files, read from disk instead of over the network.
+  const outlinesFromDisk = () =>
+    vi.stubGlobal('fetch', async (url: string | URL) => {
+      const m = /\/data\/outlines\/([\d_-]+\.json)$/.exec(String(url));
+      try {
+        return new Response(readFileSync(`public/data/outlines/${m![1]}`, 'utf8'), { status: 200 });
+      } catch {
+        return new Response('', { status: 404 });
+      }
+    });
+
+  it("measures the test house with the stand-in for Google's data", async () => {
+    process.env.APP_ENV = 'test';
+    const sheet = await measureRoof(33.895447, -78.434496);
+    expect(sheet).toMatchObject({ source: 'google', sqft: [2250, 2590], squares: [22.5, 26], pitch: '6/12', imageryDate: '2025-03-10', ballpark: [10100, 11700] });
+    expect(sheet!.box).not.toBeNull();
+    expect(roofSummary(sheet)).toBe('Roof about 22.5 squares (2,250 square feet), 6/12 pitch. Ballpark $10,100 to $11,700.');
+    expect(imageryMonth(sheet!.imageryDate)).toBe('March 2025');
+  });
+
+  it("falls back to the building's outline when Google has nothing", async () => {
+    process.env.APP_ENV = 'test';
+    outlinesFromDisk();
+    const sheet = await measureRoof(33.974452, -78.379911); // 404 Test Main St: no Google data in tests
+    expect(sheet).toMatchObject({ source: 'outline', pitch: '', imageryDate: '', box: null, ballpark: [9400, 11200] });
+    expect(roofSummary(sheet)).toMatch(/^Roof about [\d.]+ to [\d.]+ squares, from the building's outline\. Slope not known\. Ballpark \$9,400 to \$11,200\.$/);
+  });
+
+  it("doesn't keep the owners' alert waiting: past its time budget, the measurement gives up", async () => {
+    process.env.APP_ENV = 'test';
+    vi.stubGlobal('fetch', () => new Promise(() => {})); // a lookup that never answers
+    const started = Date.now();
+    expect(await measureRoof(33.974452, -78.379911, 50)).toBeNull();
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
+
+  it('gives nothing, without failing, when neither has the house or the lookup is down', async () => {
+    process.env.APP_ENV = 'test';
+    vi.stubGlobal('fetch', async () => {
+      throw new Error('network down');
+    });
+    expect(await measureRoof(33.974452, -78.379911)).toBeNull();
+    expect(roofSummary(null)).toBe('Roof not measured from above.');
+  });
+
+  it('shows customers a ballpark only when the facts file says so', () => {
+    const sheet = asRoofSheet({ source: 'google', sqft: [2250, 2590], squares: [22.5, 26], pitch: '6/12', imageryDate: '2025-03-10', box: null, ballpark: [10100, 11700] });
+    expect(customerBallpark(sheet)).toBeNull();
+    facts.estimate.showBallpark = true;
+    expect(customerBallpark(sheet)).toEqual({ low: '$10,100', high: '$11,700', material: 'architectural shingles' });
+    expect(customerBallpark(null)).toBeNull();
+  });
+
+  it('says so when a building is too big to price, and reads stored sheets with care', () => {
+    const big = asRoofSheet({ source: 'google', sqft: [9600, 11040], squares: [96, 110.5], pitch: '4/12', imageryDate: '', box: null, ballpark: null });
+    expect(roofSummary(big)).toBe('Roof about 96 squares (9,600 square feet), 4/12 pitch. Too big or too small to price from above.');
+    expect(asRoofSheet(null)).toBeNull();
+    expect(asRoofSheet({ source: 'somewhere', sqft: [1, 2], squares: [1, 2] })).toBeNull();
+    expect(asRoofSheet({ source: 'google' })).toBeNull();
   });
 });
 

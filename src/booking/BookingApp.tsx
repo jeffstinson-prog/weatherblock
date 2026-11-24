@@ -38,6 +38,9 @@ import {
 import { Choices, ErrorSummary, SlotPicker, TextField } from './ui';
 
 export interface BookingProps {
+  /** "estimate" when someone comes from an estimate request: same form, worded for an estimate. */
+  variant: 'inspection' | 'estimate';
+  bookEstimateLabel: string;
   businessName: string;
   phone: string;
   phoneHref: string;
@@ -86,27 +89,56 @@ function newDraft(): Draft {
   };
 }
 
-/** The satellite picture the instant estimate already had, for the review step. */
-let handoffSatellite: string | null = null;
+/** What an estimate request hands to the booking form: the home and how to reach the person. */
+interface RequestHandoff {
+  place?: Draft['address'] | null;
+  satellite?: string | null;
+  contact?: { name?: string; mobile?: string; email?: string };
+}
 
-/** A booking the instant estimate started: the address they picked and what it showed, for us to pick up.
- *  The address comes with the server's signature, so it counts as picked from the list. */
+/** The satellite picture the estimate page already had, for the review step. */
+let handoffSatellite: string | null = null;
+/** True when this visit to the form started from an estimate request. */
+let cameFromRequest = false;
+
+/** Fill in what the request already told us, so nothing is typed twice. A picked address
+ *  carries the server's signature, so it counts as picked from the list. */
+function applyRequest(d: Draft, h: RequestHandoff): Draft {
+  const place = h.place && typeof h.place.text === 'string' && h.place.text.trim().length >= 5 ? h.place : null;
+  const c = h.contact ?? {};
+  const mobile = typeof c.mobile === 'string' ? (/^\+1\d{10}$/.test(c.mobile) ? formatMobile(c.mobile) : c.mobile.slice(0, 20)) : '';
+  return {
+    ...d,
+    address: place ?? d.address,
+    roof: { ...d.roof, reason: d.roof.reason || 'replace' },
+    contact: {
+      ...d.contact,
+      name: (typeof c.name === 'string' ? c.name.slice(0, 120) : '') || d.contact.name,
+      mobile: mobile || d.contact.mobile,
+      email: (typeof c.email === 'string' ? c.email.slice(0, 254) : '') || d.contact.email,
+    },
+  };
+}
+
+/** "Pick a time now" on the estimate page (or "Book a time for them" in the owner app) leaves the request here. */
 function takeEstimateHandoff(d: Draft): Draft {
   try {
     const raw = sessionStorage.getItem('estimate-handoff-v1');
     if (!raw) return d;
     sessionStorage.removeItem('estimate-handoff-v1');
-    const h = JSON.parse(raw) as { address?: string; place?: Draft['address'] | null; satellite?: string | null; notes?: string };
-    const picked = h.place && typeof (h.place as { sig?: unknown }).sig === 'string' ? h.place : null;
-    if (picked && !d.address.text) handoffSatellite = typeof h.satellite === 'string' ? h.satellite : null;
-    return {
-      ...d,
-      address: d.address.text ? d.address : picked ?? { text: (h.address ?? '').slice(0, 300) },
-      roof: { ...d.roof, reason: d.roof.reason || 'replace', notes: (d.roof.notes || h.notes || '').slice(0, 2000) },
-    };
+    const h = JSON.parse(raw) as RequestHandoff;
+    cameFromRequest = true;
+    handoffSatellite = h.place?.placeId && typeof h.satellite === 'string' ? h.satellite : null;
+    return applyRequest(d, h);
   } catch {
     return d;
   }
+}
+
+/** The code in the link from an estimate request's email: /estimate/book/#r=... */
+function requestTokenFromLink(): string {
+  const m = /^#r=([A-Za-z0-9_-]{43})$/.exec(location.hash);
+  return m ? m[1]! : '';
 }
 
 /** A time tapped on the home page ("Next open times") comes along as the pick. It's checked
@@ -162,6 +194,7 @@ export default function BookingApp(props: BookingProps) {
   const [fromReview, setFromReview] = useState(false);
   const [photoStatus, setPhotoStatus] = useState('');
   const [done, setDone] = useState<DoneInfo | null>(null);
+  const [linkNote, setLinkNote] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const heading = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
@@ -177,11 +210,29 @@ export default function BookingApp(props: BookingProps) {
     } else {
       setDraft((d) => takeSlotHandoff(takeEstimateHandoff(takeAssistantHandoff(d))));
     }
-    if (handoffSatellite) {
+    if (cameFromRequest) {
+      // The request's address and details are in. Start at the top, with its picture (or none).
+      cameFromRequest = false;
+      setStep(0);
+      setRestored(false);
       setSatellite(handoffSatellite);
       handoffSatellite = null;
     }
     setReady(true);
+
+    // The link from an estimate request's email: ask the server what they told us, then drop the code from the address bar.
+    const token = requestTokenFromLink();
+    if (token) {
+      history.replaceState(null, '', location.pathname);
+      post<RequestHandoff>('/api/estimate-requests', { action: 'get', token })
+        .then((h) => {
+          setDraft((d) => applyRequest(d, h));
+          setStep(0);
+          setRestored(false);
+          setSatellite(null);
+        })
+        .catch((err) => setLinkNote((err as RequestFailed).body?.message ?? ''));
+    }
   }, []);
 
   // Save as they go.
@@ -351,7 +402,8 @@ export default function BookingApp(props: BookingProps) {
 
   const name = STEPS[step]!;
   const total = STEPS.length;
-  const bookLabel = props.free ? 'Book my free inspection' : 'Book my inspection';
+  const forEstimate = props.variant === 'estimate';
+  const bookLabel = forEstimate ? props.bookEstimateLabel : props.free ? 'Book my free inspection' : 'Book my inspection';
 
   return (
     <div class="booking">
@@ -378,6 +430,12 @@ export default function BookingApp(props: BookingProps) {
             Your pick. You can change it in step 3.
           </span>
         </p>
+      )}
+
+      {linkNote && step === 0 && (
+        <div class="notice">
+          <p>{linkNote}</p>
+        </div>
       )}
 
       {restored && step === 0 && (
@@ -477,7 +535,7 @@ export default function BookingApp(props: BookingProps) {
             />
             <Choices
               name="reason"
-              legend="Why do you want an inspection?"
+              legend={forEstimate ? "What's going on with the roof?" : 'Why do you want an inspection?'}
               options={REASONS}
               value={draft.roof.reason}
               error={errors.reason}
@@ -615,7 +673,7 @@ export default function BookingApp(props: BookingProps) {
             <TextField
               id="mobile"
               label="Mobile number"
-              hint="Only used to reach you about this inspection."
+              hint={forEstimate ? 'Only used to reach you about this visit.' : 'Only used to reach you about this inspection.'}
               type="tel"
               inputMode="tel"
               autocomplete="tel"

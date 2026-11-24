@@ -25,7 +25,11 @@ interface Booking {
     sentAt: string;
     decidedAt: string | null;
     askedAt: string | null;
+    roofSqft: number | null;
+    roofPitch: number | null;
   } | null;
+  /** A satellite view of the home, when the estimate states the roof's size. */
+  roofPicture?: string | null;
   job: { status: 'to_schedule' | 'scheduled' | 'done'; day: string | null; doneAt: string | null } | null;
 }
 
@@ -229,6 +233,45 @@ export default function ManageApp(props: Props) {
               {paragraphs(est.summary).map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
+            </div>
+          )}
+          {est.roofSqft !== null && (
+            <div class="roof-facts">
+              <h3>Your roof</h3>
+              {booking.roofPicture && (
+                <figure class="aerial">
+                  <div class="aerial-frame">
+                    <img src={booking.roofPicture} alt={`Satellite view of ${booking.address}`} width={640} height={400} loading="lazy" />
+                  </div>
+                </figure>
+              )}
+              <dl>
+                <div>
+                  <dt>Size</dt>
+                  <dd>
+                    {est.roofSqft.toLocaleString('en-US')} square feet ({(est.roofSqft / 100).toFixed(1).replace(/\.0$/, '')} squares)
+                  </dd>
+                </div>
+                {est.roofPitch !== null && (
+                  <div>
+                    <dt>Pitch</dt>
+                    <dd>{est.roofPitch === 0 ? 'Flat' : `${est.roofPitch}/12`}</dd>
+                  </div>
+                )}
+              </dl>
+              <p class="muted small">
+                A square is 100 square feet of roof.
+                {booking.roofPicture && (
+                  <>
+                    {' '}
+                    Picture:{' '}
+                    <span class="gmp-attribution" translate={false}>
+                      Google Maps
+                    </span>
+                    .
+                  </>
+                )}
+              </p>
             </div>
           )}
           {fileUrl && (

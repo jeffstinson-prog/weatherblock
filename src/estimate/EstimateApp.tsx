@@ -1,348 +1,331 @@
-// The instant estimate: pick your address, and Google's measurement of your
-// roof becomes a ballpark for a new one. When Google has no data for a house,
-// its outline in open building data stands in; when that's missing too, the
-// house's size typed in. A rough guide, never a quote.
-import { useRef, useState } from 'preact/hooks';
+// The estimate page: find the home, say how to reach you, and the request goes
+// to the owners so one of them can call. The page shows the roof from above and
+// nothing about its size. A price shows only if the facts file turns that on,
+// and then only after the request is sent.
+import { useEffect, useRef, useState } from 'preact/hooks';
 import Icon from '../icons/Icon';
 import AddressField from '../booking/AddressField';
-import { post, type Place } from '../booking/client';
-import {
-  candidates,
-  dollars,
-  measuredEstimate,
-  outlineFromHouse,
-  parseTile,
-  pitchLabel,
-  roofEstimate,
-  tilesAround,
-  type Candidate,
-  type PriceConfig,
-  type RoofEstimate,
-  type TileData,
-} from './roof';
+import { RequestFailed, post, readSource, uuid, type Place } from '../booking/client';
+import { refLabel } from '../booking/format';
+import { formatMobile, normalizeMobile } from '../booking/rules';
+import { ErrorSummary, TextField } from '../booking/ui';
+import { validateRequest } from './rules';
 
-interface Props {
-  config: PriceConfig;
-  material: string;
-  priceText: string;
-  bookLabel: string;
+export interface EstimateProps {
+  /** The button that sends the request: "Get my free estimate". */
+  cta: string;
+  /** Where "Pick a time now" goes: the booking form, worded for an estimate. */
+  bookHref: string;
+  businessName: string;
   phone: string;
   phoneHref: string;
   serviceAreaShort: string;
+  /** Finishes "One of us will call you ...": "soon", or the promise in the facts file. */
+  callback: string;
+  free: boolean;
 }
 
-interface SolarRoof {
-  areaM2: number;
-  groundAreaM2: number;
-  pitchDegrees: number;
-  imageryDate: string;
+interface Sent {
+  ref: string;
+  firstName: string;
+  mobile: string;
+  ballpark: { low: string; high: string; material: string } | null;
 }
 
-type Found =
-  | { source: 'google'; roof: SolarRoof; image: string | null }
-  | { source: 'outline'; houses: Candidate[]; pick: number }
-  | { source: 'none' };
+// Where each error should send the cursor.
+const TARGETS: Record<string, string> = { address: 'address', name: 'name', mobile: 'mobile', email: 'email' };
 
-const monthYear = (iso: string) =>
-  iso ? new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
-
-// Without Google data: a USDA aerial photo (public domain) with the outline drawn on top.
-const VIEW_W = 640;
-const VIEW_H = 400;
-const HALF_W_M = 40;
-
-function aerialUrl(c: Candidate): string {
-  const r = 6378137;
-  const x = (c.lon * Math.PI * r) / 180;
-  const y = Math.log(Math.tan(((90 + c.lat) * Math.PI) / 360)) * r;
-  const hw = HALF_W_M / Math.cos((c.lat * Math.PI) / 180);
-  const hh = hw * (VIEW_H / VIEW_W);
-  const q = new URLSearchParams({
-    bbox: [x - hw, y - hh, x + hw, y + hh].map((n) => n.toFixed(2)).join(','),
-    bboxSR: '3857',
-    imageSR: '3857',
-    size: `${VIEW_W},${VIEW_H}`,
-    format: 'jpg',
-    f: 'image',
-  });
-  return `https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer/exportImage?${q}`;
-}
-
-function outlinePoints(c: Candidate): string {
-  const scale = VIEW_W / (2 * HALF_W_M);
-  return c.outline.map(([x, y]) => `${(VIEW_W / 2 + x * scale).toFixed(1)},${(VIEW_H / 2 - y * scale).toFixed(1)}`).join(' ');
-}
-
-async function outlinesNear(lat: number, lon: number): Promise<Candidate[]> {
-  const lists = await Promise.all(
-    tilesAround(lat, lon, 80).map(async (k) => {
-      const res = await fetch(`/data/outlines/${k}.json`);
-      return res.ok ? parseTile(k, (await res.json()) as TileData) : [];
-    }),
-  );
-  return candidates(lists.flat(), lat, lon);
-}
-
-export default function EstimateApp(p: Props) {
+export default function EstimateApp(p: EstimateProps) {
   const [text, setText] = useState('');
   const [place, setPlace] = useState<Place | null>(null);
-  const [satellite, setSatellite] = useState<string | null>(null);
   const [typed, setTyped] = useState(false);
+  const [satellite, setSatellite] = useState<string | null>(null);
+  const [picture, setPicture] = useState<string | null>(null);
+  const [looking, setLooking] = useState(false);
+  const [name, setName] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [email, setEmail] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [found, setFound] = useState<Found | null>(null);
-  const [manual, setManual] = useState(false);
-  const [sqft, setSqft] = useState('');
-  const [stories, setStories] = useState('1');
-  const [manualResult, setManualResult] = useState<RoofEstimate | null>(null);
-  // Read the box itself when the button is pressed: someone can type before the page's script is ready.
-  const sqftBox = useRef<HTMLInputElement>(null);
+  const [sent, setSent] = useState<Sent | null>(null);
+  // One key per visit: a double tap or a retry makes one request, not two.
+  const key = useRef(uuid());
+  const startedAt = useRef(Date.now());
+  const latest = useRef(0);
+  const heading = useRef<HTMLHeadingElement>(null);
 
-  async function measure(pl: Place) {
-    setError('');
-    setFound(null);
-    setManual(false);
-    setManualResult(null);
+  useEffect(() => {
+    if (sent) {
+      heading.current?.focus();
+      window.scrollTo({ top: 0 });
+    }
+  }, [sent]);
+
+  /** The roof from above, so they can say "yes, that's my house". Only a picture comes back. */
+  async function look(pl: Place, fallback: string | null) {
+    const ticket = ++latest.current;
+    setPicture(null);
     if (!pl.inArea) return;
+    setLooking(true);
+    try {
+      const r = await post<{ outOfArea: boolean; picture: string | null }>('/api/estimate', { place: pl });
+      if (ticket === latest.current) setPicture(r.picture ?? fallback);
+    } catch {
+      if (ticket === latest.current) setPicture(fallback);
+    } finally {
+      if (ticket === latest.current) setLooking(false);
+    }
+  }
+
+  function clearError(k: string) {
+    if (errors[k]) {
+      const next = { ...errors };
+      delete next[k];
+      setErrors(next);
+    }
+  }
+
+  const address = () => (place ? { ...place } : { text: text.trim(), typed });
+  const outOfArea = place && !place.inArea ? `That address is outside our area. We serve ${p.serviceAreaShort}. Call ${p.phone} if you think that's wrong.` : undefined;
+
+  async function send(e: Event) {
+    e.preventDefault();
+    const found = validateRequest({ address: { text, placeId: place?.placeId, typed }, contact: { name, mobile, email } });
+    if (outOfArea) found.address = outOfArea;
+    setErrors(found);
+    setFormError(undefined);
+    if (Object.keys(found).length > 0) return;
     setBusy(true);
     try {
-      const r = await post<{ source: 'google' | 'none' | 'out_of_area'; roof?: SolarRoof; image?: string | null }>('/api/estimate', { place: pl });
-      if (r.source === 'google' && r.roof) {
-        setFound({ source: 'google', roof: r.roof, image: r.image ?? null });
-        return;
-      }
-      const houses = await outlinesNear(pl.lat, pl.lng);
-      if (houses.length > 0) {
-        setFound({ source: 'outline', houses, pick: 0 });
+      const res = await post<Sent>('/api/estimate-requests', {
+        key: key.current,
+        startedAt: startedAt.current,
+        website: honeypot,
+        address: address(),
+        contact: { name: name.trim(), mobile: normalizeMobile(mobile) ?? mobile, email: email.trim() },
+        source: { utm: readSource().utm },
+      });
+      setSent(res);
+    } catch (err) {
+      const body = (err as RequestFailed).body ?? { error: 'offline', message: "We couldn't reach the server. Try again." };
+      if (body.fields && Object.keys(body.fields).length > 0) {
+        setErrors(body.fields);
+        setFormError(body.message);
       } else {
-        setFound({ source: 'none' });
-        setManual(true);
+        setFormError(`${body.message} You can also call or text ${p.phone}.`);
       }
-    } catch {
-      setError("We couldn't measure that roof just now. Enter your house's size below, or try again in a minute.");
-      setManual(true);
     } finally {
       setBusy(false);
     }
   }
 
-  function fromSize(e: Event) {
-    e.preventDefault();
-    setError('');
-    const raw = sqftBox.current?.value ?? sqft;
-    setSqft(raw);
-    const n = Number(raw.replace(/[,\s]/g, ''));
-    if (!Number.isFinite(n) || n < 300 || n > 15000) {
-      setError('Enter the heated square feet, like 1,800. Your listing or tax card has it.');
-      return;
-    }
-    setManualResult(roofEstimate(outlineFromHouse(n, Number(stories)), p.config));
-  }
-
-  const house = found?.source === 'outline' ? found.houses[found.pick] : undefined;
-  const result: RoofEstimate | null =
-    manualResult ??
-    (found?.source === 'google'
-      ? measuredEstimate(found.roof.areaM2, found.roof.groundAreaM2, p.config)
-      : house
-        ? roofEstimate(house.areaM2, p.config)
-        : null);
-
-  function book() {
-    const notes = result?.price
-      ? `From the instant estimate: about ${result.squares[0]} to ${result.squares[1]} squares, ${dollars(result.price[0])} to ${dollars(result.price[1])}.`
-      : '';
+  /** Straight to the booking form, with the address and their details already in. */
+  function pickTime() {
     try {
-      sessionStorage.setItem('estimate-handoff-v1', JSON.stringify({ address: place?.text ?? text, place, satellite, notes }));
+      sessionStorage.setItem(
+        'estimate-handoff-v1',
+        JSON.stringify({ place: address(), satellite, contact: { name: name.trim(), mobile, email: email.trim() } }),
+      );
     } catch {
-      // Private browsing: the booking form still works, just without the address filled in.
+      // Private browsing: the booking form still works, just without anything filled in.
     }
-    location.href = '/book/';
+    location.href = p.bookHref;
   }
+
+  if (sent) {
+    return (
+      <div class="booking done">
+        <div class="done-mark" aria-hidden="true">
+          <Icon name="check" size={30} stroke={3} />
+        </div>
+        <h2 tabIndex={-1} ref={heading} class="step-title">
+          Thanks{sent.firstName ? `, ${sent.firstName}` : ''}. Your request is in.
+        </h2>
+        <p class="ref">
+          Reference <strong>{refLabel(sent.ref)}</strong>
+        </p>
+
+        {sent.ballpark && (
+          <section class="estimate-card result" aria-labelledby="est-ballpark-h">
+            <h3 id="est-ballpark-h">Ballpark for a new roof</h3>
+            <p class="price">
+              {sent.ballpark.low} to {sent.ballpark.high}
+            </p>
+            <p class="small muted">
+              For {sent.ballpark.material}, installed. A rough guide, not a quote. A photo from above can't show how many layers are on the roof,
+              rotten wood, or every skylight and chimney. Your price is the one in your written estimate.
+            </p>
+          </section>
+        )}
+
+        <p>
+          To finish your estimate we need a few details a photo from above can't show: how many layers are on the roof, the wood underneath,
+          the flashing.
+        </p>
+
+        <h3>What happens next</h3>
+        <ul class="ticks">
+          <li>
+            <Icon name="check" size={18} stroke={2.5} />
+            <span>
+              One of us will call you {p.callback} at {formatMobile(sent.mobile)}.
+            </span>
+          </li>
+          <li>
+            <Icon name="check" size={18} stroke={2.5} />
+            <span>
+              We set up your {p.free ? 'free ' : ''}estimate. It starts with a roof inspection, so the price fits your roof as it is.
+            </span>
+          </li>
+          <li>
+            <Icon name="check" size={18} stroke={2.5} />
+            <span>Don't want to wait? Pick a time now. Your details are already filled in.</span>
+          </li>
+        </ul>
+
+        <div class="actions">
+          <button type="button" class="btn lg" onClick={pickTime}>
+            Pick a time now
+            <Icon name="arrow-right" size={20} />
+          </button>
+          <a class="btn secondary" href={p.phoneHref}>
+            <Icon name="phone" size={18} />
+            Call {p.phone}
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  const ready = (place?.inArea ?? false) || typed;
 
   return (
-    <div class="estimate">
-      <div class="estimate-lookup">
+    <div class="booking estimate">
+      <ErrorSummary errors={errors} targets={TARGETS} message={formError} />
+      <form noValidate onSubmit={send}>
         <AddressField
           value={text}
           selected={Boolean(place)}
           typed={typed}
-          outOfArea={place && !place.inArea ? `That address is outside our area. We serve ${p.serviceAreaShort}.` : undefined}
+          error={errors.address}
+          outOfArea={outOfArea}
           onText={(t) => {
             setText(t);
             setPlace(null);
             setTyped(false);
+            setPicture(null);
+            setSatellite(null);
+            clearError('address');
           }}
           onPlace={(pl, sat) => {
             setText(pl.text);
             setPlace(pl);
-            setSatellite(sat);
             setTyped(false);
-            void measure(pl);
+            setSatellite(sat);
+            clearError('address');
+            void look(pl, sat);
           }}
           onUseTyped={() => {
             setTyped(true);
             setPlace(null);
-            setFound(null);
-            setError("We need the address from the list to measure the roof. Pick it as you type, or enter your house's size below.");
-            setManual(true);
+            setPicture(null);
+            setSatellite(null);
+            clearError('address');
           }}
         />
-        {busy && (
+
+        {looking && (
           <p class="measuring" aria-live="polite">
-            Measuring your roof...
+            Finding your roof...
           </p>
         )}
-      </div>
 
-      {error && (
-        <div class="error-box" role="alert">
-          <p>{error}</p>
-        </div>
-      )}
-
-      {found?.source === 'google' && !manualResult && (
-        <section class="estimate-card found" aria-labelledby="est-found-h">
-          <h2 id="est-found-h">{place?.text}</h2>
-          {found.image && (
-            <figure class="aerial">
-              <div class="aerial-frame">
-                <img src={found.image} alt="Satellite view of the roof we measured, outlined in yellow" width={640} height={400} />
-              </div>
-              <figcaption>Is this your house?</figcaption>
-            </figure>
-          )}
-          <p class="small muted">
-            Measured from aerial imagery{found.roof.imageryDate ? ` taken ${monthYear(found.roof.imageryDate)}` : ''}, with{' '}
-            <span class="gmp-attribution" translate={false}>
-              Google Maps
-            </span>
-            .
-          </p>
-          <div class="actions">
-            <button type="button" class="btn secondary" onClick={() => setManual(true)}>
-              Enter my house's size instead
-            </button>
-          </div>
-        </section>
-      )}
-
-      {found?.source === 'outline' && house && !manualResult && (
-        <section class="estimate-card found" aria-labelledby="est-found-h">
-          <h2 id="est-found-h">{place?.text}</h2>
-          <figure class="aerial">
+        {place?.inArea && picture && (
+          <figure class="aerial found-roof">
             <div class="aerial-frame">
-              <img src={aerialUrl(house)} alt="Aerial photo of the house we measured, outlined in yellow" width={VIEW_W} height={VIEW_H} />
-              <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} aria-hidden="true">
-                <polygon points={outlinePoints(house)} />
-              </svg>
+              <img src={picture} alt={`Satellite view of ${place.text}`} width={640} height={400} />
             </div>
-            <figcaption>Is this your house?</figcaption>
+            <figcaption>
+              Is this your house? If not, change the address above.{' '}
+              <span class="muted">
+                Picture:{' '}
+                <span class="gmp-attribution" translate={false}>
+                  Google Maps
+                </span>
+                .
+              </span>
+            </figcaption>
           </figure>
-          <div class="actions">
-            {found.pick + 1 < found.houses.length && (
-              <button type="button" class="btn secondary" onClick={() => setFound({ ...found, pick: found.pick + 1 })}>
-                Not my house. Show the next one
+        )}
+
+        {ready && (
+          <>
+            <h2 class="reach-title">How can we reach you?</h2>
+            <TextField
+              id="name"
+              label="Your name"
+              autocomplete="name"
+              maxLength={120}
+              value={name}
+              error={errors.name}
+              onInput={(v) => {
+                setName(v);
+                clearError('name');
+              }}
+            />
+            <TextField
+              id="mobile"
+              label="Mobile number"
+              hint="So we can call you about your estimate."
+              type="tel"
+              inputMode="tel"
+              autocomplete="tel"
+              maxLength={20}
+              value={mobile}
+              error={errors.mobile}
+              onInput={(v) => {
+                setMobile(v);
+                clearError('mobile');
+              }}
+            />
+            <TextField
+              id="email"
+              label="Email"
+              optional
+              hint="For a copy of your request."
+              type="email"
+              inputMode="email"
+              autocomplete="email"
+              maxLength={254}
+              value={email}
+              error={errors.email}
+              onInput={(v) => {
+                setEmail(v);
+                clearError('email');
+              }}
+            />
+            <div class="hp" aria-hidden="true">
+              <label for="website">Leave this empty</label>
+              <input id="website" type="text" tabIndex={-1} autoComplete="off" value={honeypot} onInput={(e) => setHoneypot((e.currentTarget as HTMLInputElement).value)} />
+            </div>
+            <p class="hint consent">
+              By sending this, you agree that {p.businessName} may call or text you at this number about your estimate.{' '}
+              <a href="/privacy/" target="_blank" rel="noopener">
+                Privacy
+              </a>
+              .
+            </p>
+            <div class="step-actions">
+              <button type="submit" class="btn lg" disabled={busy}>
+                {busy ? 'Sending...' : p.cta}
+                {!busy && <Icon name="arrow-right" size={20} />}
               </button>
-            )}
-            <button type="button" class="btn secondary" onClick={() => setManual(true)}>
-              Enter my house's size instead
-            </button>
-          </div>
-        </section>
-      )}
-
-      {result && (
-        <section class="estimate-card result" aria-labelledby="est-result-h">
-          <h2 id="est-result-h">Ballpark for a new roof</h2>
-          {result.price ? (
-            <p class="price">
-              {dollars(result.price[0])} to {dollars(result.price[1])}
-            </p>
-          ) : (
-            <p>
-              This looks like a building we can't size from above, like a townhome row or a business. We'll measure it at the
-              inspection.
-            </p>
-          )}
-          {/* Too big to price: say so and stop. Its size and the range would only contradict that. */}
-          {result.price && (
-          <ul class="plain">
-            {found?.source === 'google' && !manualResult ? (
-              <>
-                <li>
-                  Your roof: about {result.roofSqft[0].toLocaleString('en-US')} square feet, or {result.squares[0]} squares.
-                </li>
-                <li>Average pitch: about {pitchLabel(found.roof.pitchDegrees)}.</li>
-                <li>
-                  The range adds up to {Math.round((p.config.measuredRange[1] - 1) * 100)}% for waste and what a photo from above can't see.
-                </li>
-              </>
-            ) : (
-              <>
-                <li>Your house seen from above: about {result.outlineSqft.toLocaleString('en-US')} square feet.</li>
-                <li>
-                  With the slope: about {result.roofSqft[0].toLocaleString('en-US')} to {result.roofSqft[1].toLocaleString('en-US')} square feet of
-                  roof, or {result.squares[0]} to {result.squares[1]} squares.
-                </li>
-              </>
-            )}
-            <li>For {p.material}, installed.</li>
-          </ul>
-          )}
-          {result.price && (
-          <p class="small muted">
-            A rough guide, not a quote. A photo from above can't show how many layers are on the roof, rotten wood, or every skylight
-            and chimney. {p.priceText} Your price is the one in your written estimate after the free inspection.
-          </p>
-          )}
-          <div class="actions">
-            <button type="button" class="btn" onClick={book}>
-              {p.bookLabel}
-              <Icon name="arrow-right" size={18} />
-            </button>
-            <a class="btn secondary" href={p.phoneHref}>
-              <Icon name="phone" size={18} />
-              Call {p.phone}
-            </a>
-          </div>
-        </section>
-      )}
-
-      {manual && (
-        <section class="estimate-card" aria-labelledby="est-size-h">
-          <h2 id="est-size-h">Use your house's size</h2>
-          <form onSubmit={fromSize} noValidate>
-            <div class="field">
-              <label for="est-sqft">Heated square feet</label>
-              <p class="hint" id="est-sqft-hint">
-                From your listing or the county tax card.
-              </p>
-              <input
-                id="est-sqft"
-                ref={sqftBox}
-                type="text"
-                inputMode="numeric"
-                aria-describedby="est-sqft-hint"
-                value={sqft}
-                onInput={(e) => setSqft((e.currentTarget as HTMLInputElement).value)}
-              />
             </div>
-            <div class="field">
-              <label for="est-stories">Stories</label>
-              <select id="est-stories" value={stories} onChange={(e) => setStories((e.currentTarget as HTMLSelectElement).value)}>
-                <option value="1">1</option>
-                <option value="1.5">1 and a half</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-              </select>
-            </div>
-            <button type="submit" class="btn">
-              Show the ballpark
-            </button>
-          </form>
-        </section>
-      )}
+          </>
+        )}
+      </form>
     </div>
   );
 }

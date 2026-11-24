@@ -1,6 +1,6 @@
 # Status
 
-Updated 2026-11-21.
+Updated 2026-11-23.
 
 ## Done
 
@@ -20,7 +20,13 @@ Updated 2026-11-21.
 - **The assistant** at `/ask/`: Claude Opus 5.5 by default, answers only from the help center and facts, says it's automated, offers to book or call, and carries what it learned into the booking form. A code check of every house rule reads each reply before it's shown; the same check passes on every built page. Questions it couldn't answer are listed in the owner app for 30 days.
 - **After the visit, automated.** Mark the visit done and the customer is thanked. Write the estimate in the owner app (price, what's included, an optional PDF) and send it: the customer gets an email and a text with their private link, where they say yes, ask a question, or say no thanks. Follow-up emails go out on days 2, 7 and 21 until they answer, ask or text us, and wait for a mailing address on file (CAN-SPAM). A yes alerts the owners and goes to Jobs.
 - **Roof jobs and crews.** Three crews to start (rename them in the app). Put a job on a crew's day (it asks first when the crew is full); the customer hears the date, gets a reminder the evening before, hears when weather moves the day (one tap moves every job on it), and gets thanks and one review request when it's done.
-- **Instant estimate** at `/estimate/`: pick an address and Google measures the roof (area with the slope, and pitch) for a ballpark from `facts.yaml` ($450 per square installed for architectural shingles, $350 to $400 per square from 30 squares). Without Google data, Microsoft's open building outlines stand in; then the house's size. Google's Solar API runs on its own key (JT's call: Google's terms describe it for energy systems).
+- **Estimate requests** at `/estimate/` (pull request 12, November 23). JT and Justin's call: no roof price anywhere on the site, and every request comes to the owners first.
+  - The page: address, a satellite picture of the roof, then name and mobile (email optional), one button. Then "one of us will call you", the phone number, and "Pick a time now", which opens the booking form filled in. No price, no roof size, no pitch on the page or in anything sent to the browser. Tests keep it that way.
+  - The owners: a text and an email at once with who, where, the roof's size and pitch (Google's measurement, or the open building outline) and a ballpark from `facts.yaml`. One reminder after half an hour with no call. Today in the owner app starts with the people to call; each request can be marked called, booked for them, sent the booking link, or closed.
+  - A booking from the same number is tied to the request and carries its roof sheet and where they came from. The written estimate can state the roof's size and pitch (checked by the owner), with a satellite picture, on the customer's page.
+  - The page is named for what it gives: "Free estimate". It is not called "instant", because nothing instant comes back but the picture. `estimate.showBallpark: true` in `facts.yaml` turns on a real instant estimate: a rough price range shown only after someone sends their name and number. Off for now.
+  - What Google gave us (map positions, roof measurements) is deleted after 30 days, for bookings too. The address and Google's place ID stay.
+  - The price per square was removed from the help center, the assistant, the home page and the terms. The assistant now says prices come in the written estimate and points to the estimate page.
 - **Availability** comes from weekly windows, days off, number of inspectors and busy times from the calendar. Starting point until Justin changes it in the owner app: Monday to Saturday, 8 to 10, 10 to noon, noon to 2, 2 to 4, one inspector, bookable 12 hours to 21 days ahead.
 - **Protection.** Row level security on every table; the public can only call five narrow functions. Rate limits, a hidden bot field, at most 3 upcoming bookings per mobile number. Gate codes deleted a week after the visit.
 - **Redesign** (November 21, pull request 9). A full visual pass over every page and flow, after measuring twelve well-made sites (four roofing and exterior companies, plus Opendoor, Block, Lemonade, Tend, One Medical and others) for type, spacing and structure. What changed:
@@ -35,11 +41,12 @@ Updated 2026-11-21.
 
 ## Next
 
-1. All nine pull requests are merged into `main` (November 21), the redesign included. Netlify builds the test site from `main`, and the redesign is live there. From here on, each merge into `main` publishes on its own.
+1. Pull requests 1 to 11 are merged into `main`. Netlify builds the test site from `main`, and each merge publishes on its own. Pull request 12 (estimate requests) waits for JT's "merge".
 2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase: tables loaded and sign-ups off (November 19). The sign-in code email waits for Resend, since Supabase only allows template edits with custom SMTP.
-3. Supabase has the new tables for estimates, crews and roof jobs (loaded November 20).
-4. Facts for the automation (LAUNCH.md section 3): a mailing address, the Google review link, when estimates are ready, and whether $450 per square is for the measured roof or includes waste.
-5. Run the live assistant tests once there's an Anthropic key: `npm run test:assistant` (top 30 questions and 15 attempts to break the rules). Not run yet; no key in this environment.
+3. Supabase has the tables for estimates, crews and roof jobs (loaded November 20). The update for estimate requests has to be loaded before pull request 12 is merged: one file, pasted into the SQL Editor (LAUNCH.md, section 1). It is safe to load while the current site is running.
+4. Facts for the automation (LAUNCH.md section 3): a mailing address, the Google review link, when estimates are ready, how fast you call back an estimate request, and whether $450 per square is for the measured roof or includes waste.
+5. Estimate requests only reach your phones once email (Resend) and texts (Twilio) are set up and you two are added as owners. Until then they are saved and wait in the owner app, which also needs Resend for its sign-in code.
+6. Run the live assistant tests once there's an Anthropic key: `npm run test:assistant` (top 30 questions and 15 attempts to break the rules). Not run yet; no key in this environment.
 
 ## Waiting on JT and Justin
 

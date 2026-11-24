@@ -24,14 +24,15 @@ export default defineConfig({
   integrations: [
     preact(),
     sitemap({
-      filter: (page) => !/^\/(app|b|r|api)(\/|$)/.test(new URL(page).pathname),
+      // Private pages, and the booking form's second front door (the same form as /book/).
+      filter: (page) => !/^\/(app|b|r|api|estimate\/book)(\/|$)/.test(new URL(page).pathname),
     }),
   ],
   security: {
     csp: {
       directives: [
         "default-src 'self'",
-        "img-src 'self' data: blob: https://maps.googleapis.com https://imagery.nationalmap.gov",
+        "img-src 'self' data: blob: https://maps.googleapis.com",
         `connect-src 'self'${supabaseUrl ? ` ${supabaseUrl}` : ''}`,
         "font-src 'self'",
         "object-src 'none'",

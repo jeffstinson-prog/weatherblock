@@ -1,89 +1,112 @@
 ---
 import Base from '../layouts/Base.astro';
 import BookCall from '../components/BookCall.astro';
+import Icon from '../components/Icon.astro';
 import PageHero from '../components/PageHero.astro';
 import EstimateApp from '../estimate/EstimateApp';
 import '../styles/booking.css';
-import { facts, telHref } from '../facts';
+import { facts, has, smsHref, telHref } from '../facts';
 
-const e = facts.instantEstimate;
-const on = e.on && Boolean(e.material);
+const e = facts.estimate;
+const d = facts.derived;
+const { inspection, reviews } = facts;
+const tel = telHref();
+const sms = smsHref();
 const props = {
-  config: { pricePerSquare: e.pricePerSquare, largeRoof: e.largeRoof, measuredRange: e.measuredRange, slopeFactor: e.slopeFactor },
-  material: e.material,
-  priceText: facts.derived.roofPriceText,
-  bookLabel: facts.derived.bookLabel,
+  cta: d.estimateCta,
+  bookHref: '/estimate/book/',
+  businessName: facts.business.name,
   phone: facts.contact.phone,
-  phoneHref: telHref(),
+  phoneHref: tel,
   serviceAreaShort: facts.serviceArea.short,
+  callback: d.estimateCallback,
+  free: inspection.free,
 };
-const lede = on
-  ? `A ballpark for a new roof with ${e.material}, from your house's outline seen from above. It takes about ten seconds.`
-  : `Prices come in a written estimate after ${facts.derived.theInspection}.`;
+const free = inspection.free ? 'free ' : '';
+// The page says up front what happens: a call, not a price on the screen (unless the facts file turns the ballpark on).
+const lede = e.showBallpark
+  ? `Enter your address and how to reach you, and see a rough price range for a new roof with ${e.material}. Then one of us calls to set up your written estimate.`
+  : `Start with your address. We find your roof from above, then one of us calls you to set up your ${free}estimate.`;
+const description = `${d.estimateTitle} in ${facts.serviceArea.short}. Enter your address and we call you to set up a roof inspection and a written estimate.`;
+const google = reviews.google;
+// Only what the facts file backs up.
+const ticks = [
+  ...(inspection.free ? ['The estimate is free'] : []),
+  ...(inspection.byDrone ? ['We inspect by drone, with no foot traffic on your shingles'] : []),
+  ...(inspection.deliverables ? [`You get ${inspection.deliverables}`] : []),
+];
+const showReviews = has('reviews.google.url') && google.rating !== null && google.count !== null;
 ---
 
-<Base title="Instant roof estimate" description={`A ballpark for a new roof in ${facts.serviceArea.short}, from your house's outline seen from above.`}>
-  <PageHero title="Instant roof estimate" lede={lede} />
-
-  {on && (
-    <div class="section tight">
-      <div class="wrap split">
-        <div class="tool">
+{e.on ? (
+  <Base title={d.estimateTitle} description={description} focus>
+    <div class="flow">
+      <div class="wrap flow-grid">
+        <div class="flow-main">
+          <header class="flow-head">
+            <h1>{d.estimateTitle}</h1>
+            <p>{lede}</p>
+          </header>
           <EstimateApp client:load {...props} />
           <noscript>
-            <p>This page needs JavaScript. Call or text {facts.contact.phone} for a price.</p>
+            <p>This page needs JavaScript. Call or text {facts.contact.phone} and we'll set up your estimate.</p>
           </noscript>
-          <p class="small muted sources">
-            Addresses and roof measurements: <span class="gmp-attribution" translate="no">Google Maps</span>. When Google has no data for a house:
-            building outlines from Microsoft, under the Open Database License (our copy is at{' '}
-            <a href="/data/outlines/LICENSE.txt">/data/outlines</a>), and aerial photos from the USDA National Agriculture Imagery Program,
-            via the U.S. Geological Survey.
+          <ul class="ticks reassure">
+            {ticks.map((line) => (
+              <li>
+                <Icon name="check" size={18} stroke={2.5} />
+                <span>{line}</span>
+              </li>
+            ))}
+            {showReviews && (
+              <li>
+                <Icon name="star" size={18} />
+                <span>
+                  {google.rating!.toFixed(1)} stars on Google from {google.count} reviews
+                </span>
+              </li>
+            )}
+          </ul>
+          <p class="talk-line">
+            Prefer to talk? {tel && <a href={tel}>Call {facts.contact.phone}</a>}{sms && <> or <a href={sms}>text us</a></>}.
           </p>
         </div>
-        <aside class="side" aria-label="How the estimate works">
-          <div class="card how">
+        <aside class="flow-side" aria-label="How it works">
+          <div class="card">
             <h2>How it works</h2>
             <ol class="steps">
-              <li>Pick your address from the list.</li>
-              <li>We measure your roof from above.</li>
-              <li>You see a rough price range for a new roof with {e.material}.</li>
+              <li>Enter your address. We find your roof from above.</li>
+              <li>Tell us how to reach you.</li>
+              <li>One of us calls to set up your {free}estimate: a roof inspection, then a written price.</li>
             </ol>
           </div>
-          <p class="note">
-            A rough guide, not a quote. Your price is the one in your written estimate after {facts.derived.theInspection}.
-          </p>
+          <p class="talk">Your price is the one in your written estimate after {d.theInspection}.</p>
         </aside>
       </div>
     </div>
-  )}
-
-  <BookCall />
-</Base>
+  </Base>
+) : (
+  <Base title="Roof estimate" description={`Prices come in a written estimate after ${d.theInspection}.`}>
+    <PageHero title="Roof estimate" lede={`Prices come in a written estimate after ${d.theInspection}.`} />
+    <BookCall />
+  </Base>
+)}
 
 <style>
-  .tool {
-    max-width: 40rem;
-  }
-  .how {
-    padding: 1.5rem;
-  }
-  .how h2 {
-    font-size: var(--h3);
-    line-height: 1.2;
-    margin-bottom: 1rem;
-  }
-  .how .steps {
-    margin: 0;
+  .reassure {
+    margin: 1.75rem 0 0;
     font-size: var(--text-s);
   }
-  .how .steps li {
-    min-height: 2.1rem;
-    display: flex;
-    align-items: center;
-  }
-  .note {
-    margin: 0;
+  .talk-line {
+    margin: 1rem 0 0;
     font-size: var(--text-s);
     color: var(--muted);
+  }
+  .talk-line a {
+    font-weight: 650;
+  }
+  .flow-side .steps {
+    margin: 0;
+    font-size: var(--text-s);
   }
 </style>

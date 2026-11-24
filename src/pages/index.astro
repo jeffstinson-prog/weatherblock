@@ -12,13 +12,13 @@ import { serviceMeta } from '../lib/services';
 
 const tel = telHref();
 const sms = smsHref();
-const { inspection, insuranceClaims, reviews, instantEstimate } = facts;
+const { inspection, insuranceClaims, reviews, estimate } = facts;
 const google = reviews.google;
 const showReviews = has('reviews.google.url') && google.rating !== null && google.count !== null;
 const questions = topArticles().slice(0, 6);
 const insuranceAnswer = getArticle('insurance-pay');
 const nc2027 = getArticle('nc-2027-changes');
-const estimateOn = instantEstimate.on && Boolean(instantEstimate.material);
+const estimateOn = estimate.on;
 
 // The headline is one of the business's own lines, one sentence to a line.
 const headline = facts.business.lines[1] ?? facts.business.name;
@@ -56,7 +56,7 @@ const trust: { icon: IconName; text: string }[] = [
           {estimateOn && (
             <a class="btn secondary" href="/estimate/">
               <Icon name="ruler" size={18} />
-              Instant estimate
+              {facts.derived.estimateName}
             </a>
           )}
           {tel && (
@@ -153,14 +153,21 @@ const trust: { icon: IconName; text: string }[] = [
       <div class="wrap">
         <div class="estimate-band">
           <div class="estimate-copy">
-            <p class="eyebrow on-dark">Instant estimate</p>
-            <h2 id="est-h">See a ballpark before anyone visits</h2>
-            <p>
-              Pick your address and we measure your roof from above. You get a rough price range for a new roof with {instantEstimate.material}.
-              Your price is the one in your written estimate after {facts.derived.theInspection}.
-            </p>
+            <p class="eyebrow on-dark">{facts.derived.estimateName}</p>
+            <h2 id="est-h">Start your estimate with your address</h2>
+            {estimate.showBallpark ? (
+              <p>
+                Enter your address and how to reach you, and see a rough price range for a new roof with {estimate.material}. Then one of us
+                calls to set up your written estimate.
+              </p>
+            ) : (
+              <p>
+                Enter your address and we find your roof from above. Then one of us calls you to set up your{' '}
+                {inspection.free ? 'free ' : ''}estimate: a roof inspection, then a written price.
+              </p>
+            )}
             <a class="btn light lg" href="/estimate/">
-              Get an instant estimate
+              {facts.derived.estimateCta}
               <Icon name="arrow-right" size={20} />
             </a>
           </div>
@@ -701,7 +708,7 @@ const trust: { icon: IconName; text: string }[] = [
     }
   }
 
-  /* Instant estimate */
+  /* The estimate band */
   .estimate-band {
     position: relative;
     isolation: isolate;

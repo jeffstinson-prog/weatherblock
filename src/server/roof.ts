@@ -1,6 +1,6 @@
-// The instant estimate's math: find the house in the outline tiles, size the
-// roof, and turn it into a price range from facts.yaml. Pure functions, so the
-// page and the tests share them.
+// Roof math: find the house in the outline tiles, size the roof, and turn it
+// into a price range from facts.yaml. Pure functions. Server only: the numbers
+// are for the owners, and nothing here is sent to a browser.
 
 export interface Building {
   lat: number;

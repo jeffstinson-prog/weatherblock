@@ -16,11 +16,12 @@ const who = business.legalName || business.name;
   </ul>
 
   <h2>Estimates and prices</h2>
-  {facts.instantEstimate.on ? (
-    <p>The instant estimate on this website is a rough guide from public data, not an offer or a quote. Your price is the one in a written estimate after we've seen the roof. Any work happens under a separate written agreement.</p>
+  {facts.estimate.on && facts.estimate.showBallpark ? (
+    <p>The ballpark the estimate page shows is a rough guide from a measurement taken from above, not an offer or a quote. Your price is the one in a written estimate after we've seen the roof. Any work happens under a separate written agreement.</p>
   ) : (
     <p>This website doesn't list prices. Prices come in a written estimate after we've seen the roof. Any work happens under a separate written agreement.</p>
   )}
+  {facts.estimate.on && <p>When you ask for an estimate on this website, we call or text the number you give us to set it up. Asking doesn't commit you to any work.</p>}
 
   <h2>Insurance</h2>
   <p>{insuranceClaims.weDo} {insuranceClaims.youDo} We don't file, handle or negotiate insurance claims. We can't promise what insurance will pay.</p>

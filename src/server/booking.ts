@@ -15,7 +15,7 @@ import {
 import { facts } from '../facts';
 import { asPublic, dbErrorCode } from './db';
 import { config } from './env';
-import { inServiceArea, verifyPlace } from './maps';
+import { inServiceArea, satelliteByAddress, verifyPlace } from './maps';
 import { manageToken, manageUrl, tokenHash } from './tokens';
 
 export interface SlotOut {
@@ -33,6 +33,9 @@ export interface CustomerEstimate {
   sentAt: string;
   decidedAt: string | null;
   askedAt: string | null;
+  /** The roof's size and pitch (rise per 12), when the estimate states them. */
+  roofSqft: number | null;
+  roofPitch: number | null;
 }
 
 /** The roof job as the customer sees it, once they've said yes. */
@@ -54,6 +57,8 @@ export interface BookingSummary {
   canChange: boolean;
   estimate?: CustomerEstimate | null;
   job?: CustomerJob | null;
+  /** A satellite view of the home, shown with an estimate that states the roof's size. */
+  roofPicture?: string | null;
 }
 
 export const TIMEZONE = 'America/New_York';
@@ -82,6 +87,8 @@ export function toSummary(row: Record<string, unknown>): BookingSummary {
           sentAt: new Date(String(e.sent_at)).toISOString(),
           decidedAt: isoOrNull(e.decided_at),
           askedAt: isoOrNull(e.asked_at),
+          roofSqft: (e.roof_sqft as number | null) ?? null,
+          roofPitch: (e.roof_pitch as number | null) ?? null,
         }
       : null,
     job: j ? { status: j.status as CustomerJob['status'], day: (j.day as string | null) ?? null, doneAt: isoOrNull(j.done_at) } : null,
@@ -317,12 +324,22 @@ const NOT_FOUND: ManageResult = {
   message: `We couldn't find that booking. The link may be old. Call ${facts.contact.phone} and we'll help.`,
 };
 
+/** What the customer's private page shows, from the database's summary of their booking. */
+export function customerView(row: Record<string, unknown>): BookingSummary {
+  const booking = toSummary(row);
+  // A satellite view of the home goes with an estimate that states the roof's size. Google finds the
+  // spot from the address when the picture loads, so no map position is kept for it. Only for an
+  // address picked from the list: one typed by hand could land on the wrong house.
+  if (booking.estimate?.roofSqft && row.has_place) booking.roofPicture = satelliteByAddress(booking.address);
+  return booking;
+}
+
 export async function getByToken(token: string): Promise<ManageResult> {
   const row = await asPublic(async (tx) => {
     const [r] = await tx`select wb_api.manage_get(${tokenHash(token)}) as booking`;
     return r?.booking as Record<string, unknown> | null;
   });
-  return row ? { ok: true, booking: toSummary(row) } : NOT_FOUND;
+  return row ? { ok: true, booking: customerView(row) } : NOT_FOUND;
 }
 
 export async function rescheduleByToken(token: string, slotId: string): Promise<ManageResult> {

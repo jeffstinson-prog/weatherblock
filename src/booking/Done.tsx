@@ -76,6 +76,12 @@ export default function Done({ info, props }: { info: DoneInfo; props: BookingPr
 
       <h3>What happens next</h3>
       <ul class="ticks">
+        {props.variant === 'estimate' && (
+          <li>
+            <Icon name="check" size={18} stroke={2.5} />
+            <span>Your estimate starts with a roof inspection, so the price fits your roof as it is.</span>
+          </li>
+        )}
         {props.byDrone && (
           <li>
             <Icon name="check" size={18} stroke={2.5} />
@@ -98,7 +104,7 @@ export default function Done({ info, props }: { info: DoneInfo; props: BookingPr
 
       <h3>Change or cancel</h3>
       <p>
-        Use your private link: <a href={manage}>change or cancel this inspection</a>. Bookmark it, or find it in your
+        Use your private link: <a href={manage}>change or cancel this {props.variant === 'estimate' ? 'visit' : 'inspection'}</a>. Bookmark it, or find it in your
         confirmation. Anyone with the link can change this booking, so keep it to yourself.
       </p>
     </div>

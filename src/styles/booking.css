@@ -1,5 +1,5 @@
 /*
-  The flows: booking, the private link, the instant estimate and the assistant.
+  The flows: booking, the private link, the estimate page and the assistant.
   Phone first; one column; big targets; the buttons that move you on stay in reach.
 */
 
@@ -744,26 +744,7 @@ details.field summary {
   }
 }
 
-/* ---- The instant estimate ---- */
-.estimate-lookup {
-  display: grid;
-  gap: 0.5rem;
-  margin: 0 0 1.25rem;
-  padding: 1.25rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-l);
-  background: var(--card);
-  box-shadow: var(--shadow-2);
-}
-.estimate-lookup .field {
-  margin: 0;
-}
-.estimate-lookup label {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
+/* ---- The estimate page ---- */
 .measuring {
   display: flex;
   align-items: center;
@@ -785,15 +766,6 @@ details.field summary {
     transform: rotate(360deg);
   }
 }
-.estimate-card.found h2 {
-  font-family: var(--font-display);
-  font-size: var(--h3);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  text-transform: none;
-  color: var(--ink);
-  line-height: 1.25;
-}
 .aerial {
   margin: 0 0 0.85rem;
 }
@@ -808,48 +780,75 @@ details.field summary {
   width: 100%;
   height: auto;
 }
-.aerial-frame svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.aerial-frame polygon {
-  fill: rgb(255 213 0 / 0.18);
-  stroke: #ffd500;
-  stroke-width: 3;
-  paint-order: stroke;
-  filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.9));
-}
 .aerial figcaption {
   font-weight: 700;
   margin-top: 0.6rem;
 }
-.estimate-card ul.plain {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 1rem;
-  display: grid;
-  gap: 0.5rem;
+.aerial figcaption .muted {
+  font-weight: 400;
 }
-.estimate-card ul.plain li {
-  position: relative;
-  padding-left: 1.4rem;
+/* The roof they picked, right under the address. */
+.found-roof {
+  margin: 1rem 0 0;
 }
-.estimate-card ul.plain li::before {
-  content: '';
-  position: absolute;
-  left: 0.2rem;
-  top: 0.62em;
-  width: 0.4rem;
-  height: 0.4rem;
-  border-radius: 50%;
-  background: var(--logo-green);
+.found-roof figcaption {
+  font-size: var(--text-s);
 }
-.sources {
-  margin-top: 2rem;
+.reach-title {
+  font-size: var(--h3);
+  line-height: 1.2;
+  margin: 1.75rem 0 1rem;
+}
+.booking.estimate .consent {
+  margin: 0;
+}
+/* A short form: its button sits under the fields, where the eye ends up, not pinned to the screen. */
+.booking.estimate .step-actions {
+  position: static;
+  margin-top: 1.25rem;
+  padding-top: 0;
+  border-top: 0;
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.booking.estimate .measuring {
+  margin-top: 0.75rem;
+}
+@media (min-width: 40rem) {
+  /* Before the contact fields appear there is no button bar to close the card. */
+  .booking.estimate:not(:has(.step-actions)) {
+    padding-bottom: clamp(1.5rem, 4vw, 2.25rem);
+  }
 }
 
+/* The roof's size and pitch, with the customer's estimate. */
+.roof-facts {
+  margin: 0 0 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+.manage .roof-facts h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+}
+.roof-facts dl {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 0.6rem;
+}
+.roof-facts dl > div {
+  display: grid;
+  grid-template-columns: 4rem 1fr;
+  gap: 0.75rem;
+}
+.roof-facts dt {
+  font-weight: 600;
+  color: var(--muted);
+}
+.roof-facts dd {
+  margin: 0;
+}
 /* Google Maps text attribution, as Google's guidelines ask: plain, unbroken, readable. */
 .gmp-attribution {
   font-family: Roboto, system-ui, sans-serif;

@@ -50,12 +50,27 @@ describe('voice', () => {
   });
 
   it('puts dollar figures in help answers only when the answer cites its sources', () => {
-    // Prices that come from facts.yaml (the roof price per square) are ours to state; anything else needs a source.
-    const own = facts.derived.roofPriceText;
-    const unsourced = helpArticles
-      .filter((a) => /\$\s?\d/.test(own ? a.markdown.replaceAll(own, '') : a.markdown) && a.sources.length === 0)
-      .map((a) => a.slug);
+    // We state no prices of our own. A grant amount or the like needs a source.
+    const unsourced = helpArticles.filter((a) => /\$\s?\d/.test(a.markdown) && a.sources.length === 0).map((a) => a.slug);
     expect(unsourced).toEqual([]);
+  });
+
+  it('keeps the roof price out of every page, help answer and browser script', () => {
+    // The price per square lives in facts.yaml for the owners' ballpark. Nothing a visitor loads may read it.
+    const reads = /estimate\.(pricePerSquare|largeRoof|measuredRange|slopeFactor)|pricePerSquare|priceConfig|roofsheet|server\/roof/;
+    const visitorFiles = [
+      ...walk(join(root, 'src/pages'), ['.astro']),
+      ...walk(join(root, 'src/components'), ['.astro']),
+      ...walk(join(root, 'src/layouts'), ['.astro']),
+      ...walk(join(root, 'src/content'), ['.md']),
+      ...walk(join(root, 'src/booking'), ['.ts', '.tsx']),
+      ...walk(join(root, 'src/estimate'), ['.ts', '.tsx']),
+      ...walk(join(root, 'src/assistant'), ['.ts', '.tsx']),
+      ...walk(join(root, 'src/owner'), ['.ts', '.tsx']),
+      ...walk(join(root, 'src/scripts'), ['.ts']),
+    ];
+    const offenders = visitorFiles.filter((f) => reads.test(readFileSync(f, 'utf8')));
+    expect(offenders.map((f) => f.replace(root, ''))).toEqual([]);
   });
 
   it('never says we file, handle or negotiate claims, or waive deductibles, except to say we do not', () => {
