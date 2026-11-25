@@ -308,7 +308,9 @@ const trust: { icon: IconName; text: string }[] = [
 <script>
   // The hero's "Next open times": the three soonest windows, straight from the
   // booking calendar. Tapping one starts a booking with that time already picked.
+  // A tab left open loads them again when it's shown after a few minutes.
   import { dayKey, shortDay, windowLabel } from '../booking/format';
+  import { STALE_MS, stillAhead, whenShownAgain } from '../booking/fresh';
 
   interface Slot {
     id: string;
@@ -320,9 +322,12 @@ const trust: { icon: IconName; text: string }[] = [
   const list = card?.querySelector<HTMLElement>('[data-times-list]');
   const arrow = card?.querySelector<HTMLTemplateElement>('template[data-arrow]')?.content.firstElementChild;
   if (card && list) {
-    const today = dayKey(new Date().toISOString());
-    const tomorrow = dayKey(new Date(Date.now() + 86_400_000).toISOString());
-    const dayLabel = (iso: string) => (dayKey(iso) === today ? 'Today' : dayKey(iso) === tomorrow ? 'Tomorrow' : shortDay(iso));
+    // "Today" and "Tomorrow" are worked out each time the list is drawn, so they're right after midnight too.
+    const dayLabel = (iso: string) => {
+      const today = dayKey(new Date().toISOString());
+      const tomorrow = dayKey(new Date(Date.now() + 86_400_000).toISOString());
+      return dayKey(iso) === today ? 'Today' : dayKey(iso) === tomorrow ? 'Tomorrow' : shortDay(iso);
+    };
 
     const row = (s: Slot) => {
       const li = document.createElement('li');
@@ -341,22 +346,31 @@ const trust: { icon: IconName; text: string }[] = [
       return li;
     };
 
-    fetch('/api/slots', { headers: { accept: 'application/json' } })
-      .then((r) => (r.ok ? (r.json() as Promise<{ slots: Slot[] }>) : Promise.reject(new Error('no times'))))
-      .then(({ slots }) => {
-        if (slots.length === 0) throw new Error('no times');
-        list.replaceChildren(...slots.slice(0, 3).map(row));
-        card.dataset.state = 'ready';
-      })
-      .catch(() => {
-        const li = document.createElement('li');
-        const a = document.createElement('a');
-        a.href = '/book/';
-        a.textContent = 'See open times on the booking page';
-        li.append(a);
-        list.replaceChildren(li);
-        card.dataset.state = 'none';
-      });
+    let loadedAt = 0;
+    const load = () => {
+      loadedAt = Date.now();
+      fetch('/api/slots', { headers: { accept: 'application/json' }, cache: 'no-store' })
+        .then((r) => (r.ok ? (r.json() as Promise<{ slots: Slot[] }>) : Promise.reject(new Error('no times'))))
+        .then(({ slots }) => {
+          const open = stillAhead(slots);
+          if (open.length === 0) throw new Error('no times');
+          list.replaceChildren(...open.slice(0, 3).map(row));
+          card.dataset.state = 'ready';
+        })
+        .catch(() => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = '/book/';
+          a.textContent = 'See open times on the booking page';
+          li.append(a);
+          list.replaceChildren(li);
+          card.dataset.state = 'none';
+        });
+    };
+    load();
+    whenShownAgain(() => {
+      if (Date.now() - loadedAt > STALE_MS) load();
+    });
 
     list.addEventListener('click', (e) => {
       const a = (e.target as Element).closest<HTMLAnchorElement>('a[data-slot]');

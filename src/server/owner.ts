@@ -7,6 +7,7 @@ import { asOwner, dbErrorCode } from './db';
 import { bookingChanged, onMyWay } from './notify';
 import { forBooking, inspected } from './pipeline';
 import { calendarApi, serviceAccountEmail, syncCalendar } from './calendar';
+import { read } from './env';
 import { roofImageUrl } from './maps';
 import { asRoofSheet } from './roofsheet';
 import { viewUrl } from './storage';
@@ -242,6 +243,8 @@ export async function getAvailability(owner: Owner) {
         syncedAt: s!.calendar_synced_at ? iso(s!.calendar_synced_at) : null,
         serviceAccount: serviceAccountEmail(),
         available: calendarApi() !== null,
+        // A calendar ID set in Netlify (GOOGLE_CALENDAR_ID) is used when the field here is empty.
+        serverId: read('GOOGLE_CALENDAR_ID') ?? '',
       },
       week,
       daysOff: daysOff.map((d) => ({ day: d.day as string, note: d.note as string })),
