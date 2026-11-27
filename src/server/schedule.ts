@@ -1,10 +1,11 @@
 // The schedule: inspections and roof jobs, day by day, with who does each one.
 // Owners assign the inspector for a visit here; jobs go on a crew's day.
 import { z } from 'zod';
-import { TZ } from '../booking/format';
+import { TZ, whenLabel } from '../booking/format';
 import { labelOf, REASONS } from '../booking/rules';
 import type { Owner } from './auth';
 import { asOwner } from './db';
+import { tellAssignee } from './handoff';
 import { crewRow } from './pipeline';
 
 export type Result<T = object> = ({ ok: true } & T) | { ok: false; status: number; message: string };
@@ -78,12 +79,22 @@ export async function assignInspector(owner: Owner, bookingId: string, userId: u
   const p = z.uuid().nullable().safeParse(userId ?? null);
   if (!p.success) return { ok: false, status: 400, message: 'Pick someone from the list.' };
   const done = await asOwner(owner.userId, async (tx) => {
+    const [before] = await tx`select assigned_to from wb.bookings where id = ${bookingId}`;
     const [b] = await tx`update wb.bookings set assigned_to = ${p.data} where id = ${bookingId} returning id`;
-    if (b) {
-      await tx`insert into wb.booking_events (booking_id, actor, kind, detail)
-               values (${bookingId}, 'owner', 'assigned', ${tx.json({ to: p.data })})`;
-    }
-    return Boolean(b);
+    if (!b) return null;
+    await tx`insert into wb.booking_events (booking_id, actor, kind, detail)
+             values (${bookingId}, 'owner', 'assigned', ${tx.json({ to: p.data })})`;
+    const [v] = await tx`select name, status, starts_at, ends_at from wb.booking_list where id = ${bookingId}`;
+    return { changed: before?.assigned_to !== p.data, v };
   });
-  return done ? { ok: true } : { ok: false, status: 404, message: 'Booking not found.' };
+  if (!done) return { ok: false, status: 404, message: 'Booking not found.' };
+  if (done.changed && done.v && done.v.status === 'booked' && +new Date(done.v.ends_at as string) > Date.now()) {
+    await tellAssignee(owner, p.data, {
+      title: 'put you on an inspection',
+      body: `${done.v.name as string}, ${whenLabel(iso(done.v.starts_at), iso(done.v.ends_at))}.`,
+      url: `/app/#/booking/${bookingId}`,
+      tag: `assign-${bookingId}`,
+    });
+  }
+  return { ok: true };
 }

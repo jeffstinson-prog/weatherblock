@@ -4,8 +4,11 @@
 import { z } from 'zod';
 import { money, shortDay, townOf, whenLabel, windowLabel } from '../booking/format';
 import { formatMobile, normalizeMobile } from '../booking/rules';
+import { STAGES, STAGE_LABEL, type Stage } from '../booking/stages';
+import { MANUAL_SOURCES, sourceLabel } from '../booking/sources';
 import { facts } from '../facts';
 import type { Owner } from './auth';
+import { tellAssignee } from './handoff';
 import { asOwner } from './db';
 import { config } from './env';
 import { send } from './messaging/send';
@@ -26,19 +29,7 @@ const MOBILE = /^\+1[2-9]\d{9}$/;
 
 // ---------- Stages ----------
 
-export const STAGES = ['new', 'contacted', 'booked', 'inspected', 'estimate_sent', 'won', 'scheduled', 'done', 'lost'] as const;
-export type Stage = (typeof STAGES)[number];
-export const STAGE_LABEL: Record<Stage, string> = {
-  new: 'New lead',
-  contacted: 'Contacted',
-  booked: 'Inspection booked',
-  inspected: 'Inspected',
-  estimate_sent: 'Estimate sent',
-  won: 'Won',
-  scheduled: 'Job scheduled',
-  done: 'Completed',
-  lost: 'Lost',
-};
+export { STAGES, STAGE_LABEL, type Stage };
 
 interface Req {
   id: string;
@@ -265,7 +256,15 @@ export async function customer(owner: Owner, mobileInput: string) {
     if (when) timeline.push({ at: when, kind, text, ...extraFields });
   };
   for (const r of d.reqs) {
-    add(r.created_at, 'request', `Asked for an estimate on the website${r.lead_source && r.lead_source !== 'direct' ? ` (${r.lead_source})` : ''}.`, { href: `#/request/${r.id}` });
+    const manual = (MANUAL_SOURCES as readonly string[]).includes(r.lead_source);
+    add(
+      r.created_at,
+      'request',
+      manual
+        ? `Added as a lead by the team (${sourceLabel(r.lead_source).toLowerCase()}).`
+        : `Asked for an estimate on the website${r.lead_source && r.lead_source !== 'direct' ? ` (from ${sourceLabel(r.lead_source)})` : ''}.`,
+      { href: `#/request/${r.id}` },
+    );
     if (r.called_at) add(r.called_at, 'call', 'Marked called.', { href: `#/request/${r.id}` });
     if (r.closed_at) add(r.closed_at, 'closed', `Request closed${r.close_reason ? `: ${r.close_reason}` : ''}.`);
   }
@@ -359,8 +358,9 @@ export async function saveProfile(owner: Owner, mobileInput: string, input: unkn
   const p = ProfileInput.safeParse(input);
   if (!p.success) return fail(400, 'Check the details and try again.');
   const v = p.data;
-  await asOwner(owner.userId, async (tx) => {
+  const handedTo = await asOwner(owner.userId, async (tx) => {
     await tx`insert into wb.customer_profiles (mobile) values (${mobile}) on conflict (mobile) do nothing`;
+    const [before] = await tx`select assigned_to from wb.customer_profiles where mobile = ${mobile}`;
     if (v.assignedTo !== undefined) await tx`update wb.customer_profiles set assigned_to = ${v.assignedTo} where mobile = ${mobile}`;
     if (v.tags !== undefined) {
       const tags = [...new Set(v.tags.map((t) => t.replace(/\s+/g, ' ')))];
@@ -374,7 +374,22 @@ export async function saveProfile(owner: Owner, mobileInput: string, input: unkn
                  where mobile = ${mobile} and status = 'open' and auto_key is not null`;
       }
     }
+    if (!v.assignedTo || v.assignedTo === before?.assigned_to) return null;
+    const [who] = await tx`
+      select name, address from (
+        select name, address, created_at from wb.bookings where mobile = ${mobile}
+        union all select name, address, created_at from wb.estimate_requests where mobile = ${mobile}
+      ) x order by created_at desc limit 1`;
+    return who ? { to: v.assignedTo, name: who.name as string, town: townOf(who.address as string) } : null;
   });
+  if (handedTo) {
+    await tellAssignee(owner, handedTo.to, {
+      title: 'gave you a customer',
+      body: `${handedTo.name}${handedTo.town ? ` in ${handedTo.town}` : ''}. They're yours to follow through.`,
+      url: `/app/#/customer/${mobile.slice(1)}`,
+      tag: `customer-${mobile.slice(1)}`,
+    });
+  }
   return { ok: true };
 }
 

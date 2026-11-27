@@ -44,6 +44,9 @@ export interface CrewInfo {
   name: string;
   jobsPerDay: number;
   active: boolean;
+  leadName?: string;
+  leadMobile?: string;
+  color?: string;
 }
 
 interface Props {

@@ -10,6 +10,7 @@ import { STALE_MS, whenShownAgain } from '../booking/fresh';
 import { STATUS_LABEL, directions, type Row } from './Today';
 import { ago, promiseLabel } from './promise';
 import PushCard from './PushCard';
+import { customerHref, dueLabel } from './ui';
 
 interface CallRow {
   id: string;
@@ -22,9 +23,22 @@ interface CallRow {
   leadSource: string;
 }
 
+interface HomeTask {
+  id: string;
+  title: string;
+  dueOn: string;
+  mobile: string | null;
+  mine: boolean;
+  auto: boolean;
+  customerName: string;
+}
+
 interface HomeData {
   today: string;
   name: string;
+  me: string;
+  tasks: HomeTask[];
+  taskCounts: { mine: number; late: number; unassigned: number };
   toCall: CallRow[];
   calledCount: number;
   visits: Row[];
@@ -228,6 +242,68 @@ export default function Home() {
                       Book
                     </button>
                   </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      <section aria-labelledby="tasks-h">
+        <div class="section-head">
+          <h2 id="tasks-h">Tasks due</h2>
+          <a href="#/tasks/mine" class="small">
+            All my tasks{d.taskCounts.mine > 0 ? ` (${d.taskCounts.mine})` : ''}
+          </a>
+        </div>
+        {d.tasks.length === 0 ? (
+          <p class="muted">
+            Nothing due today.
+            {d.taskCounts.unassigned > 0 && (
+              <>
+                {' '}
+                <a href="#/tasks/nobody">
+                  {d.taskCounts.unassigned} task{d.taskCounts.unassigned === 1 ? '' : 's'} with nobody on {d.taskCounts.unassigned === 1 ? 'it' : 'them'}
+                </a>
+                .
+              </>
+            )}
+          </p>
+        ) : (
+          <ul class="reset-list task-list card-list">
+            {d.tasks.map((t) => {
+              const due = dueLabel(t.dueOn, d.today);
+              return (
+                <li key={t.id} class="task">
+                  <button
+                    type="button"
+                    class="task-check"
+                    aria-pressed="false"
+                    disabled={busy !== ''}
+                    aria-label={`Mark done: ${t.title}`}
+                    onClick={() => void act(`task-${t.id}`, `task/${t.id}`, { task: { status: 'done' } }, `Done: ${t.title}`)}
+                  >
+                    <Icon name="circle" size={24} />
+                  </button>
+                  <div class="task-main">
+                    <a class="task-title" href={t.mobile ? customerHref(t.mobile) : '#/tasks/mine'}>
+                      {t.title}
+                    </a>
+                    <p class="task-meta">
+                      <span class={`due ${due.late ? 'late' : 'today'}`}>{due.text}</span>
+                      {!t.mine && <span class="muted">Nobody yet</span>}
+                    </p>
+                  </div>
+                  {!t.mine && (
+                    <button
+                      type="button"
+                      class="btn secondary small-btn"
+                      disabled={busy !== ''}
+                      onClick={() => void act(`take-${t.id}`, `task/${t.id}`, { task: { assignee: d.me } }, `It's yours: ${t.title}`)}
+                    >
+                      Take it
+                    </button>
+                  )}
                 </li>
               );
             })}

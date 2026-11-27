@@ -66,6 +66,13 @@ async function route(owner: Owner, method: string, path: string[], url: URL, req
         return result(await p.setJobStatus(owner, id, body.status));
       case 'assign':
         return result(await sched.assignInspector(owner, id, body.userId));
+      // Photos from the visit, and which ones the customer sees.
+      case 'photo_add':
+        return result(await o.teamPhotoUpload(owner, id, body.contentType, body.bytes));
+      case 'photo_set':
+        return result(await o.setPhoto(owner, id, body.photoId, { shared: body.shared, caption: body.caption }));
+      case 'photo_remove':
+        return result(await o.removeTeamPhoto(owner, id, body.photoId));
     }
   }
 
@@ -88,6 +95,7 @@ async function route(owner: Owner, method: string, path: string[], url: URL, req
   if (head === 'lead' && method === 'POST') return result(await crm.createLead(owner, body.lead));
 
   // Tasks.
+  if (method === 'GET' && head === 'people') return json(200, await tasks.people(owner));
   if (method === 'GET' && head === 'tasks') return json(200, await tasks.listTasks(owner, url.searchParams.get('which') === 'done' ? 'done' : 'open'));
   if (head === 'task' && method === 'POST') {
     if (!id) return result(await tasks.createTask(owner, body.task));

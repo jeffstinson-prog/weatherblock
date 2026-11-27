@@ -4,6 +4,7 @@
 import { z } from 'zod';
 import type { Owner } from './auth';
 import { asOwner } from './db';
+import { tellAssignee } from './handoff';
 
 export type Result<T = object> = ({ ok: true } & T) | { ok: false; status: number; message: string };
 const fail = (status: number, message: string) => ({ ok: false as const, status, message });
@@ -75,8 +76,16 @@ export async function createTask(owner: Owner, input: unknown): Promise<Result<{
       values (${v.title}, ${v.notes || null}, ${v.dueOn ?? null}, ${v.assignee ?? null}, ${v.mobile ?? null}, ${owner.userId})
       returning id`,
   );
-  return { ok: true, id: r!.id as string };
+  const id = r!.id as string;
+  await tellAssignee(owner, v.assignee, { title: 'gave you a task', body: dueText(v.title, v.dueOn), url: '/app/#/tasks/mine', tag: `task-${id}` });
+  return { ok: true, id };
 }
+
+const dueText = (title: string, due: string | null | undefined) => {
+  if (!due) return title;
+  const day = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(`${due}T12:00:00Z`));
+  return `${title} (due ${day})`;
+};
 
 const TaskUpdate = z.object({
   title: z.string().trim().min(1).max(200).optional(),
@@ -91,20 +100,46 @@ export async function updateTask(owner: Owner, id: string, input: unknown): Prom
   if (!p.success) return fail(400, 'Check the task and try again.');
   const v = p.data;
   const found = await asOwner(owner.userId, async (tx) => {
-    const [t] = await tx`select id from wb.tasks where id = ${id}`;
-    if (!t) return false;
+    const [t] = await tx`select id, title, assignee, auto_key, request_id, to_char(due_on, 'YYYY-MM-DD') as due_on from wb.tasks where id = ${id}`;
+    if (!t) return null;
     if (v.title !== undefined) await tx`update wb.tasks set title = ${v.title} where id = ${id}`;
     if (v.notes !== undefined) await tx`update wb.tasks set notes = ${v.notes || null} where id = ${id}`;
     if (v.dueOn !== undefined) await tx`update wb.tasks set due_on = ${v.dueOn} where id = ${id}`;
     if (v.assignee !== undefined) await tx`update wb.tasks set assignee = ${v.assignee} where id = ${id}`;
-    if (v.status === 'done') await tx`update wb.tasks set status = 'done', done_at = now(), done_by = ${owner.userId} where id = ${id} and status = 'open'`;
+    if (v.status === 'done') {
+      await tx`update wb.tasks set status = 'done', done_at = now(), done_by = ${owner.userId} where id = ${id} and status = 'open'`;
+      // Ticking off "Call them back" is the same as marking the request called.
+      if (String(t.auto_key ?? '').startsWith('call:') && t.request_id) {
+        await tx`update wb.estimate_requests set status = 'called', called_at = coalesce(called_at, now()) where id = ${t.request_id} and status = 'new'`;
+      }
+    }
     if (v.status === 'open') await tx`update wb.tasks set status = 'open', done_at = null, done_by = null where id = ${id}`;
-    return true;
+    return t;
   });
-  return found ? { ok: true } : fail(404, 'That task is gone.');
+  if (!found) return fail(404, 'That task is gone.');
+  if (v.assignee && v.assignee !== found.assignee) {
+    await tellAssignee(owner, v.assignee, {
+      title: 'gave you a task',
+      body: dueText(v.title ?? (found.title as string), v.dueOn !== undefined ? v.dueOn : (found.due_on as string | null)),
+      url: '/app/#/tasks/mine',
+      tag: `task-${id}`,
+    });
+  }
+  return { ok: true };
 }
 
 export async function deleteTask(owner: Owner, id: string): Promise<Result> {
   await asOwner(owner.userId, (tx) => tx`delete from wb.tasks where id = ${id}`);
   return { ok: true };
+}
+
+/** Who's on the team, and how many of my tasks are due (the badge on Tasks). */
+export async function people(owner: Owner) {
+  return asOwner(owner.userId, async (tx) => {
+    const owners = await tx`select user_id, name from wb.owners where active order by created_at`;
+    const [due] = await tx`
+      select count(*)::int as n from wb.tasks
+      where status = 'open' and assignee = ${owner.userId} and due_on <= wb.local_today()`;
+    return { me: owner.userId, owners: owners.map((o) => ({ id: o.user_id as string, name: o.name as string })), due: Number(due?.n ?? 0) };
+  });
 }

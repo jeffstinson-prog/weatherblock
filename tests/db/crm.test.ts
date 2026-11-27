@@ -12,6 +12,8 @@ import * as p from '../../src/server/pipeline';
 import * as sched from '../../src/server/schedule';
 import * as t from '../../src/server/tasks';
 import * as team from '../../src/server/team';
+import * as push from '../../src/server/push';
+import { home } from '../../src/server/home';
 
 const url = process.env.DATABASE_URL ?? 'postgres://postgres:postgres@127.0.0.1:5432/wb_test';
 let justin: Owner;
@@ -84,6 +86,15 @@ describe('tasks that make and close themselves', () => {
     expect(await tasksFor(r.mobile)).toEqual([{ title: 'Call Robert Hayes back', status: 'open', auto_key: `call:${r.id}` }]);
     await asService((tx) => tx`update wb.estimate_requests set status = 'called', called_at = now() where id = ${r.id}`);
     expect((await tasksFor(r.mobile))[0]!.status).toBe('done');
+  });
+
+  it('ticking off the call-back marks the request called, so it leaves Call now', async () => {
+    const r = await request('Ivy Doss');
+    const [task] = await asService((tx) => tx`select id from wb.tasks where auto_key = ${`call:${r.id}`}`);
+    expect(await t.updateTask(justin, task!.id as string, { status: 'done' })).toEqual({ ok: true });
+    const [req] = await asService((tx) => tx`select status, called_at from wb.estimate_requests where id = ${r.id}`);
+    expect(req).toMatchObject({ status: 'called', called_at: expect.any(Date) });
+    expect(await stage(r.mobile)).toBe('contacted');
   });
 
   it('the whole job: write the estimate, schedule the job, close it out, each closing as the work is done', async () => {
@@ -250,5 +261,95 @@ describe('the schedule, the team and the numbers', () => {
     expect(r.sources.find((s) => s.source === 'google_gbp')).toMatchObject({ leads: 1, booked: 1, won: 1, wonCents: 1_000_000 });
     expect(r.sources.find((s) => s.source === 'google_cpc')).toMatchObject({ leads: 1, booked: 0, won: 0 });
     expect(r.wonByMonth.at(-1)).toMatchObject({ count: 1, cents: 1_000_000 });
+  });
+});
+
+describe('hand-offs, visit photos and the home list', () => {
+  const keys = { p256dh: 'B'.repeat(87), auth: 'a'.repeat(22) };
+  beforeEach(async () => {
+    push.loggedPushes.length = 0;
+    await asService((tx) => tx`delete from wb.push_subscriptions`);
+    await push.subscribe(jt, { endpoint: 'https://fcm.googleapis.com/fcm/send/jt-phone', keys }, 'iPhone');
+    await push.subscribe(justin, { endpoint: 'https://fcm.googleapis.com/fcm/send/justin-phone', keys }, 'iPhone');
+  });
+  const pings = () => push.loggedPushes.map((x) => ({ to: x.endpoint.split('/').pop(), ...x.message }));
+
+  it('handing someone a task, a customer or an inspection pings them, and only them', async () => {
+    const r = await request('Lena Marsh');
+    // A task Justin gives himself: nobody is pinged.
+    await t.createTask(justin, { title: 'Order drip edge', assignee: justin.userId });
+    expect(pings()).toEqual([]);
+    // A task for JT: JT's phone, not Justin's.
+    const made = await t.createTask(justin, { title: 'Measure the porch roof', dueOn: '2030-04-02', assignee: jt.userId, mobile: r.mobile });
+    expect(made.ok).toBe(true);
+    expect(pings()).toEqual([
+      expect.objectContaining({ to: 'jt-phone', title: 'Justin gave you a task', body: 'Measure the porch roof (due Tue, Apr 2)', url: '/app/#/tasks/mine' }),
+    ]);
+    // Handing it back and forth: a ping each time it changes hands, none when it doesn't.
+    push.loggedPushes.length = 0;
+    const id = (made as { id: string }).id;
+    await t.updateTask(jt, id, { assignee: justin.userId });
+    await t.updateTask(jt, id, { assignee: justin.userId, notes: 'Bring the ladder' });
+    expect(pings()).toEqual([expect.objectContaining({ to: 'justin-phone', title: 'JT gave you a task' })]);
+
+    push.loggedPushes.length = 0;
+    await crm.saveProfile(justin, r.mobile, { assignedTo: jt.userId });
+    await crm.saveProfile(justin, r.mobile, { assignedTo: jt.userId, tags: ['Hot lead'] });
+    expect(pings()).toEqual([
+      expect.objectContaining({ to: 'jt-phone', title: 'Justin gave you a customer', body: "Lena Marsh in Supply. They're yours to follow through.", url: `/app/#/customer/${r.mobile.slice(1)}` }),
+    ]);
+
+    push.loggedPushes.length = 0;
+    const b = await book();
+    await sched.assignInspector(justin, b.booking.id, jt.userId);
+    await sched.assignInspector(justin, b.booking.id, jt.userId);
+    expect(pings()).toEqual([expect.objectContaining({ to: 'jt-phone', title: 'Justin put you on an inspection', url: `/app/#/booking/${b.booking.id}` })]);
+    expect(pings()[0]!.body).toMatch(/^Dana Whitley, \w+day, \w+ \d+/);
+  });
+
+  it('photos from the visit: add, share with a caption, hide, and remove only the team\'s own', async () => {
+    const b = await book();
+    expect(await o.teamPhotoUpload(justin, b.booking.id, 'image/gif', 1000)).toMatchObject({ ok: false, status: 415 });
+    expect(await o.teamPhotoUpload(justin, b.booking.id, 'image/jpeg', 20 * 1024 * 1024)).toMatchObject({ ok: false, status: 413 });
+    expect(await o.teamPhotoUpload(justin, randomUUID(), 'image/jpeg', 1000)).toMatchObject({ ok: false, status: 404 });
+    const up = await o.teamPhotoUpload(justin, b.booking.id, 'image/jpeg', 120_000);
+    expect(up).toMatchObject({ ok: true, photoId: expect.any(String), upload: { method: 'PUT' } });
+    const photoId = (up as { photoId: string }).photoId;
+    let d = (await o.detail(justin, b.booking.id))!;
+    expect(d.photoUrls).toEqual([expect.objectContaining({ id: photoId, source: 'team', shared: false, caption: '' })]);
+    expect(d.owners.map((x) => x.name)).toEqual(['Justin Coffey', 'JT Stinson']);
+
+    expect(await o.setPhoto(justin, b.booking.id, photoId, { shared: true, caption: 'Lifted shingles on the back' })).toEqual({ ok: true });
+    d = (await o.detail(justin, b.booking.id))!;
+    expect(d.photoUrls[0]).toMatchObject({ shared: true, caption: 'Lifted shingles on the back' });
+    expect(await o.setPhoto(justin, b.booking.id, photoId, { shared: false })).toEqual({ ok: true });
+    expect((await o.detail(justin, b.booking.id))!.photoUrls[0]).toMatchObject({ shared: false, caption: 'Lifted shingles on the back' });
+    expect(await o.setPhoto(justin, b.booking.id, randomUUID(), { shared: true })).toMatchObject({ ok: false, status: 404 });
+
+    // A customer's own photo stays, even if someone tries to remove it from here.
+    const [mine] = await asService(
+      (tx) => tx`insert into wb.booking_photos (booking_id, draft_key, path, content_type, bytes) values (${b.booking.id}, ${randomUUID()}, ${`uploads/${randomUUID()}.jpg`}, 'image/jpeg', 1000) returning id`,
+    );
+    await o.removeTeamPhoto(justin, b.booking.id, mine!.id);
+    await o.removeTeamPhoto(justin, b.booking.id, photoId);
+    expect((await o.detail(justin, b.booking.id))!.photoUrls.map((x) => x.source)).toEqual(['customer']);
+  });
+
+  it('home shows tasks due for me or nobody, without the call-backs, and the tab count', async () => {
+    await request('Wes Tate'); // makes "Call Wes Tate back", which Home's Call now already shows
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    await t.createTask(justin, { title: 'Mine, due today', dueOn: today, assignee: justin.userId });
+    await t.createTask(justin, { title: 'Nobody, late', dueOn: '2020-01-01' });
+    await t.createTask(justin, { title: "JT's, today", dueOn: today, assignee: jt.userId });
+    await t.createTask(justin, { title: 'Mine, next year', dueOn: '2099-01-01', assignee: justin.userId });
+    const h = await home(justin);
+    expect(h.tasks.map((x) => [x.title, x.mine])).toEqual([
+      ['Nobody, late', false],
+      ['Mine, due today', true],
+    ]);
+    expect(h.taskCounts).toEqual({ mine: 2, late: 0, unassigned: 2 });
+    expect(h.me).toBe(justin.userId);
+    expect((await t.people(justin)).due).toBe(1);
+    expect((await t.people(jt)).due).toBe(1);
   });
 });

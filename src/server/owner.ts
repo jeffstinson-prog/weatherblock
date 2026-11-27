@@ -1,5 +1,6 @@
 // What the owner app can see and do. Everything runs as the signed-in owner,
 // so row level security checks every read and write.
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { AGES, MATERIALS, REASONS, RELATIONSHIPS, SOMEONE_HOME, labelOf } from '../booking/rules';
 import { TZ } from '../booking/format';
@@ -10,7 +11,7 @@ import { calendarApi, serviceAccountEmail, syncCalendar } from './calendar';
 import { read } from './env';
 import { roofImageUrl } from './maps';
 import { asRoofSheet } from './roofsheet';
-import { viewUrl } from './storage';
+import { createUpload, viewUrl } from './storage';
 import type { BookingSummary } from './booking';
 import type { Owner } from './auth';
 
@@ -76,15 +77,19 @@ export async function detail(owner: Owner, id: string) {
     const [r] = await tx`select l.*, b.gate_code, b.roof from wb.booking_list l join wb.bookings b on b.id = l.id where l.id = ${id}`;
     if (!r) return null;
     const [request] = await tx`select id, ref, created_at from wb.estimate_requests where booking_id = ${id} order by created_at desc limit 1`;
-    const photos = await tx`select id, path from wb.booking_photos where booking_id = ${id} order by created_at`;
+    const photos = await tx`
+      select id, path, source, shared, coalesce(caption, '') as caption from wb.booking_photos
+      where booking_id = ${id} order by created_at`;
+    const owners = await tx`select user_id, name from wb.owners where active order by created_at`;
+    const [assigned] = await tx`select assigned_to from wb.bookings where id = ${id}`;
     const events = await tx`select at, actor, kind, detail from wb.booking_events where booking_id = ${id} order by at`;
     const messages = await tx`
       select created_at, channel, direction, audience, kind, status, to_addr, from_addr, coalesce(subject, body) as summary
       from wb.messages where booking_id = ${id} order by created_at`;
-    return { r, photos, events, messages, request };
+    return { r, photos, events, messages, request, owners, assignedTo: (assigned?.assigned_to as string | null) ?? null };
   });
   if (!found) return null;
-  const { r, photos, events, messages, request } = found;
+  const { r, photos, events, messages, request, owners, assignedTo } = found;
   const after = await forBooking(owner, id);
   const roofSheet = asRoofSheet(r.roof);
   return {
@@ -104,7 +109,18 @@ export async function detail(owner: Owner, id: string) {
     referrerName: (r.referrer_name as string | null) ?? '',
     createdAt: iso(r.created_at),
     cancelReason: (r.cancel_reason as string | null) ?? '',
-    photoUrls: await Promise.all(photos.map(async (p) => ({ id: p.id as string, url: await viewUrl(p.path as string) }))),
+    photoUrls: await Promise.all(
+      photos.map(async (p) => ({
+        id: p.id as string,
+        url: await viewUrl(p.path as string),
+        source: p.source as 'customer' | 'team',
+        shared: Boolean(p.shared),
+        caption: p.caption as string,
+      })),
+    ),
+    // Who does the inspection, and who could.
+    assignedTo,
+    owners: owners.map((o) => ({ id: o.user_id as string, name: o.name as string })),
     events: events.map((e) => ({ at: iso(e.at), actor: e.actor, kind: e.kind, detail: e.detail })),
     messages: messages.map((m) => ({
       at: iso(m.created_at),
@@ -407,5 +423,54 @@ export async function saveMe(owner: Owner, input: unknown): Promise<ActionResult
   await asOwner(owner.userId, (tx) => tx`
     update wb.owners set mobile = ${mobile}, alert_sms = ${v.data.alertSms}, alert_email = ${v.data.alertEmail}
     where user_id = ${owner.userId}`);
+  return { ok: true };
+}
+
+// ---------- Team photos ----------
+
+const PHOTO_TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+
+/** A place to upload one photo from the visit. It shows in the customer's link once shared. */
+export async function teamPhotoUpload(owner: Owner, bookingId: string, contentType: unknown, bytes: unknown): Promise<ActionResult & { photoId?: string; upload?: Awaited<ReturnType<typeof createUpload>> }> {
+  const type = typeof contentType === 'string' ? contentType : '';
+  const size = typeof bytes === 'number' ? Math.floor(bytes) : 0;
+  if (!PHOTO_TYPES[type]) return { ok: false, status: 415, message: 'Add a JPG, PNG or WebP photo.' };
+  if (size < 1 || size > 10 * 1024 * 1024) return { ok: false, status: 413, message: 'That photo is too big.' };
+  const path = `team/${bookingId}/${randomUUID()}.${PHOTO_TYPES[type]}`;
+  const photoId = await asOwner(owner.userId, async (tx) => {
+    const [b] = await tx`select id from wb.bookings where id = ${bookingId}`;
+    if (!b) return null;
+    const [{ n }] = (await tx`select count(*)::int as n from wb.booking_photos where booking_id = ${bookingId} and source = 'team'`) as unknown as [{ n: number }];
+    if (n >= 60) return 'full';
+    const [p] = await tx`
+      insert into wb.booking_photos (booking_id, draft_key, path, content_type, bytes, source, uploaded_by)
+      values (${bookingId}, ${randomUUID()}, ${path}, ${type}, ${size}, 'team', ${owner.userId}) returning id`;
+    return p!.id as string;
+  });
+  if (photoId === null) return { ok: false, status: 404, message: 'Booking not found.' };
+  if (photoId === 'full') return { ok: false, status: 409, message: 'That visit has 60 photos already.' };
+  return { ok: true, photoId, upload: await createUpload(path, type) };
+}
+
+const PhotoInput = z.object({ shared: z.boolean().optional(), caption: z.string().trim().max(200).optional() });
+
+/** Share a photo with the customer (or stop), and give it a caption. */
+export async function setPhoto(owner: Owner, bookingId: string, photoId: unknown, input: unknown): Promise<ActionResult> {
+  const v = PhotoInput.safeParse(input);
+  if (typeof photoId !== 'string' || !/^[0-9a-f-]{36}$/.test(photoId) || !v.success) return { ok: false, status: 400, message: 'Which photo?' };
+  const done = await asOwner(owner.userId, async (tx) => {
+    const [p] = await tx`select id from wb.booking_photos where id = ${photoId} and booking_id = ${bookingId}`;
+    if (!p) return false;
+    if (v.data.shared !== undefined) await tx`update wb.booking_photos set shared = ${v.data.shared} where id = ${photoId}`;
+    if (v.data.caption !== undefined) await tx`update wb.booking_photos set caption = ${v.data.caption || null} where id = ${photoId}`;
+    return true;
+  });
+  return done ? { ok: true } : { ok: false, status: 404, message: 'That photo is gone.' };
+}
+
+/** Take a team photo off the visit. Customers' own photos stay. */
+export async function removeTeamPhoto(owner: Owner, bookingId: string, photoId: unknown): Promise<ActionResult> {
+  if (typeof photoId !== 'string' || !/^[0-9a-f-]{36}$/.test(photoId)) return { ok: false, status: 400, message: 'Which photo?' };
+  await asOwner(owner.userId, (tx) => tx`delete from wb.booking_photos where id = ${photoId} and booking_id = ${bookingId} and source = 'team'`);
   return { ok: true };
 }
