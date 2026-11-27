@@ -236,6 +236,34 @@ describe('a message from the private page', () => {
   });
 });
 
+describe('before the database update for the portal is loaded', () => {
+  // The site goes live on merge; the update is pasted into Supabase by hand. In between,
+  // the private link must keep working.
+  it('the page still shows, with their own photos, and a message says it cannot go yet', async () => {
+    const a = await book();
+    await asService(
+      (tx) => tx`insert into wb.booking_photos (booking_id, draft_key, path, content_type, bytes)
+                 values (${a.id}, ${randomUUID()}, 'uploads/aaaaaaaa-0000-4000-8000-000000000009.jpg', 'image/jpeg', 1000)`,
+    );
+    await db()`alter table wb.booking_photos rename column shared to shared_later`;
+    await db()`alter table wb.messages drop constraint messages_channel_check`;
+    await db()`alter table wb.messages add constraint messages_channel_check check (channel in ('sms', 'email'))`;
+    try {
+      const found = await getByToken(a.token);
+      if (!found.ok) throw new Error('not found');
+      const view = await portalView(found.booking);
+      expect(view.photos.map((ph) => ph.source)).toEqual(['customer']);
+      expect(await sendPortalMessage(a.token, 'Hello')).toMatchObject({ ok: false, status: 503, error: 'not_ready' });
+      expect(await portalRows(a.id)).toHaveLength(0);
+      expect(await tasks(a.id)).toHaveLength(0);
+    } finally {
+      await db()`alter table wb.booking_photos rename column shared_later to shared`;
+      await db()`alter table wb.messages drop constraint messages_channel_check`;
+      await db()`alter table wb.messages add constraint messages_channel_check check (channel in ('sms', 'email', 'portal'))`;
+    }
+  });
+});
+
 describe('what a customer can see', () => {
   const msg = (bookingId: string, fields: Record<string, unknown>) =>
     asService(

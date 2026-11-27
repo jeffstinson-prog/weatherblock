@@ -8,11 +8,12 @@
 //   messages  what we sent them (email, text), and what they sent us (texts,
 //             messages from this page, questions about their estimate)
 // Never: messages to the owners, a team photo nobody shared, another booking's rows.
+import { facts } from '../facts';
 import type { BookingSummary } from './booking';
 import { getByToken } from './booking';
 import { asService, type Tx } from './db';
 import { config } from './env';
-import { send, type Outcome } from './messaging/send';
+import { send } from './messaging/send';
 import { messagePreview, ownerPortalMessageEmail, pushPortalMessage, type PortalCustomer } from './messaging/portal-templates';
 import { ownerRecipients } from './notify';
 import { pushToOwners } from './push';
@@ -61,6 +62,23 @@ async function photoRows(tx: Tx, bookingId: string) {
     from wb.booking_photos
     where booking_id = ${bookingId} and (source = 'customer' or (source = 'team' and shared))
     order by created_at desc, id`;
+}
+
+/**
+ * The site goes live on merge; the database update (20261128120000_portal.sql) is pasted
+ * into Supabase by hand. Until it is, a column, a table or an allowed value is missing:
+ * the page still works, with the customer's own photos, and a message says it can't go yet.
+ */
+const beforeUpdate = (err: unknown) => ['42703', '42P01', '23514'].includes((err as { code?: string })?.code ?? '');
+
+/** Before the update every photo is the customer's own. */
+async function photosBeforeUpdate(bookingId: string) {
+  return asService(
+    (tx) => tx`
+      select id, path, '' as caption, 'customer' as source, created_at
+      from wb.booking_photos where booking_id = ${bookingId}
+      order by created_at desc, id`,
+  );
 }
 
 async function threadRows(tx: Tx, bookingId: string) {
@@ -148,7 +166,13 @@ function toThread({ messages, questions }: Awaited<ReturnType<typeof threadRows>
 }
 
 export async function customerPhotos(bookingId: string): Promise<PortalPhoto[]> {
-  return signPhotos(await asService((tx) => photoRows(tx, bookingId)));
+  try {
+    return await signPhotos(await asService((tx) => photoRows(tx, bookingId)));
+  } catch (err) {
+    if (!beforeUpdate(err)) throw err;
+    console.error('portal photos: the database update for the portal is not loaded yet');
+    return signPhotos(await photosBeforeUpdate(bookingId));
+  }
 }
 
 export async function customerThread(bookingId: string): Promise<ThreadItem[]> {
@@ -159,9 +183,13 @@ export async function customerThread(bookingId: string): Promise<ThreadItem[]> {
 export async function portalFor(bookingId: string): Promise<Portal> {
   const found = await asService(async (tx) => {
     const [b] = await tx`select created_at from wb.bookings where id = ${bookingId}`;
-    return { bookedAt: b?.created_at, photos: await photoRows(tx, bookingId), thread: await threadRows(tx, bookingId) };
+    return { bookedAt: b?.created_at, thread: await threadRows(tx, bookingId) };
   });
-  return { bookedAt: found.bookedAt ? iso(found.bookedAt) : '', photos: await signPhotos(found.photos), messages: toThread(found.thread) };
+  return {
+    bookedAt: found.bookedAt ? iso(found.bookedAt) : '',
+    photos: await customerPhotos(bookingId),
+    messages: toThread(found.thread),
+  };
 }
 
 /** What the private page gets: the booking (its id stays on the server), its photos and its messages. */
@@ -205,33 +233,45 @@ export async function sendPortalMessage(token: unknown, body: unknown): Promise<
   const bookingId = found.booking.id;
   const text = read.text;
 
-  const saved = await asService(async (tx) => {
-    const [b] = await tx`
-      select b.id, b.name, b.mobile, b.email, b.address, coalesce(b.assigned_to, p.assigned_to) as assignee
-      from wb.bookings b left join wb.customer_profiles p on p.mobile = b.mobile
-      where b.id = ${bookingId}`;
-    if (!b) return null;
-    // The same words again within a minute (a double tap, a retry on a slow connection) are one message.
-    const [again] = await tx`
-      select id from wb.messages
-      where booking_id = ${bookingId} and channel = 'portal' and direction = 'in' and body = ${text}
-        and created_at > now() - interval '1 minute'
-      limit 1`;
-    if (again) return { customer: b, messageId: null, followUpsStopped: false };
-    const [m] = await tx`
-      insert into wb.messages (booking_id, channel, direction, audience, kind, to_addr, from_addr, body, provider, status)
-      values (${bookingId}, 'portal', 'in', 'customer', 'portal_message', 'team', ${b.mobile}, ${text}, 'portal', 'received')
-      returning id`;
-    const stopped = await tx`
-      update wb.estimates set followups_stopped_at = coalesce(followups_stopped_at, now())
-      where booking_id = ${bookingId} and status = 'sent'
-      returning id`;
-    await tx`
-      insert into wb.tasks (auto_key, title, due_on, mobile, booking_id, assignee)
-      values (${`message:${m!.id}`}, ${`Reply to ${b.name}'s message`.slice(0, 200)}, wb.local_today(), ${b.mobile}, ${bookingId}, ${b.assignee})
-      on conflict (auto_key) do nothing`;
-    return { customer: b, messageId: m!.id as string, followUpsStopped: stopped.length > 0 };
-  });
+  /** Save it, stop follow-ups and make the task, all at once. */
+  const save = () =>
+    asService(async (tx) => {
+      const [b] = await tx`
+        select b.id, b.name, b.mobile, b.email, b.address, coalesce(b.assigned_to, p.assigned_to) as assignee
+        from wb.bookings b left join wb.customer_profiles p on p.mobile = b.mobile
+        where b.id = ${bookingId}`;
+      if (!b) return null;
+      // The same words again within a minute (a double tap, a retry on a slow connection) are one message.
+      // One message at a time per booking, so two taps at the same instant can't both slip past this check.
+      await tx`select pg_advisory_xact_lock(hashtext(${`portal_message:${bookingId}`}))`;
+      const [again] = await tx`
+        select id from wb.messages
+        where booking_id = ${bookingId} and channel = 'portal' and direction = 'in' and body = ${text}
+          and created_at > now() - interval '1 minute'
+        limit 1`;
+      if (again) return { customer: b, messageId: null, followUpsStopped: false };
+      const [m] = await tx`
+        insert into wb.messages (booking_id, channel, direction, audience, kind, to_addr, from_addr, body, provider, status)
+        values (${bookingId}, 'portal', 'in', 'customer', 'portal_message', 'team', ${b.mobile}, ${text}, 'portal', 'received')
+        returning id`;
+      const stopped = await tx`
+        update wb.estimates set followups_stopped_at = coalesce(followups_stopped_at, now())
+        where booking_id = ${bookingId} and status = 'sent'
+        returning id`;
+      await tx`
+        insert into wb.tasks (auto_key, title, due_on, mobile, booking_id, assignee)
+        values (${`message:${m!.id}`}, ${`Reply to ${b.name}'s message`.slice(0, 200)}, wb.local_today(), ${b.mobile}, ${bookingId}, ${b.assignee})
+        on conflict (auto_key) do nothing`;
+      return { customer: b, messageId: m!.id as string, followUpsStopped: stopped.length > 0 };
+    });
+  let saved: Awaited<ReturnType<typeof save>>;
+  try {
+    saved = await save();
+  } catch (err) {
+    if (!beforeUpdate(err)) throw err;
+    console.error('portal message: the database update for the portal is not loaded yet');
+    return { ok: false, status: 503, error: 'not_ready', message: `Messages from this page aren't working yet. Call or text ${facts.contact.phone} and we'll help.` };
+  }
   if (!saved) return NOT_FOUND;
 
   if (saved.messageId) {
@@ -253,20 +293,21 @@ async function alertOwners(c: PortalCustomer, text: string, followUpsStopped: bo
   const site = config.siteUrl();
   const appUrl = `${site}/app/#/booking/${c.id}`;
   const email = ownerPortalMessageEmail(c, text, followUpsStopped, appUrl, site);
-  const jobs: Promise<Outcome | number>[] = [pushToOwners(pushPortalMessage(c, text))];
-  for (const r of await ownerRecipients()) {
-    if (!r.email) continue;
-    jobs.push(
-      send({
-        bookingId: c.id,
-        channel: 'email',
-        audience: 'owner',
-        kind: 'owner_portal_message',
-        to: r.email,
-        ...email,
-        dedupeKey: `portal_message:${messageId}:${r.email}`,
-      }),
-    );
-  }
-  await Promise.allSettled(jobs);
+  const recipients = await ownerRecipients();
+  await Promise.allSettled([
+    pushToOwners(pushPortalMessage(c, text)),
+    ...recipients
+      .filter((r) => r.email)
+      .map((r) =>
+        send({
+          bookingId: c.id,
+          channel: 'email',
+          audience: 'owner',
+          kind: 'owner_portal_message',
+          to: r.email!,
+          ...email,
+          dedupeKey: `portal_message:${messageId}:${r.email}`,
+        }),
+      ),
+  ]);
 }

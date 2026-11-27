@@ -165,7 +165,7 @@ export default function Estimate(props: {
       )}
 
       {error && (
-        <div class="error-box" role="alert">
+        <div class="error-box" role="alert" id="est-error">
           <p>{error}</p>
         </div>
       )}
@@ -195,6 +195,7 @@ export default function Estimate(props: {
               maxLength={1000}
               value={note}
               aria-invalid={error ? 'true' : undefined}
+              aria-describedby={error ? 'est-error' : undefined}
               onInput={(e) => setNote((e.currentTarget as HTMLTextAreaElement).value)}
             />
           </div>

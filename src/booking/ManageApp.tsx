@@ -30,6 +30,8 @@ export default function ManageApp(props: PortalFacts) {
   const [fileUrl, setFileUrl] = useState('');
   const [notice, setNotice] = useState<{ text: string; where: 'top' | 'messages' } | null>(null);
   const loadedAt = useRef(0);
+  /** The link this page is showing. An answer for an earlier one is dropped. */
+  const shown = useRef('');
   const writeRef = useRef<HTMLTextAreaElement>(null);
 
   const call: Call = (payload) => post('/api/manage', { token, ...payload });
@@ -38,30 +40,47 @@ export default function ManageApp(props: PortalFacts) {
   async function loadFile(t: string, b: PortalBooking) {
     if (!b.estimate?.hasFile) return;
     const f = await post<{ url: string }>('/api/manage', { action: 'estimate_file', token: t }).catch(() => null);
-    if (f) setFileUrl(f.url);
+    if (f && shown.current === t) setFileUrl(f.url);
   }
 
   async function load(t: string, quiet = false) {
     try {
       const res = await post<{ booking: PortalBooking }>('/api/manage', { action: 'get', token: t });
+      if (shown.current !== t) return;
       loadedAt.current = Date.now();
       setBooking(res.booking);
       await loadFile(t, res.booking);
     } catch (err) {
       // A quiet reload that fails keeps what's on the screen.
-      if (!quiet) setError((err as RequestFailed).body?.message ?? 'Something went wrong.');
+      if (!quiet && shown.current === t) setError((err as RequestFailed).body?.message ?? 'Something went wrong.');
     }
   }
 
-  useEffect(() => {
+  /** Read the code after # and load that booking. */
+  function open() {
     const t = decodeURIComponent(location.hash.replace(/^#/, ''));
+    shown.current = t;
     setToken(t);
+    setBooking(null);
+    setFileUrl('');
+    setNotice(null);
+    setError('');
     if (!t) {
       setError('This link is missing its code. Open it again from your text or email.');
       setLoading(false);
       return;
     }
-    void load(t).finally(() => setLoading(false));
+    setLoading(true);
+    void load(t).finally(() => {
+      if (shown.current === t) setLoading(false);
+    });
+  }
+
+  useEffect(() => {
+    open();
+    // Another private link opened in this tab changes only the part after #: start over with it.
+    window.addEventListener('hashchange', open);
+    return () => window.removeEventListener('hashchange', open);
   }, []);
 
   // Back to a tab left open: load the page again, so it shows what's new.

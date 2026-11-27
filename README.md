@@ -44,6 +44,17 @@ Email goes through Resend, texts through Twilio. Every message is written to `wb
 - **Replies to our number** are kept, STOP and START are honored, and every reply is forwarded to the owners. Point the Twilio number's incoming webhook at `https://<site>/api/twilio/sms`.
 - **Every 15 minutes** `netlify/functions/every-15-minutes.mts` calls `/api/jobs` with `CRON_SECRET`: reminders, retries of failed messages, clean-up (gate codes after a week, unused photo uploads after two days).
 
+## The customer's private page
+
+At `/b/#<code>`, the link in every confirmation, reminder and estimate message. The code sits after `#`, so it never goes to a server in a URL; the page sends it in the body of each request to `/api/manage`. It works for 60 days after the last thing that happened (the visit, the estimate, the answer, the job).
+
+- **Where things stand:** booked, inspected, estimate ready, approved, job scheduled, done, each with its date.
+- **What happens next,** in one card with the one thing to do: change or cancel the visit (and add it to a calendar), answer the estimate (go ahead, a question, no thanks, the PDF, the roof's size), get ready for the job's day (cars out of the driveway, pets inside, we protect the landscaping, noise from 7 am to 5 pm), or a thank-you, with the review link when `pipeline.reviewUrl` is set.
+- **Photos:** the ones the customer sent with the booking, and the team's photos marked shared, newest first, through links that last an hour.
+- **Messages:** what we sent them by email and text (an email and a text about the same thing show once) and what they sent us. A message written here is saved, stops estimate follow-ups, makes a task to reply, and pings and emails the owners. Up to 10 an hour from one connection.
+- **Your team and documents:** call, text or email, the visit's time and place, and the estimate's PDF. Documents has a place for a warranty document (`warranty` in `src/booking/portal/types.ts`); nothing sends one yet, so the page never mentions a warranty.
+- **Never on the page:** messages to the owners, a team photo nobody shared, anything from another booking, or the booking's id.
+
 ## Owner app
 
 At `/app/`. Installs to a phone's home screen. Owners sign in with a 6-digit code sent by email (Supabase Auth, no passwords, no public sign-ups).
@@ -90,7 +101,7 @@ One small system, in [`src/styles/global.css`](src/styles/global.css): type, col
 - **Color.** From the logo: blue `#268EBC` and sea green `#80BBAE`. Both are too light for small text, so text, links and buttons use a deeper blue. Warm paper background, white cards, deep ocean for the dark sections. One light design for every visitor: the site does not switch to dark colors when a phone is set to dark mode (JT's call). Every text pair is checked for WCAG AA contrast by the end-to-end tests.
 - **Icons.** A small set from [Lucide](https://lucide.dev) (ISC license), kept in `src/icons/data.ts`. To add one: add its name in `scripts/build-icons.mjs`, then `npm install --no-save lucide-static && node scripts/build-icons.mjs`.
 - **Page parts.** `Header` (stays in view; a phone gets a menu sheet), `PageHero` (the top of every inner page), `BookCall` (the closing section), `StickyCta` (a Book and Call bar on phones once the page's own buttons scroll away), `Footer`. Booking and the private link use a quiet header and a short footer (`focus` on the layout), so nothing pulls people out of the form.
-- **Flows.** `src/styles/booking.css` styles booking, the private link, the estimate page and the assistant; `src/styles/owner.css` the owner app.
+- **Flows.** `src/styles/booking.css` styles booking, the private link, the estimate page and the assistant; `src/styles/portal.css` the private link's cards and side column; `src/styles/owner.css` the owner app.
 - **Motion.** Short and small, and off for anyone whose device asks for reduced motion.
 - **No inline styles.** The site's content security policy blocks `style=""` attributes; use a class.
 
@@ -123,7 +134,7 @@ Netlify builds every pull request as a deploy preview and deploys `main` to prod
 | --- | --- |
 | `facts.yaml` | Every fact the site may state |
 | `src/content/help/` | Help center answers |
-| `src/booking/` | The booking form and the manage link (Preact) |
+| `src/booking/` | The booking form and the customer's private page (Preact; the page's parts are in `src/booking/portal/`) |
 | `src/estimate/` | The estimate page (Preact) |
 | `src/owner/` | The owner app (Preact) |
 | `src/assistant/`, `src/server/assistant/` | The assistant page, its prompt and the rule check |

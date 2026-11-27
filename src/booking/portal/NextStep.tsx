@@ -33,12 +33,12 @@ function Heading(props: { icon: IconName; children: string; chip?: { text: strin
   );
 }
 
-function WriteButton(props: { onWrite: () => void; label?: string }) {
+function WriteButton(props: { onWrite: () => void }) {
   return (
     <div class="actions">
       <button type="button" class="btn secondary" onClick={props.onWrite}>
         <Icon name="message-square" size={18} />
-        {props.label ?? 'Send us a message'}
+        Send us a message
       </button>
     </div>
   );
@@ -265,7 +265,8 @@ function AwaitingEstimate(props: CardProps) {
         It will be ready {facts.turnaround || 'soon'}. We'll email you{booking.smsConsent ? ' and text you' : ''} when it is, and it will show
         here.
       </p>
-      <WriteButton onWrite={props.onWrite} label="Questions? Send us a message" />
+      <p class="muted ask-first">Questions in the meantime?</p>
+      <WriteButton onWrite={props.onWrite} />
     </section>
   );
 }
@@ -329,7 +330,8 @@ function JobCard(props: CardProps) {
             ))}
           </ul>
         </div>
-        <WriteButton onWrite={props.onWrite} label="Questions about the day? Send us a message" />
+        <p class="muted ask-first">Questions about the day?</p>
+        <WriteButton onWrite={props.onWrite} />
       </section>
     );
   }
