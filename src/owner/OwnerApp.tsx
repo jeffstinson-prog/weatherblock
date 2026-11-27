@@ -1,12 +1,14 @@
-// The owner app: sign in, then Today (with the people to call), Upcoming, Estimates, Jobs and More.
+// The owner app: sign in, then Home (who to call, the next stop, the week), Upcoming, Estimates, Jobs and More.
 // One page; the part after # says which screen (nothing personal in it).
 import { useEffect, useState } from 'preact/hooks';
 import Icon, { type IconName } from '../icons/Icon';
 import { auth, whenSignedOut } from './api';
+import { followNotifications } from './push';
 import Availability from './Availability';
 import BookingView from './BookingView';
 import Crews from './Crews';
 import Estimates from './Estimates';
+import Home from './Home';
 import Jobs from './Jobs';
 import More from './More';
 import Referrals from './Referrals';
@@ -33,7 +35,7 @@ export function go(path: string) {
 }
 
 const TABS: { view: string; label: string; href: string; icon: IconName }[] = [
-  { view: 'today', label: 'Today', href: '#/today', icon: 'sun' },
+  { view: 'today', label: 'Home', href: '#/today', icon: 'house' },
   { view: 'upcoming', label: 'Upcoming', href: '#/upcoming', icon: 'calendar-days' },
   { view: 'estimates', label: 'Estimates', href: '#/estimates', icon: 'file-text' },
   { view: 'jobs', label: 'Jobs', href: '#/jobs', icon: 'hammer' },
@@ -63,6 +65,7 @@ export default function OwnerApp(props: AppProps) {
     };
     window.addEventListener('hashchange', onHash);
     whenSignedOut(() => setState('out'));
+    followNotifications();
     if (!auth) {
       setState('out');
     } else {
@@ -87,7 +90,7 @@ export default function OwnerApp(props: AppProps) {
   return (
     <div class="owner">
       <main id="main" class="owner-main">
-        {route.view === 'today' && <Today date={null} />}
+        {route.view === 'today' && <Home />}
         {route.view === 'day' && <Today date={route.arg} />}
         {route.view === 'upcoming' && <Upcoming />}
         {route.view === 'booking' && <BookingView id={route.arg} />}

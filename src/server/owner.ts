@@ -16,7 +16,7 @@ import type { Owner } from './auth';
 
 const iso = (v: unknown) => new Date(String(v)).toISOString();
 
-function row(r: Record<string, unknown>) {
+export function row(r: Record<string, unknown>) {
   return {
     id: r.id as string,
     ref: r.ref as string,

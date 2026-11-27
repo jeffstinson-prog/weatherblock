@@ -5,6 +5,8 @@ import { formatMobile } from '../../booking/rules';
 import { asService } from '../db';
 import { send } from './send';
 import { ownerRecipients } from '../notify';
+import { pushToOwners } from '../push';
+import { pushTextIn } from './push-templates';
 
 const STOP = /^\s*(stop|stopall|unsubscribe|cancel|end|quit|revoke|optout)\s*[.!]*\s*$/i;
 const START = /^\s*(start|unstop|yes)\s*[.!]*\s*$/i;
@@ -53,6 +55,7 @@ export async function handleInbound(m: Inbound): Promise<{ optedOut: boolean; op
   const who = booking ? `${booking.name} ${formatMobile(m.from)}` : formatMobile(m.from);
   const note = optOut ? ` (Replying "${body.trim().slice(0, 20)}" stops our texts to them until they reply START. Call them if they meant to cancel a visit.)` : '';
   const text = `Text from ${who}: ${body.slice(0, 300)}${note}`;
+  await pushToOwners(pushTextIn(who, body + note, booking?.id ?? null));
   let forwarded = 0;
   for (const r of await ownerRecipients()) {
     if (r.mobile && r.mobile !== m.from) {

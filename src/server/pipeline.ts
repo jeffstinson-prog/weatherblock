@@ -12,6 +12,8 @@ import { send, type Outcome } from './messaging/send';
 import type { Email } from './messaging/templates';
 import * as t from './messaging/pipeline-templates';
 import { ownerRecipients } from './notify';
+import { pushEstimateAnswer } from './messaging/push-templates';
+import { pushToOwners } from './push';
 import { asRoofSheet, imageryMonth } from './roofsheet';
 import { createUpload, viewUrl } from './storage';
 import { looksLikeToken, manageToken, manageUrl, tokenHash } from './tokens';
@@ -316,7 +318,7 @@ async function alertOwners(bookingId: string, kind: t.Answer, note: string, key:
     if (r.email) jobs.push(send({ bookingId, channel: 'email', audience: 'owner', kind: `owner_${kind}`, to: r.email, ...email, dedupeKey: `${key}:${r.email}` }));
     if (r.mobile) jobs.push(send({ bookingId, channel: 'sms', audience: 'owner', kind: `owner_${kind}`, to: r.mobile, text, dedupeKey: `${key}:${r.mobile}` }));
   }
-  await Promise.allSettled(jobs);
+  await Promise.allSettled([...jobs, pushToOwners(pushEstimateAnswer(kind, found.c, amount, note))]);
 }
 
 /** A few minutes' link to the customer's estimate PDF. */

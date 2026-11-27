@@ -339,6 +339,8 @@ describe('the scheduled job', () => {
     const r = await ask();
     const saved = await row(r.ref);
     await asService((tx) => tx`delete from wb.messages`);
+    // The job's clock is 2 pm today, whatever time the tests run: the request came in a minute before.
+    await asService((tx) => tx`update wb.estimate_requests set created_at = ${new Date(day.getTime() - 60_000)} where id = ${saved.id}`);
 
     expect(await q.runRequestReminders(day)).toBe(0); // only a minute old
     await asService((tx) => tx`update wb.estimate_requests set created_at = ${new Date(day.getTime() - 40 * 60_000)} where id = ${saved.id}`);

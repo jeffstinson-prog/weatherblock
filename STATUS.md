@@ -1,6 +1,6 @@
 # Status
 
-Updated 2026-11-25.
+Updated 2026-11-27.
 
 ## Done
 
@@ -17,6 +17,9 @@ Updated 2026-11-25.
 - **Texts and email.** Confirmation, a reminder the evening before (6 to 9 pm) and the morning of (from 7:30 am), changes and cancellations, owner alerts by text and email, replies to our number forwarded to the owners, STOP and START honored. Without keys everything is logged, not sent. Retries and clean-up run every 15 minutes.
 - **Owner app** at `/app/`, installable: sign in with an emailed code; Today with directions, call and text; booking details with the gate code on tap, photos, notes, status, reschedule and "on my way"; Upcoming with overbooking warnings; Availability (windows, inspectors, notice, days off); referral codes with share links; CSV export (no gate codes); your alerts.
 - **Google Calendar sync** both ways: bookings go on the calendar and come off when cancelled; anything else busy blocks those windows (free events and meetings you said no to don't); events moved or deleted in Google are put back. Its key file goes into Netlify whole (November 25), and a key that can't be read, or a calendar Google won't share, shows in the owner app with what to fix. The 15-minute job that runs it is live and passing (checked November 25). Waits on a Google service account: [`GO-LIVE.md`](GO-LIVE.md), step 5.
+- **Owner app, phase 1** (November 27, pull request 15).
+  - A new home screen: who to call now, with a countdown to the one-hour promise and one tap to call, mark called or book them; the next stop with navigate, call, text and "on my way"; the rest of today and the next six days; and four numbers at a glance (to call, visits today, next 7 days, estimates out).
+  - Phone notifications through the installed app: a ping for every new estimate request, booking, cancellation, customer text and estimate answer, and a reminder when a request waits half an hour. They don't wait on text-message registration. Each owner turns them on per phone (iPhone: from the app on the Home Screen). The server makes its own signing keys and keeps them in the database. Needs one database update.
 - **Open times never go stale** (November 25). The site never offered a past time, but a phone could still show one: a page left open since yesterday, or a time picked earlier and saved on the phone. Now the booking form drops a picked time that has passed or filled up as soon as it opens, with a note to pick another; the booking form, the change-time page and the home page load their times again when a phone comes back to them after a few minutes. Tested by putting the browser's clock forward.
 - **The assistant** at `/ask/`: Claude Opus 5.5 by default, answers only from the help center and facts, says it's automated, offers to book or call, and carries what it learned into the booking form. A code check of every house rule reads each reply before it's shown; the same check passes on every built page. Questions it couldn't answer are listed in the owner app for 30 days.
 - **After the visit, automated.** Mark the visit done and the customer is thanked. Write the estimate in the owner app (price, what's included, an optional PDF) and send it: the customer gets an email and a text with their private link, where they say yes, ask a question, or say no thanks. Follow-up emails go out on days 2, 7 and 21 until they answer, ask or text us, and wait for a mailing address on file (CAN-SPAM). A yes alerts the owners and goes to Jobs.
