@@ -63,7 +63,7 @@ const FINE = [
   "We don't file, handle or negotiate claims.",
   'We never cover, waive, rebate or discount an insurance deductible.',
   "We're working on our FORTIFIED certification.",
-  'Call or text (910) 209-5275.',
+  'Call or text (910) 444-1849.',
   'Strengthen Your Roof pays up to $10,000 for homes between the Intracoastal Waterway and the ocean.',
   'Roofs under 5 years old are paid at 100%.',
   'We had a 5.0 star rating from 11 reviews as of November 19, 2026.',
@@ -107,7 +107,7 @@ describe('the whole site keeps the rules', () => {
   it('every text and email we send passes', () => {
     const b: BookingDetails = {
       id: 'x', ref: 'K7M3QX', startsAt: '2026-11-20T13:00:00.000Z', endsAt: '2026-11-20T15:00:00.000Z',
-      address: '101 Test Beach Dr W, Ocean Isle Beach, NC 28469', name: 'Pat Tester', mobile: '+19102095275',
+      address: '101 Test Beach Dr W, Ocean Isle Beach, NC 28469', name: 'Pat Tester', mobile: '+19104441849',
       email: 'pat@example.com', smsConsent: true, relationship: 'owner', roofMaterial: 'shingle', roofAge: '10-15',
       reason: 'leak', notes: '', someoneHome: 'no', hasGateCode: false, pets: '', leadSource: 'direct', referralCode: '', photos: 0,
     };
@@ -125,7 +125,7 @@ describe('the whole site keeps the rules', () => {
 describe('what the assistant is told', () => {
   const prompt = systemPrompt();
   it('includes the facts we have and none we left blank', () => {
-    expect(prompt).toContain('(910) 209-5275');
+    expect(prompt).toContain('(910) 444-1849');
     expect(prompt).toContain('Inspection cost: free');
     expect(prompt).not.toMatch(/License: /);
     expect(prompt).toContain('license number (do not say whether we are licensed)');

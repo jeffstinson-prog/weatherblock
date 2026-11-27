@@ -63,7 +63,7 @@ describe('the Google key in Netlify', () => {
 });
 
 describe('reading the calendar', () => {
-  const calendarId = 'weatherblockroofing@gmail.com';
+  const calendarId = 'info@weatherblockroofingnc.com';
   const from = new Date('2026-11-25T05:00:00.000Z');
   const to = new Date('2026-12-18T05:00:00.000Z');
 
@@ -120,7 +120,7 @@ describe('reading the calendar', () => {
     expect(payload.scope).toBe('https://www.googleapis.com/auth/calendar.events');
 
     const u = new URL(list!.url);
-    expect(u.pathname).toBe('/calendar/v3/calendars/weatherblockroofing%40gmail.com/events');
+    expect(u.pathname).toBe('/calendar/v3/calendars/info%40weatherblockroofingnc.com/events');
     expect(u.searchParams.get('timeMin')).toBe(from.toISOString());
     expect(u.searchParams.get('timeMax')).toBe(to.toISOString());
     expect(u.searchParams.get('singleEvents')).toBe('true');

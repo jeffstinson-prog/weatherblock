@@ -65,7 +65,7 @@ describe('a new booking', () => {
       'customer:sms:confirmation:logged',
       'owner:email:owner_new:logged',
     ]);
-    expect(m.find((x) => x.audience === 'owner')!.to_addr).toBe('weatherblockroofing@gmail.com');
+    expect(m.find((x) => x.audience === 'owner')!.to_addr).toBe('info@weatherblockroofingnc.com');
   });
 
   it('skips the text when they did not agree to texts', async () => {

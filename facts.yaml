@@ -31,10 +31,10 @@ business:
     ref: Isaiah 4:6
 
 contact:
-  phone: (910) 209-5275
-  phoneE164: "+19102095275"
-  takesTexts: true # the Google profile offers Text on this number
-  email: weatherblockroofing@gmail.com
+  phone: (910) 444-1849
+  phoneE164: "+19104441849"
+  takesTexts: true # the site offers Text on this number: texts to it must reach you
+  email: info@weatherblockroofingnc.com
   hours: "" # phone hours to publish, e.g. "Mon to Sat, 7 am to 7 pm". Google currently says "Open 24 hours".
 
 web:

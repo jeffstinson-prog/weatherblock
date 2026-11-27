@@ -83,8 +83,8 @@ test('help search finds answers as you type', async ({ page }) => {
 
 test('call and text buttons dial the business number', async ({ page }) => {
   await page.goto('/contact/');
-  await expect(page.getByRole('link', { name: /^Call/ }).first()).toHaveAttribute('href', 'tel:+19102095275');
-  await expect(page.getByRole('link', { name: /^Text/ }).first()).toHaveAttribute('href', 'sms:+19102095275');
+  await expect(page.getByRole('link', { name: /^Call/ }).first()).toHaveAttribute('href', 'tel:+19104441849');
+  await expect(page.getByRole('link', { name: /^Text/ }).first()).toHaveAttribute('href', 'sms:+19104441849');
 });
 
 test('search engines are kept out until launch', async ({ page }) => {
@@ -104,7 +104,7 @@ test('home page has RoofingContractor structured data', async ({ page }) => {
   const json = await page.locator('script[type="application/ld+json"]').first().textContent();
   const data = JSON.parse(json!);
   expect(data['@type']).toBe('RoofingContractor');
-  expect(data.telephone).toBe('+19102095275');
+  expect(data.telephone).toBe('+19104441849');
   expect(data.aggregateRating).toBeUndefined();
 });
 
