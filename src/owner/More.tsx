@@ -1,6 +1,6 @@
 // Export, referral codes, your alerts, sign out.
 import { useEffect, useState } from 'preact/hooks';
-import Icon from '../icons/Icon';
+import Icon, { type IconName } from '../icons/Icon';
 import { ApiError, api, auth, download } from './api';
 import { dayKey } from '../booking/format';
 import PushCard from './PushCard';
@@ -62,15 +62,23 @@ export default function More(props: { businessName: string }) {
 
       <ul class="rows">
         {[
-          { href: '#/requests', label: 'Estimate requests' },
-          { href: '#/availability', label: 'Inspection availability' },
-          { href: '#/crews', label: 'Crews' },
-          { href: '#/referrals', label: 'Referral codes' },
-          { href: '#/questions', label: 'Questions people asked the assistant' },
+          { href: '#/estimates', label: 'Estimates', icon: 'file-text' },
+          { href: '#/jobs', label: 'Roof jobs', icon: 'hammer' },
+          { href: '#/requests', label: 'Estimate requests', icon: 'phone-call' },
+          { href: '#/team', label: 'Team', icon: 'user-check' },
+          { href: '#/reports', label: 'Reports', icon: 'chart-column' },
+          { href: '#/upcoming', label: 'Next two weeks', icon: 'calendar-range' },
+          { href: '#/crews', label: 'Crews', icon: 'hard-hat' },
+          { href: '#/availability', label: 'Inspection availability', icon: 'calendar-clock' },
+          { href: '#/referrals', label: 'Referral codes', icon: 'share-2' },
+          { href: '#/questions', label: 'Questions people asked the assistant', icon: 'circle-help' },
         ].map((l) => (
           <li key={l.href}>
             <a href={l.href}>
-              {l.label}
+              <span class="row-label">
+                <Icon name={l.icon as IconName} size={20} />
+                {l.label}
+              </span>
               <Icon name="chevron-right" size={20} />
             </a>
           </li>

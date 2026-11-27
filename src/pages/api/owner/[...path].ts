@@ -7,6 +7,10 @@ import * as o from '../../../server/owner';
 import * as p from '../../../server/pipeline';
 import * as q from '../../../server/requests';
 import { home } from '../../../server/home';
+import * as crm from '../../../server/crm';
+import * as sched from '../../../server/schedule';
+import * as tasks from '../../../server/tasks';
+import * as team from '../../../server/team';
 import * as push from '../../../server/push';
 
 export const prerender = false;
@@ -17,7 +21,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const today = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
-function result(r: (o.ActionResult | p.Result | q.ActionResult | push.PushResult) & Record<string, unknown>) {
+function result(r: (o.ActionResult | p.Result | q.ActionResult | push.PushResult | crm.Result | tasks.Result | sched.Result) & Record<string, unknown>) {
   return r.ok ? json(200, r) : json(r.status, { error: (r.code as string | undefined) ?? 'failed', message: r.message });
 }
 
@@ -60,8 +64,51 @@ async function route(owner: Owner, method: string, path: string[], url: URL, req
         return result(await p.scheduleJob(owner, id, body.job));
       case 'job_status':
         return result(await p.setJobStatus(owner, id, body.status));
+      case 'assign':
+        return result(await sched.assignInspector(owner, id, body.userId));
+      // Photos from the visit, and which ones the customer sees.
+      case 'photo_add':
+        return result(await o.teamPhotoUpload(owner, id, body.contentType, body.bytes));
+      case 'photo_set':
+        return result(await o.setPhoto(owner, id, body.photoId, { shared: body.shared, caption: body.caption }));
+      case 'photo_remove':
+        return result(await o.removeTeamPhoto(owner, id, body.photoId));
     }
   }
+
+  // Customers: one per mobile number, with their tasks, notes and history.
+  if (method === 'GET' && head === 'customers') return json(200, await crm.customers(owner));
+  if (head === 'customer' && id && /^\+?\d{10,11}$/.test(id)) {
+    if (method === 'GET') {
+      const c = await crm.customer(owner, id);
+      return c ? json(200, c) : json(404, { error: 'not_found', message: 'Customer not found.' });
+    }
+    switch (body.action) {
+      case 'profile':
+        return result(await crm.saveProfile(owner, id, body.profile));
+      case 'note':
+        return result(await crm.addNote(owner, id, body.note));
+      case 'email':
+        return result(await crm.emailCustomer(owner, id, body.email));
+    }
+  }
+  if (head === 'lead' && method === 'POST') return result(await crm.createLead(owner, body.lead));
+
+  // Tasks.
+  if (method === 'GET' && head === 'people') return json(200, await tasks.people(owner));
+  if (method === 'GET' && head === 'tasks') return json(200, await tasks.listTasks(owner, url.searchParams.get('which') === 'done' ? 'done' : 'open'));
+  if (head === 'task' && method === 'POST') {
+    if (!id) return result(await tasks.createTask(owner, body.task));
+    if (UUID.test(id)) return result(body.action === 'delete' ? await tasks.deleteTask(owner, id) : await tasks.updateTask(owner, id, body.task));
+  }
+
+  // Schedule, team and reports.
+  if (method === 'GET' && head === 'schedule') {
+    const from = sched.validDate(url.searchParams.get('from')) ?? today();
+    return json(200, await sched.schedule(owner, from, Number(url.searchParams.get('days') ?? 7) || 7));
+  }
+  if (method === 'GET' && head === 'team') return json(200, await team.team(owner));
+  if (method === 'GET' && head === 'reports') return json(200, await team.reports(owner, Number(url.searchParams.get('days') ?? 90) || 90));
 
   // Estimate requests: people to call.
   if (method === 'GET' && head === 'requests') return json(200, await q.listRequests(owner));

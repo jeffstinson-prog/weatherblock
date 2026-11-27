@@ -5,6 +5,7 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { facts } from '../facts';
+import { normalizeMobile } from '../booking/rules';
 import { asOwner, asPublic, asService, dbErrorCode } from './db';
 import { config } from './env';
 import { addDays, local } from './reminders';
@@ -111,18 +112,26 @@ export interface JobInfo {
   doneAt: string | null;
 }
 
+export const CREW_COLORS = ['blue', 'green', 'orange', 'purple', 'red', 'teal'] as const;
+
 export interface CrewInfo {
   id: string;
   name: string;
   jobsPerDay: number;
   active: boolean;
+  leadName: string;
+  leadMobile: string;
+  color: (typeof CREW_COLORS)[number];
 }
 
-const crewRow = (r: Record<string, unknown>): CrewInfo => ({
+export const crewRow = (r: Record<string, unknown>): CrewInfo => ({
   id: r.id as string,
   name: r.name as string,
   jobsPerDay: Number(r.jobs_per_day),
   active: Boolean(r.active),
+  leadName: (r.lead_name as string | null | undefined) ?? '',
+  leadMobile: (r.lead_mobile as string | null | undefined) ?? '',
+  color: ((r.color as CrewInfo['color'] | undefined) ?? 'blue'),
 });
 
 /** The estimate, the job and the crews, for one booking in the owner app. */
@@ -342,6 +351,9 @@ const CrewsInput = z
       name: z.string().trim().min(1).max(60),
       jobsPerDay: z.number().int().min(1).max(5),
       active: z.boolean(),
+      leadName: z.string().trim().max(80).optional().default(''),
+      leadMobile: z.string().max(30).optional().default(''),
+      color: z.enum(CREW_COLORS).optional(),
     }),
   )
   .min(1)
@@ -350,12 +362,18 @@ const CrewsInput = z
 export async function saveCrews(owner: Owner, input: unknown): Promise<Result> {
   const p = CrewsInput.safeParse(input);
   if (!p.success) return fail(400, 'Each crew needs a name and 1 to 5 jobs a day.');
+  const mobiles = p.data.map((c) => (c.leadMobile.replace(/\D/g, '') ? normalizeMobile(c.leadMobile) : ''));
+  if (mobiles.some((m) => m === null)) return fail(400, "A crew lead's phone needs 10 digits.");
   await asOwner(owner.userId, async (tx) => {
     for (const [i, c] of p.data.entries()) {
+      const lead = c.leadName || null;
+      const phone = mobiles[i] || null;
       if (c.id) {
-        await tx`update wb.crews set name = ${c.name}, jobs_per_day = ${c.jobsPerDay}, active = ${c.active}, sort = ${i + 1} where id = ${c.id}`;
+        await tx`update wb.crews set name = ${c.name}, jobs_per_day = ${c.jobsPerDay}, active = ${c.active}, sort = ${i + 1},
+                 lead_name = ${lead}, lead_mobile = ${phone}, color = ${c.color ?? CREW_COLORS[i % CREW_COLORS.length]!} where id = ${c.id}`;
       } else {
-        await tx`insert into wb.crews (name, jobs_per_day, active, sort) values (${c.name}, ${c.jobsPerDay}, ${c.active}, ${i + 1})`;
+        await tx`insert into wb.crews (name, jobs_per_day, active, sort, lead_name, lead_mobile, color)
+                 values (${c.name}, ${c.jobsPerDay}, ${c.active}, ${i + 1}, ${lead}, ${phone}, ${c.color ?? CREW_COLORS[i % CREW_COLORS.length]!})`;
       }
     }
   });

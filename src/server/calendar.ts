@@ -283,8 +283,10 @@ export async function syncCalendar(now = new Date(), api = calendarApi()): Promi
     const active = await asService(
       (tx) => tx`
         select b.id, b.ref, b.name, b.mobile, b.address, b.reason, coalesce(b.notes, '') as notes,
-               b.calendar_event_id, b.calendar_synced_at, b.updated_at, s.starts_at, s.ends_at
+               b.calendar_event_id, b.calendar_synced_at, b.updated_at, s.starts_at, s.ends_at,
+               coalesce(o.name, '') as inspector
         from wb.bookings b join wb.slots s on s.id = b.slot_id
+        left join wb.owners o on o.user_id = b.assigned_to
         where b.status = 'booked' and s.ends_at > ${now} and s.starts_at < ${until}`,
     );
     let pushed = 0;
@@ -296,10 +298,11 @@ export async function syncCalendar(now = new Date(), api = calendarApi()): Promi
       const wrong = !event || event.start !== start || event.end !== end; // missing, or moved in Google
       if (!stale && !wrong) continue;
       const body: EventBody = {
-        summary: `Roof inspection: ${String(b.name).split(' ')[0]} (${refLabel(b.ref)})`,
+        summary: `Roof inspection: ${String(b.name).split(' ')[0]} (${refLabel(b.ref)})${b.inspector ? `, ${String(b.inspector).split(' ')[0]}` : ''}`,
         location: b.address,
         description: [
           `${b.name}, ${formatMobile(b.mobile)}`,
+          b.inspector ? `Inspector: ${b.inspector}` : 'Inspector: not picked yet',
           `Why: ${labelOf(REASONS, b.reason)}`,
           b.notes ? `Notes: ${b.notes}` : '',
           `Open in the app: ${site}/app/#/booking/${b.id}`,

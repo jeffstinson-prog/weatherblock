@@ -6,6 +6,9 @@ import { formatMobile } from '../booking/rules';
 import { SlotPicker } from '../booking/ui';
 import type { Slot } from '../booking/client';
 import { STATUS_LABEL, directions } from './Today';
+import Icon from '../icons/Icon';
+import { shrinkPhoto } from '../booking/client';
+import { Avatar, PersonSelect, customerHref, type Person } from './ui';
 import EstimatePanel, { type CrewInfo, type EstimateInfo, type JobInfo, type RoofSuggestion } from './EstimatePanel';
 import RoofPanel, { type RoofSheet } from './RoofPanel';
 
@@ -38,7 +41,9 @@ interface Detail {
   referrerName: string;
   createdAt: string;
   cancelReason: string;
-  photoUrls: { id: string; url: string }[];
+  photoUrls: { id: string; url: string; source: 'customer' | 'team'; shared: boolean; caption: string }[];
+  assignedTo: string | null;
+  owners: Person[];
   events: { at: string; actor: string; kind: string; detail: Record<string, unknown> }[];
   messages: { at: string; channel: string; direction: string; audience: string; kind: string; status: string; to: string; summary: string }[];
   estimate: EstimateInfo | null;
@@ -65,6 +70,7 @@ export default function BookingView(props: { id: string }) {
   const [tell, setTell] = useState(true);
   const [showGate, setShowGate] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [uploading, setUploading] = useState('');
 
   async function load() {
     try {
@@ -97,13 +103,54 @@ export default function BookingView(props: { id: string }) {
     }
   }
 
+  /** Photos from the visit: shrink each one on the phone, then send it straight to storage. */
+  async function addPhotos(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const list = [...files].slice(0, 20);
+    setError('');
+    setFlash('');
+    let done = 0;
+    try {
+      for (const f of list) {
+        setUploading(`Adding photo ${done + 1} of ${list.length}...`);
+        const blob = await shrinkPhoto(f);
+        const r = await api<{ photoId: string; upload: { url: string; method: string; headers: Record<string, string> } }>(`booking/${props.id}`, {
+          body: { action: 'photo_add', contentType: blob.type || 'image/jpeg', bytes: blob.size },
+        });
+        const res = await fetch(r.upload.url, { method: r.upload.method, headers: r.upload.headers, body: blob });
+        if (!res.ok) {
+          await api(`booking/${props.id}`, { body: { action: 'photo_remove', photoId: r.photoId } }).catch(() => {});
+          throw new ApiError(res.status, "A photo didn't upload. Try again on a better signal.");
+        }
+        done++;
+      }
+      setFlash(`${done} photo${done === 1 ? '' : 's'} added. Tick the ones ${b?.name.split(' ')[0] ?? 'the customer'} should see.`);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "That photo didn't work. Try a JPG or PNG.");
+    } finally {
+      setUploading('');
+      await load();
+    }
+  }
+
   if (error && !b) return <p class="owner-pad error-box" role="alert">{error}</p>;
   if (!b) return <p class="owner-pad" aria-live="polite">Loading...</p>;
 
   return (
     <section class="owner-pad booking-view">
-      <p>
-        <a href="#/today">Back to Today</a>
+      <p class="back">
+        <a
+          href="#/schedule"
+          onClick={(e) => {
+            if (history.length > 1) {
+              e.preventDefault();
+              history.back();
+            }
+          }}
+        >
+          <Icon name="chevron-left" size={18} />
+          Back
+        </a>
       </p>
       <h1>{b.address}</h1>
       <p class="lead-line">
@@ -116,6 +163,25 @@ export default function BookingView(props: { id: string }) {
         <a class="btn secondary" href={directions(b)} target="_blank" rel="noopener">Directions</a>
         <a class="btn secondary" href={`tel:${b.mobile}`}>Call {b.name.split(' ')[0]}</a>
         <a class="btn secondary" href={`sms:${b.mobile}`}>Text</a>
+        <a class="btn secondary" href={customerHref(b.mobile)}>
+          <Icon name="contact" size={18} />
+          Customer page
+        </a>
+      </div>
+
+      <div class="assign-row">
+        <Avatar id={b.assignedTo} people={b.owners} size="md" />
+        <div class="grow">
+          <PersonSelect
+            id="b-inspector"
+            label="Inspector"
+            value={b.assignedTo}
+            people={b.owners}
+            nobody="No inspector yet"
+            disabled={busy}
+            onChange={(id) => void act({ action: 'assign', userId: id }, id ? `${b.owners.find((o) => o.id === id)?.name.split(' ')[0] ?? 'They'} has this inspection.` : 'Inspector taken off.')}
+          />
+        </div>
       </div>
 
       {b.request && (
@@ -190,17 +256,66 @@ export default function BookingView(props: { id: string }) {
           </dd>
           <dt>Pets</dt><dd>{b.pets || 'None mentioned'}</dd>
         </dl>
-        {b.photoUrls.length > 0 && (
-          <ul class="photo-grid">
-            {b.photoUrls.map((p, i) => (
-              <li key={p.id}>
-                <a href={p.url} target="_blank" rel="noopener">
-                  <img src={p.url} alt={`Customer photo ${i + 1}`} loading="lazy" width={160} height={120} />
-                </a>
-              </li>
-            ))}
+        {b.photoUrls.some((p) => p.source === 'customer') && (
+          <>
+            <h3>Their photos</h3>
+            <ul class="photo-grid">
+              {b.photoUrls
+                .filter((p) => p.source === 'customer')
+                .map((p, i) => (
+                  <li key={p.id}>
+                    <a href={p.url} target="_blank" rel="noopener">
+                      <img src={p.url} alt={`Customer photo ${i + 1}`} loading="lazy" width={160} height={120} />
+                    </a>
+                  </li>
+                ))}
+            </ul>
+          </>
+        )}
+      </section>
+
+      <section aria-labelledby="team-photos-h" class="panel">
+        <h2 id="team-photos-h">Photos from the visit</h2>
+        <p class="muted small">Add what you saw on the roof. Tick a photo to show it on {b.name.split(' ')[0]}'s page with their estimate.</p>
+        {b.photoUrls.some((p) => p.source === 'team') && (
+          <ul class="reset-list team-photos">
+            {b.photoUrls
+              .filter((p) => p.source === 'team')
+              .map((p, i) => (
+                <li key={p.id} class={`team-photo ${p.shared ? 'is-shared' : ''}`}>
+                  <a href={p.url} target="_blank" rel="noopener">
+                    <img src={p.url} alt={p.caption || `Visit photo ${i + 1}`} loading="lazy" width={240} height={180} />
+                  </a>
+                  <label class="check">
+                    <input type="checkbox" checked={p.shared} disabled={busy} onChange={(e) => void act({ action: 'photo_set', photoId: p.id, shared: (e.currentTarget as HTMLInputElement).checked }, (e.currentTarget as HTMLInputElement).checked ? 'They can see that photo now.' : 'That photo is hidden from them.')} />
+                    <span>Customer sees it</span>
+                  </label>
+                  <label for={`cap-${p.id}`} class="visually-hidden">
+                    Caption for photo {i + 1}
+                  </label>
+                  <input
+                    id={`cap-${p.id}`}
+                    type="text"
+                    maxLength={200}
+                    placeholder="Caption, like Lifted shingles on the back"
+                    value={p.caption}
+                    onChange={(e) => {
+                      const v = (e.currentTarget as HTMLInputElement).value;
+                      if (v !== p.caption) void act({ action: 'photo_set', photoId: p.id, caption: v }, 'Caption saved.');
+                    }}
+                  />
+                  <button type="button" class="link-btn danger-text" disabled={busy} onClick={() => confirm('Remove this photo?') && void act({ action: 'photo_remove', photoId: p.id }, 'Photo removed.')}>
+                    Remove
+                  </button>
+                </li>
+              ))}
           </ul>
         )}
+        <label class="btn secondary file-btn">
+          <Icon name="camera" size={18} />
+          {uploading || 'Add photos'}
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple class="visually-hidden" disabled={uploading !== ''} onChange={(e) => void addPhotos((e.currentTarget as HTMLInputElement).files).then(() => ((e.target as HTMLInputElement).value = ''))} />
+        </label>
       </section>
 
       <section aria-labelledby="notes-h" class="panel">

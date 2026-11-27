@@ -100,6 +100,7 @@ test('the owner finishes the visit and sends the estimate', async ({ page }) => 
   await expectAccessible(page);
   await expectNoSideScroll(page);
 
+  await page.getByRole('link', { name: 'More' }).click();
   await page.getByRole('link', { name: 'Estimates' }).click();
   await expect(page.getByRole('heading', { name: 'Estimates', level: 1 })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Waiting on the customer (1)' })).toBeVisible();
@@ -145,7 +146,8 @@ test('the owner schedules the job, weather moves the day, and the customer sees 
   await expect(page.getByRole('status')).toHaveText('Scheduled. The customer was told.');
   await expectAccessible(page);
 
-  await page.getByRole('link', { name: 'Jobs' }).click();
+  await page.getByRole('link', { name: 'More' }).click();
+  await page.getByRole('link', { name: 'Roof jobs' }).click();
   await expect(page.getByRole('heading', { name: 'Jobs', level: 1 })).toBeVisible();
   const day = page.locator('.up-day', { hasText: 'Casey Homeowner' });
   await expect(day.getByText('Crew 2')).toBeVisible();

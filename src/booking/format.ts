@@ -47,6 +47,28 @@ export function windowLabel(startIso: string, endIso: string): string {
 /** "Friday, November 20, 8 to 10 am" */
 export const whenLabel = (startIso: string, endIso: string) => `${longDay(startIso)}, ${windowLabel(startIso, endIso)}`;
 
+/** "3:15 pm", "noon" */
+export function timeLabel(iso: string): string {
+  const p = hourParts(iso);
+  if (p.h === 12 && p.m === 0 && p.pm) return 'noon';
+  return `${clock(p)} ${p.pm ? 'pm' : 'am'}`;
+}
+
+/** "Today, 3:15 pm", "Yesterday, 9 am", "Fri, Nov 20, 3:15 pm": when a message came or went. */
+export function stampLabel(iso: string, now = Date.now()): string {
+  const day = dayKey(iso);
+  const when = day === dayKey(new Date(now).toISOString()) ? 'Today' : day === dayKey(new Date(now - 86_400_000).toISOString()) ? 'Yesterday' : shortDay(iso);
+  return `${when}, ${timeLabel(iso)}`;
+}
+
+/** "Today", "Tomorrow" or "Fri, Nov 20", for a visit's day. */
+export function dayWord(iso: string, now = Date.now()): string {
+  const day = dayKey(iso);
+  if (day === dayKey(new Date(now).toISOString())) return 'Today';
+  if (day === dayKey(new Date(now + 86_400_000).toISOString())) return 'Tomorrow';
+  return shortDay(iso);
+}
+
 /** "K7M3QX" to "K7M-3QX", easier to read over the phone. */
 /** A calendar date (YYYY-MM-DD) as "Fri, Dec 4" and "Friday, December 4". Noon UTC keeps it on the same local day. */
 export const dateShort = (date: string) => shortDay(`${date}T12:00:00Z`);
