@@ -568,6 +568,10 @@
   color: var(--muted);
   overflow-wrap: break-word;
 }
+/* A long address: a little smaller, so it fits on one line on most phones. */
+.row-value.email {
+  font-size: var(--text-xs);
+}
 .side-card .summary {
   margin: 0;
   gap: 0.5rem;

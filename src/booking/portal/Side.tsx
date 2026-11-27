@@ -65,7 +65,7 @@ export function Team(props: { booking: PortalBooking; facts: PortalFacts }) {
               <Icon name="mail" size={20} />
               <span class="row-text">
                 <span class="row-label">Email</span>{' '}
-                <span class="row-value">
+                <span class="row-value email">
                   <Address email={facts.email} />
                 </span>
               </span>
