@@ -72,3 +72,26 @@ describe('the built site keeps the rules', () => {
     });
   }
 });
+
+describe('a shared link shows the logo', () => {
+  // iMessage, Facebook, LinkedIn and others show this picture with a link to any page.
+  const html = pages(root).filter((f) => !f.includes('/app/'));
+  it('every page names the share picture, its size and a large card', () => {
+    expect(html.length).toBeGreaterThan(10);
+    const missing = html.filter((f) => {
+      const page = readFileSync(f, 'utf8');
+      return !(
+        /<meta property="og:image" content="https:\/\/[^"]+\/brand\/share\.png"/.test(page) &&
+        page.includes('<meta property="og:image:width" content="1200"') &&
+        page.includes('<meta property="og:image:height" content="630"') &&
+        page.includes('<meta name="twitter:card" content="summary_large_image"')
+      );
+    });
+    expect(missing.map((f) => f.replace(root, ''))).toEqual([]);
+  });
+  it('the picture is there, 1200 by 630', () => {
+    const png = readFileSync(join(root, 'brand', 'share.png'));
+    expect(png.subarray(1, 4).toString()).toBe('PNG');
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
+  });
+});

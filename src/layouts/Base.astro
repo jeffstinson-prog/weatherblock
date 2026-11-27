@@ -26,6 +26,7 @@ const fullTitle = title === name ? name : `${title} | ${name}`;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? `https://${facts.web.domain}`).href;
 const robots = noindex || !indexable() ? 'noindex, nofollow' : 'index, follow';
 const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+const shareImage = new URL('/brand/share.png', canonical).href;
 ---
 
 <!doctype html>
@@ -48,7 +49,14 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={new URL('/icons/mark-white-512.png', canonical).href} />
+    <!-- The picture a shared link shows in iMessage, Facebook, LinkedIn and others (scripts/build-share-image.mjs). -->
+    <meta property="og:image" content={shareImage} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${name} logo`} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={shareImage} />
     <meta name="format-detection" content="telephone=no" />
     {ld.map((item) => <script type="application/ld+json" set:html={JSON.stringify(item)} />)}
     <slot name="head" />
