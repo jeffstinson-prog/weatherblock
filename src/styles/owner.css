@@ -2052,3 +2052,16 @@ dialog.sheet::backdrop {
     scroll-padding-inline: 0;
   }
 }
+
+/* The smallest phones: the three buttons on a card fit without pushing it wider. */
+@media (max-width: 22rem) {
+  .call-actions,
+  .next-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+  .call-actions .btn .icon,
+  .next-actions .btn .icon {
+    display: none;
+  }
+}

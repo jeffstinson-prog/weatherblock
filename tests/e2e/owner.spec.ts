@@ -228,6 +228,7 @@ test('home: the numbers, marking a call done from the card, and turning on notif
   await expect(push.getByRole('alert')).toHaveText("Notifications aren't set up on the server yet.");
   await expectAccessible(page);
   await expectNoSideScroll(page);
+  await shot(page, 'home');
 
   // The same card lives in More, with the alert settings.
   await page.getByRole('link', { name: 'More' }).click();
