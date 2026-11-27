@@ -9,6 +9,7 @@ import { createBooking, openSlots } from '../../src/server/booking';
 import { fakeCalendar, syncCalendar } from '../../src/server/calendar';
 import { asService, closeDatabase, db, useDatabase } from '../../src/server/db';
 import * as o from '../../src/server/owner';
+import { assignInspector } from '../../src/server/schedule';
 
 const url = process.env.DATABASE_URL ?? 'postgres://postgres:postgres@127.0.0.1:5432/wb_test';
 const SECRET = 'owner-test-jwt-secret-that-is-long-enough';
@@ -198,6 +199,12 @@ describe('Google Calendar sync (stand-in calendar)', () => {
     // A real change to the booking is pushed too.
     await asService((tx) => tx`update wb.bookings set notes = 'Now leaking in two rooms' where id = ${r.booking.id}`);
     expect(await syncCalendar()).toMatchObject({ pushed: 1 });
+    // So is the inspector: the calendar says who's going.
+    expect(await assignInspector(owner, r.booking.id, owner.userId)).toEqual({ ok: true });
+    expect(await syncCalendar()).toMatchObject({ pushed: 1 });
+    const assigned = [...fakeCalendar.events.values()].find((e) => e.bookingId === r.booking.id)!;
+    expect(assigned.body?.summary).toMatch(/^Roof inspection: Sam \(.+\), Justin$/);
+    expect(assigned.body?.description).toContain('Inspector: Justin Coffey');
 
     // Cancelled: leaves the calendar.
     await o.setStatus(owner, r.booking.id, 'cancelled', false);

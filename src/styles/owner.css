@@ -1752,7 +1752,8 @@ dialog.sheet::backdrop {
   border-left-color: var(--gold);
 }
 .sched-item.is-past {
-  opacity: 0.8;
+  border-left-color: var(--line-strong);
+  background: var(--sand);
 }
 .si-kind {
   display: inline-flex;
@@ -1849,7 +1850,8 @@ dialog.sheet::backdrop {
   border-left: 5px solid var(--crew);
 }
 .crew-card.is-off {
-  opacity: 0.75;
+  border-left-color: var(--line-strong);
+  background: var(--sand);
 }
 .crew-card p {
   margin: 0;
