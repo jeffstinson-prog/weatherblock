@@ -8,8 +8,9 @@ settings, code and tests, once you've made the account or given the answer.
 
 ## 1. Accounts
 
-Use the business Gmail (weatherblockroofing@gmail.com) as the login where you
-can, then add each other, so the business owns every account. Keys go in
+Use the business's own address (info@weatherblockroofingnc.com, on Google Workspace
+since November 26) as the login where you can, then add each other, so the business
+owns every account. Keys go in
 Netlify's environment settings (and GitHub secrets for tests), never in the repo.
 The full list of settings is in `.env.example`.
 

@@ -13,7 +13,7 @@ export function copyrightLine(year = new Date().getFullYear()): string {
   return `© ${year} ${holder}`;
 }
 
-/** Plain phone link, e.g. tel:+19102095275 */
+/** Plain phone link, e.g. tel:+19104441849 */
 export function telHref(): string {
   return facts.contact.phoneE164 ? `tel:${facts.contact.phoneE164}` : '';
 }

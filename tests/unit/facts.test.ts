@@ -63,12 +63,12 @@ describe('facts.yaml', () => {
   });
 
   it('rejects a misspelled key instead of ignoring it', () => {
-    const typo = yamlText.replace('  phone: (910) 209-5275', '  phon: (910) 209-5275');
+    const typo = yamlText.replace('  phone: (910) 444-1849', '  phon: (910) 444-1849');
     expect(() => parseFacts(typo)).toThrow(FactsError);
   });
 
   it('rejects a bad phone number', () => {
-    const bad = yamlText.replace('phoneE164: "+19102095275"', 'phoneE164: "910-209-5275"');
+    const bad = yamlText.replace('phoneE164: "+19104441849"', 'phoneE164: "910-444-1849"');
     expect(() => parseFacts(bad)).toThrow(/phoneE164/);
   });
 

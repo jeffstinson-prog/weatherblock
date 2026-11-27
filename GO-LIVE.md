@@ -25,7 +25,7 @@ Before the storm: 1, 2, 3, 5 and 6. Start the forms in step 4 the same day, beca
 
 ## Step 1. Email (Resend)
 
-1. Go to **resend.com** and click **Sign up**. Use weatherblockroofing@gmail.com, and confirm the email Resend sends you.
+1. Go to **resend.com** and sign in (WeatherBlock is in your existing Resend account, next to StayOIB).
 2. In Resend, click **Domains** on the left, then **Add domain**.
 3. Type `weatherblockroofingnc.com`. Region: **North Virginia (us-east-1)**. Click **Add** (it may say **Add domain**).
 4. Resend shows a list of DNS records. Keep this tab open.
@@ -60,11 +60,11 @@ Before the storm: 1, 2, 3, 5 and 6. Start the forms in step 4 the same day, beca
     - Choose **Different value for each deploy context**. Paste the key into **Production** only, and leave the rest empty. Test copies of the site then stay quiet.
     - Click **Create variable**.
 11. Click **Deploys** in the left menu, then **Trigger deploy**, then **Deploy project** (it may say **Deploy site**). Wait about 2 minutes, until it says **Published**.
-12. Test it once Resend shows the domain as verified. On your phone, book a made-up inspection at weatherblockroofingnc.com/book/ with your real mobile and email. Within a minute you get the confirmation, and weatherblockroofing@gmail.com gets the new booking alert. Cancel it from the link in the confirmation.
+12. Test it once Resend shows the domain as verified. On your phone, book a made-up inspection at weatherblockroofingnc.com/book/ with your real mobile and email. Within a minute you get the confirmation, and the business inbox gets the new booking alert. Cancel it from the link in the confirmation.
 
 Good to know:
 
-- Emails come from "WeatherBlock Roofing" at bookings@weatherblockroofingnc.com. Replies go to weatherblockroofing@gmail.com.
+- Emails come from "WeatherBlock Roofing" at bookings@weatherblockroofingnc.com. Replies go to info@weatherblockroofingnc.com.
 - From now on the site emails whatever address is typed. When you test, use your own.
 - Resend's free plan sends 100 emails a day. A booking uses about 4 (the confirmation, an alert to each of you, a reminder), so that covers about 25 bookings a day. If the storm brings more, upgrade to Resend's Pro plan before it hits (about $20 a month; check the price in Resend). Once the day's 100 are used, nothing is emailed until the next day.
 
@@ -88,29 +88,30 @@ Good to know:
 
    Click **Save changes**.
 
-## Step 3. You and Justin as owners (10 minutes, after step 2)
+## Step 3. You, Justin and the office as owners (10 minutes, after step 2)
 
-1. In Supabase, click **Authentication**, then **Users**. Click **Add user**, then **Create new user**. Type your email and any password (you won't use it), tick **Auto Confirm User**, and click **Create user**. Do the same for Justin.
+1. In Supabase, click **Authentication**, then **Users**. Click **Add user**, then **Create new user**. Type your email and any password (you won't use it), tick **Auto Confirm User**, and click **Create user**. Do the same for Justin, and for `info@weatherblockroofingnc.com` (the office login: whoever reads that inbox can sign in, and it gets a copy of every alert).
 2. Click **SQL Editor** in the left menu, then **New query**. Paste this, put in your two emails and mobiles, and click **Run**.
 
    ```sql
    insert into wb.owners (user_id, name, email, mobile)
    select u.id, o.name, u.email, o.mobile
    from (values
-     ('JT Stinson',    'JT-EMAIL-HERE',     '+19100000000'),
-     ('Justin Coffey', 'JUSTIN-EMAIL-HERE', '+19100000000')
+     ('JT Stinson',          'JT-EMAIL-HERE',                  '+19100000000'),
+     ('Justin Coffey',       'JUSTIN-EMAIL-HERE',              '+19100000000'),
+     ('WeatherBlock office', 'info@weatherblockroofingnc.com', null)
    ) as o (name, email, mobile)
    join auth.users u on lower(u.email) = lower(o.email)
    on conflict (user_id) do update set name = excluded.name, mobile = excluded.mobile, active = true;
    ```
 
-   Write mobiles as +1 and ten digits, no spaces or dashes. It should say 2 rows. If it says 0, the emails don't match the users from 1. Running it again is safe.
+   Write mobiles as +1 and ten digits, no spaces or dashes. The office has none, so it never gets texts. It should say 3 rows. If it says fewer, an email doesn't match a user from 1. Running it again is safe.
 3. On your phone, open **weatherblockroofingnc.com/app/**. Type your email, tap **Email me a code**, and type the code from the email.
 4. In the app, tap **More** and scroll to **Your alerts**. Check your mobile, and that **Email me too** is ticked. Tap **Save alerts**.
 5. Add the app to your home screen. iPhone, in Safari: tap the Share button, then **Add to Home Screen**. Android, in Chrome: tap the menu, then **Add to Home screen**.
 6. On your phone, turn on notifications for the email account your alerts go to. Until texts are approved, that email is what pings you.
 
-From here on, alerts go to your and Justin's own emails instead of weatherblockroofing@gmail.com.
+From here on, alerts go to each owner login's email: yours, Justin's and info@.
 
 If the code doesn't arrive within a minute, check spam. Still nothing: in Supabase, change the port in step 2 to `587` and try again.
 
@@ -118,7 +119,7 @@ If the code doesn't arrive within a minute, check spam. Still nothing: in Supaba
 
 Rough costs, to check in Twilio before you pay: the number about $1.15 a month; registration about $19.50 once ($4.50 for the brand, $15 for the campaign review); the campaign $1.50 a month; each text about a cent.
 
-1. Go to **twilio.com**, click **Sign up**, and use weatherblockroofing@gmail.com. Verify the email and your mobile when Twilio asks.
+1. Go to **twilio.com**, click **Sign up**, and use info@weatherblockroofingnc.com. Verify the email and your mobile when Twilio asks.
 2. Click **Upgrade** at the top of the Console and add a card. A trial account only texts numbers you've verified, and adds a trial notice to every text.
 3. Buy a number. In the left menu: **Phone Numbers**, **Manage**, **Buy a number**. Country: United States. Number: `910`. Tick **SMS**. Click **Search**, then **Buy** next to one you like.
 4. Make the Messaging Service. In the left menu: **Messaging**, **Services**, **Create Messaging Service**.
@@ -126,7 +127,7 @@ Rough costs, to check in Twilio before you pay: the number about $1.15 a month; 
    - **Add Senders**: sender type **Phone Number**, tick your new number, click **Add Phone Numbers**.
    - **Set up integration**: under **Incoming Messages**, choose **Send a webhook**. **Request URL**: `https://weatherblockroofingnc.com/api/twilio/sms`, method **HTTP POST**. Replies to your number then show in the owner app, and STOP and START work.
    - Skip the compliance step here. It's 6, below.
-5. In the service, open **Opt-Out Management** and set the HELP reply to: `WeatherBlock Roofing: appointment texts. For help call (910) 209-5275. Reply STOP to opt out.`
+5. In the service, open **Opt-Out Management** and set the HELP reply to: `WeatherBlock Roofing: appointment texts. For help call (910) 444-1849. Reply STOP to opt out.`
 6. Register with the carriers. In the left menu: **Messaging**, **Regulatory Compliance**, **Onboarding** (it may say **A2P 10DLC**). Twilio walks you through three parts:
    - **Customer profile**: WeatherBlock Roofing Incorporated, its EIN, corporation, the principal office address on file with the NC Secretary of State, website `https://weatherblockroofingnc.com`, and you or Justin as the contact.
    - **Brand**: **Low-Volume Standard** (under 6,000 texts a day; it skips the extra vetting fee).
@@ -147,7 +148,7 @@ Rough costs, to check in Twilio before you pay: the number about $1.15 a month; 
 
    > WeatherBlock Roofing: your estimate is ready. See it and let us know what you'd like to do: https://weatherblockroofingnc.com/b/#Q8xT2...
 
-   > WeatherBlock Roofing: your roof job is set for Tue, Dec 8. We'll text you the day before. Questions: (910) 209-5275.
+   > WeatherBlock Roofing: your roof job is set for Tue, Dec 8. We'll text you the day before. Questions: (910) 444-1849.
 
    **Other answers:** opt-in keyword START, opt-out STOP, help HELP. Embedded links: yes. Phone numbers: yes. Age-gated content: no. Direct lending: no.
 7. When Twilio emails that the campaign is approved (usually a few days), add three variables in Netlify, **Production** only, then **Trigger deploy**:
@@ -158,45 +159,48 @@ Rough costs, to check in Twilio before you pay: the number about $1.15 a month; 
    Don't add them before approval: carriers block texts from numbers that aren't registered.
 8. Test: in the owner app, **More**, **Your alerts**, tick **Text me when a booking comes in or changes**, and tap **Save alerts**. Send an estimate request on the site with your own name and number. A text reaches you within a minute.
 
-## Step 5. Your calendar (Google)
+## Step 5. The calendar: info@weatherblockroofingnc.com
 
-What it does: every booking shows up on a Google Calendar, and anything marked busy on that calendar blocks those times on the site. The site checks the calendar every 15 minutes.
+What it does: every booking shows up on info@'s Google Calendar, and anything marked busy on that calendar blocks those times on the site. The site checks the calendar every 15 minutes. The site is already set to use info@'s main calendar (`GOOGLE_CALENDAR_ID` in Netlify).
 
-Which calendar: the one that shows when the inspector is busy. If Justin does the inspections and keeps his appointments in Google Calendar, use his: they then block times on their own. Otherwise, use the calendar of weatherblockroofing@gmail.com and put your blocks there.
+**A. Let the site change info@'s calendar** (Google Admin, signed in as info@)
 
-**A. A key for the site** (Google Cloud, signed in as weatherblockroofing@gmail.com)
+1. Go to **admin.google.com**, signed in as info@weatherblockroofingnc.com.
+2. In the left menu: **Apps**, **Google Workspace**, **Calendar**. Click **Sharing settings**.
+3. Under **External sharing options for primary calendars**, choose **Share all information, and outside users can change calendars**. Click **Save**.
 
-1. Go to **console.cloud.google.com** and sign in with weatherblockroofing@gmail.com. Agree to the terms if asked. No card is needed for this.
-2. At the top, click the project list (it may say **Select a project**), then **New project**. Name: `WeatherBlock calendar`. Location: **No organization**. Click **Create**. When it's done, pick it in the project list.
-3. In the search box at the top, type `Google Calendar API`. Open it and click **Enable**.
-4. In the search box, type `Service accounts` and open it. Click **Create service account**. Name: `website calendar`. Click **Create and continue**, then **Done**. Skip the optional steps.
-5. Click the new service account in the list. Open the **Keys** tab. Click **Add key**, then **Create new key**. Choose **JSON** and click **Create**. A file downloads. Treat it like a password.
+   The site's key counts as an outside user. Without this, Google only lets the site see when you're busy, and it can't add bookings. It can take a few minutes to apply.
 
-   If Google says key creation is disabled, the project belongs to an organization that blocks keys. Go back to 2, signed in as weatherblockroofing@gmail.com, and pick **No organization**.
+**B. A key for the site** (Google Cloud, signed in as weatherblockroofing@gmail.com, not info@)
 
-**B. Give the key to the site** (Netlify)
+Use the Gmail here: a project made with info@ belongs to your Workspace, and Google blocks key files there.
 
-6. Open the downloaded file in a text editor: Notepad on Windows, TextEdit on a Mac. Select all, and copy.
-7. In Netlify, the project, **Project configuration**, **Environment variables**, **Add a variable**, **Add a single variable**:
-   - **Key**: `GOOGLE_SERVICE_ACCOUNT_KEY`
-   - Tick **Contains secret values**.
-   - Choose **Different value for each deploy context**, and paste the whole file into **Production** only.
-   - Click **Create variable**.
-8. In the file, find the line with `"client_email"`. Copy the address after it, between the quotes. It ends in `iam.gserviceaccount.com`.
+4. Go to **console.cloud.google.com** and sign in with weatherblockroofing@gmail.com. Agree to the terms if asked. No card is needed for this.
+5. At the top, click the project list (it may say **Select a project**), then **New project**. Name: `WeatherBlock calendar`. Location: **No organization**. Click **Create**. When it's done, pick it in the project list.
+6. In the search box at the top, type `Google Calendar API`. Open it and click **Enable**.
+7. In the search box, type `Service accounts` and open it. Click **Create service account**. Name: `website calendar`. Click **Create and continue**, then **Done**. Skip the optional steps.
+8. Click the new service account in the list. Open the **Keys** tab. Click **Add key**, then **Create new key**. Choose **JSON** and click **Create**. A file downloads. Treat it like a password.
 
-**C. Share the calendar** (Google Calendar on a computer, signed in as whoever owns the calendar)
+   If Google says key creation is disabled, the project belongs to an organization that blocks keys. Go back to 5, signed in as weatherblockroofing@gmail.com, and pick **No organization**.
 
-9. Go to **calendar.google.com**. On the left, under **My calendars**, point at the calendar, click its three dots, then **Settings and sharing**.
-10. Under **Share with specific people or groups**, click **Add people and groups**. Paste the address from 8. Permissions: **Make changes to events**. Click **Send**.
-11. Scroll down to **Integrate calendar**, and copy the **Calendar ID**. For someone's main calendar, it's their Gmail address.
+**C. Give the key to the site** (Netlify)
 
-Google only lets you change sharing on a computer, not in the phone app.
+9. Open the downloaded file in a text editor: Notepad on Windows, TextEdit on a Mac. Select all, and copy.
+10. In Netlify, the project, **Project configuration**, **Environment variables**, **Add a variable**, **Add a single variable**:
+    - **Key**: `GOOGLE_SERVICE_ACCOUNT_KEY`
+    - Tick **Contains secret values**.
+    - Choose **Different value for each deploy context**, and paste the whole file into **Production** only.
+    - Click **Create variable**.
+11. **Deploys**, **Trigger deploy**, **Deploy project**.
+12. In the file, find the line with `"client_email"`. Copy the address after it, between the quotes. It ends in `iam.gserviceaccount.com`.
 
-**D. Tell the site which calendar** (Netlify)
+**D. Share info@'s calendar** (Google Calendar on a computer, signed in as info@)
 
-12. Add one more variable: **Key** `GOOGLE_CALENDAR_ID`, **Value** the Calendar ID from 11. It's not a secret: leave **Contains secret values** unticked, and keep **Same value for all deploy contexts**. Click **Create variable**.
-13. **Deploys**, **Trigger deploy**, **Deploy project**.
-14. Check it: in the owner app, **More**, **Inspection availability**. Under Google Calendar, tap **Sync the calendar now**. The status should say **Connected**. If it says **Problem**, the message under it says what to fix. Without the app yet: put a busy event on the calendar for tomorrow at 10 am, wait 15 minutes, and the 10 to 12 window is gone from the booking page. Then delete the event.
+13. Go to **calendar.google.com**. On the left, under **My calendars**, point at the calendar, click its three dots, then **Settings and sharing**.
+14. Under **Share with specific people or groups**, click **Add people and groups**. Paste the address from 12. Permissions: **Make changes to events**. Click **Send**.
+
+    Google only lets you change sharing on a computer, not in the phone app.
+15. Check it: in the owner app, **More**, **Inspection availability**. Under Google Calendar, tap **Sync the calendar now**. The status should say **Connected**. If it says **Problem**, the message under it says what to fix. Without the app: put a busy event on the calendar for tomorrow at 10 am, wait 15 minutes, and the 10 to 12 window is gone from the booking page. Then delete the event.
 
 How it works from here:
 
@@ -205,7 +209,7 @@ How it works from here:
 - All-day events start as **Free** in Google Calendar. To block a whole day, change the event to **Busy**, or add a day off in step 6.
 - Move or cancel bookings in the owner app, not in Google Calendar. The app is what tells the customer. A booking moved or deleted in Google is put back.
 - With one inspector, a busy event closes those windows. With two, it takes one of the two.
-- So the other partner sees bookings too, share the calendar with them the same way (**See all event details** is enough).
+- So you and Justin see bookings on your phones, share info@'s calendar with your own Google accounts the same way (**See all event details** is enough), then turn it on in the Google Calendar app.
 
 ## Step 6. Open times
 

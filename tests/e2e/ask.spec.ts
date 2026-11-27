@@ -33,7 +33,7 @@ test('a reply that breaks a rule is never shown', async ({ page }) => {
   await expect(reply).toContainText("I can't give you a reliable answer");
   await expect(reply).not.toContainText('insurance will pay');
   await expect(reply).not.toContainText('deductible');
-  await expect(reply.getByRole('link', { name: /Call/ })).toHaveAttribute('href', 'tel:+19102095275');
+  await expect(reply.getByRole('link', { name: /Call/ })).toHaveAttribute('href', 'tel:+19104441849');
   // The owners see it in the app's question list, marked as stopped.
   const sql = postgres(DB);
   const [row] = await sql`select answered, blocked_rule from wb.assistant_questions where question like 'TEST_BREAK_RULE%' order by asked_at desc limit 1`;
@@ -47,7 +47,7 @@ test('starts a booking with what it learned', async ({ page }) => {
   await page.getByLabel('Your question').fill('My roof is leaking over the kitchen. What do I do?');
   await page.getByRole('button', { name: 'Ask' }).click();
   const reply = page.locator('.chat li.assistant').last();
-  await expect(reply).toContainText('Call us at (910) 209-5275');
+  await expect(reply).toContainText('Call us at (910) 444-1849');
   await reply.getByRole('button', { name: 'Book a free inspection' }).click();
   await expect(page).toHaveURL(/\/book\/$/);
   await page.getByRole('combobox', { name: 'Address of the home' }).fill('Test Main');
