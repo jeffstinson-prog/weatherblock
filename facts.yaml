@@ -132,6 +132,11 @@ pipeline:
   estimateTurnaround: "" # finishes "Your estimate will be ready ...", e.g. "within 2 business days". Blank: "soon".
   followUpDays: [2, 7, 21] # follow-up emails after an estimate goes out, until the customer answers
   reviewUrl: "" # the "ask for reviews" link from your Google Business Profile. Blank: the reviews link above.
+  # What the customer's page says to do before a roof job's day. Short lines. Add one only if every crew does it.
+  jobDayPrep:
+    - Move cars out of the driveway the evening before.
+    - Keep pets inside while we work.
+  jobHours: "" # working hours on a job's day, e.g. "7 am to 5 pm". Blank: not mentioned.
 
 financing:
   provider: Acorn Finance

@@ -93,6 +93,9 @@ export const FactsSchema = z.strictObject({
       .refine((d) => d.every((x, i) => i === 0 || x > d[i - 1]!), 'list the days in order, smallest first')
       .default([2, 7, 21]),
     reviewUrl: optionalUrl(),
+    // The customer's page before a roof job's day: short lines, and the working hours if you want them said.
+    jobDayPrep: z.array(z.string().trim().min(1).max(120)).max(6).default([]),
+    jobHours: text(),
   }),
   financing: z.strictObject({
     provider: text(),

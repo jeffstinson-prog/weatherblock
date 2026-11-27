@@ -77,6 +77,10 @@ export interface PortalFacts {
   reviewUrl: string;
   /** Finishes "Your estimate will be ready ...". Blank: "soon". */
   turnaround: string;
+  /** Lines to get ready for a roof job's day, from facts.yaml. */
+  jobDayPrep: string[];
+  /** Working hours on a job's day, e.g. "7 am to 5 pm". Blank: not mentioned. */
+  jobHours: string;
   byDrone: boolean;
   homeNotRequired: boolean;
   deliverables: string;

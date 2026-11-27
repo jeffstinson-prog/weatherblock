@@ -273,12 +273,21 @@ function AwaitingEstimate(props: CardProps) {
 
 // The roof job: a day to pick, the day, then done.
 
-const PREP: { icon: IconName; text: string }[] = [
-  { icon: 'car', text: 'Move cars out of the driveway the evening before.' },
-  { icon: 'paw-print', text: 'Keep pets inside while we work.' },
-  { icon: 'trees', text: 'We protect your plants and landscaping.' },
-  { icon: 'volume-2', text: 'Expect noise from 7 am to 5 pm.' },
-];
+/** The job-day lines come from facts.yaml; each gets an icon that fits its words. */
+function prepIcon(text: string): IconName {
+  const t = text.toLowerCase();
+  if (/\b(car|cars|driveway|park)/.test(t)) return 'car';
+  if (/\b(pet|pets|dog|dogs|cat|cats)\b/.test(t)) return 'paw-print';
+  if (/(plant|landscap|garden|yard|shrub)/.test(t)) return 'trees';
+  if (/(noise|loud|hours|am to|pm)/.test(t)) return 'volume-2';
+  return 'check';
+}
+
+export function prepLines(facts: CardProps['facts']): { icon: IconName; text: string }[] {
+  const lines = facts.jobDayPrep.map((text) => ({ icon: prepIcon(text), text }));
+  if (facts.jobHours) lines.push({ icon: 'volume-2', text: `Expect noise from ${facts.jobHours}.` });
+  return lines;
+}
 
 function JobCard(props: CardProps) {
   const { booking, facts } = props;
@@ -317,11 +326,12 @@ function JobCard(props: CardProps) {
           {dateLong(job.day)}
         </p>
         <p>Weather can move it. If it does, we'll tell you right away. We'll send a reminder the evening before.</p>
+        {prepLines(facts).length > 0 && (
         <div class="prep">
           <h3>Before the day</h3>
           <ul class="prep-list">
-            {PREP.map((p) => (
-              <li key={p.icon}>
+            {prepLines(facts).map((p) => (
+              <li key={p.text}>
                 <span class="prep-icon" aria-hidden="true">
                   <Icon name={p.icon} size={18} />
                 </span>
@@ -330,6 +340,7 @@ function JobCard(props: CardProps) {
             ))}
           </ul>
         </div>
+        )}
         <p class="muted ask-first">Questions about the day?</p>
         <WriteButton onWrite={props.onWrite} />
       </section>

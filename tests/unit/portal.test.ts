@@ -199,3 +199,20 @@ describe('what the owners hear', () => {
     for (const t of [email.subject, email.text, email.html, pushPortalMessage(c, words).title]) expect(t).not.toMatch(/[–—]/);
   });
 });
+
+describe('getting ready for the job day', () => {
+  it('says only the lines in facts.yaml, and the working hours only when they are set', async () => {
+    const { prepLines } = await import('../../src/booking/portal/NextStep');
+    const base = { jobDayPrep: ['Move cars out of the driveway the evening before.', 'Keep pets inside while we work.'], jobHours: '' } as never;
+    expect(prepLines(base)).toEqual([
+      { icon: 'car', text: 'Move cars out of the driveway the evening before.' },
+      { icon: 'paw-print', text: 'Keep pets inside while we work.' },
+    ]);
+    const withHours = { jobDayPrep: ['We cover your plants.'], jobHours: '7 am to 5 pm' } as never;
+    expect(prepLines(withHours)).toEqual([
+      { icon: 'trees', text: 'We cover your plants.' },
+      { icon: 'volume-2', text: 'Expect noise from 7 am to 5 pm.' },
+    ]);
+    expect(prepLines({ jobDayPrep: [], jobHours: '' } as never)).toEqual([]);
+  });
+});
