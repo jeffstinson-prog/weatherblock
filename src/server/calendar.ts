@@ -7,7 +7,9 @@
 // back on the next sync.
 //
 // Google access is a service account the calendar is shared with
-// ("Make changes to events"), so there is no sign-in that can expire.
+// ("Make changes to events"), so there is no sign-in that can expire. Its key
+// file goes into Netlify whole, as GOOGLE_SERVICE_ACCOUNT_KEY (or the email
+// and private key separately, as GOOGLE_SERVICE_ACCOUNT_EMAIL and _KEY).
 import { SignJWT, importPKCS8 } from 'jose';
 import { TZ } from '../booking/format';
 import { labelOf, REASONS, formatMobile } from '../booking/rules';
@@ -46,13 +48,52 @@ export class NotFound extends Error {}
 
 // ---------- Google ----------
 
+export interface ServiceAccount {
+  email: string;
+  pem: string;
+}
+
+/**
+ * The service account, read from GOOGLE_SERVICE_ACCOUNT_KEY: either the whole
+ * JSON key file as Google downloads it, or just its private key with the email
+ * in GOOGLE_SERVICE_ACCOUNT_EMAIL. Null when it isn't set or can't be read.
+ */
+export function serviceAccount(): ServiceAccount | null {
+  const raw = read('GOOGLE_SERVICE_ACCOUNT_KEY');
+  if (!raw) return null;
+  let email = read('GOOGLE_SERVICE_ACCOUNT_EMAIL') ?? '';
+  let pem = raw;
+  if (raw.startsWith('{')) {
+    try {
+      const file = JSON.parse(raw) as { client_email?: unknown; private_key?: unknown };
+      if (typeof file.private_key !== 'string') return null;
+      pem = file.private_key;
+      if (typeof file.client_email === 'string' && file.client_email.includes('@')) email = file.client_email;
+    } catch {
+      return null;
+    }
+  }
+  // Pasted from inside the file by hand: drop a trailing comma and the quotes, and turn \n back into line breaks.
+  pem = pem.trim().replace(/,$/, '').replace(/^"|"$/g, '').replace(/\\n/g, '\n').trim();
+  if (!email.includes('@') || !/-----BEGIN PRIVATE KEY-----[\s\S]+-----END PRIVATE KEY-----/.test(pem)) return null;
+  return { email: email.trim(), pem };
+}
+
+/** Set in Netlify, but not in a form we can use. */
+const keyUnreadable = (): boolean => read('GOOGLE_SERVICE_ACCOUNT_KEY') !== undefined && serviceAccount() === null;
+const KEY_UNREADABLE = "The Google key in Netlify can't be read. In Netlify, replace GOOGLE_SERVICE_ACCOUNT_KEY with the whole key file, then redeploy.";
+
 let cachedToken: { token: string; expires: number } | undefined;
 
 async function googleToken(): Promise<string> {
   if (cachedToken && cachedToken.expires > Date.now() + 60_000) return cachedToken.token;
-  const email = read('GOOGLE_SERVICE_ACCOUNT_EMAIL')!;
-  const pem = read('GOOGLE_SERVICE_ACCOUNT_KEY')!.replace(/\\n/g, '\n');
-  const key = await importPKCS8(pem, 'RS256');
+  const { email, pem } = serviceAccount()!;
+  let key: CryptoKey;
+  try {
+    key = await importPKCS8(pem, 'RS256');
+  } catch {
+    throw new Error(KEY_UNREADABLE);
+  }
   const now = Math.floor(Date.now() / 1000);
   const assertion = await new SignJWT({ scope: 'https://www.googleapis.com/auth/calendar.events' })
     .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
@@ -68,7 +109,11 @@ async function googleToken(): Promise<string> {
     signal: AbortSignal.timeout(8000),
   });
   const data = (await res.json()) as { access_token?: string; expires_in?: number; error_description?: string };
-  if (!res.ok || !data.access_token) throw new Error(`Google sign-in failed: ${data.error_description ?? res.status}`);
+  if (!res.ok || !data.access_token) {
+    throw new Error(
+      `Google refused the key (${data.error_description ?? res.status}). In Google Cloud, make a new key for the service account, put the whole file in Netlify as GOOGLE_SERVICE_ACCOUNT_KEY, and redeploy.`,
+    );
+  }
   cachedToken = { token: data.access_token, expires: Date.now() + (data.expires_in ?? 3600) * 1000 };
   return data.access_token;
 }
@@ -80,6 +125,21 @@ interface GEvent {
   start?: { dateTime?: string; date?: string };
   end?: { dateTime?: string; date?: string };
   extendedProperties?: { private?: Record<string, string> };
+  attendees?: { self?: boolean; responseStatus?: string }[];
+}
+
+/** What to tell the owners when Google says no, by status code. */
+function refused(status: number, doing: string): Error {
+  const who = serviceAccount()?.email ?? 'the service account';
+  if (status === 404) {
+    return new Error(`Google can't find that calendar (${status}). Check the Calendar ID, and that the calendar is shared with ${who}.`);
+  }
+  if (status === 401 || status === 403) {
+    return new Error(
+      `Google said no (${status}). Check that the Google Calendar API is turned on in the Google Cloud project, and that the calendar is shared with ${who} with "Make changes to events".`,
+    );
+  }
+  return new Error(`Calendar ${doing} failed: ${status}`);
 }
 
 /** An all-day event runs from local midnight to local midnight. */
@@ -102,7 +162,7 @@ const google: CalendarApi = {
       u.searchParams.set('maxResults', '250');
       if (pageToken) u.searchParams.set('pageToken', pageToken);
       const res = await fetch(u, { headers: { Authorization: `Bearer ${await googleToken()}` }, signal: AbortSignal.timeout(8000) });
-      if (!res.ok) throw new Error(`Calendar list failed: ${res.status}`);
+      if (!res.ok) throw refused(res.status, 'list');
       const data = (await res.json()) as { items?: GEvent[]; nextPageToken?: string };
       for (const e of data.items ?? []) {
         const start = e.start?.dateTime ?? (e.start?.date ? localMidnight(e.start.date) : undefined);
@@ -112,7 +172,8 @@ const google: CalendarApi = {
           id: e.id,
           start: new Date(start).toISOString(),
           end: new Date(end).toISOString(),
-          transparent: e.transparency === 'transparent',
+          // Marked free, or a meeting they said no to: doesn't block anything.
+          transparent: e.transparency === 'transparent' || Boolean(e.attendees?.some((a) => a.self && a.responseStatus === 'declined')),
           bookingId: e.extendedProperties?.private?.bookingId ?? null,
           cancelled: e.status === 'cancelled',
         });
@@ -139,7 +200,7 @@ const google: CalendarApi = {
       signal: AbortSignal.timeout(8000),
     });
     if (eventId && (res.status === 404 || res.status === 410)) throw new NotFound();
-    if (!res.ok) throw new Error(`Calendar write failed: ${res.status}`);
+    if (!res.ok) throw refused(res.status, 'write');
     return ((await res.json()) as { id: string }).id;
   },
   async remove(calendarId, eventId) {
@@ -147,7 +208,7 @@ const google: CalendarApi = {
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
       { method: 'DELETE', headers: { Authorization: `Bearer ${await googleToken()}` }, signal: AbortSignal.timeout(8000) },
     );
-    if (!res.ok && res.status !== 404 && res.status !== 410) throw new Error(`Calendar delete failed: ${res.status}`);
+    if (!res.ok && res.status !== 404 && res.status !== 410) throw refused(res.status, 'delete');
   },
 };
 
@@ -179,12 +240,12 @@ const fake: CalendarApi = {
 };
 
 export function calendarApi(): CalendarApi | null {
-  if (read('GOOGLE_SERVICE_ACCOUNT_EMAIL') && read('GOOGLE_SERVICE_ACCOUNT_KEY')) return google;
+  if (serviceAccount()) return google;
   if (appEnv() === 'test') return fake;
   return null;
 }
 
-export const serviceAccountEmail = (): string => read('GOOGLE_SERVICE_ACCOUNT_EMAIL') ?? '';
+export const serviceAccountEmail = (): string => serviceAccount()?.email ?? '';
 
 // ---------- Sync ----------
 
@@ -203,6 +264,10 @@ async function calendarId(): Promise<string | null> {
 
 export async function syncCalendar(now = new Date(), api = calendarApi()): Promise<SyncResult> {
   const id = await calendarId();
+  if (!api && keyUnreadable()) {
+    await saveStatus('error', KEY_UNREADABLE);
+    return { status: 'error', pushed: 0, removed: 0, busy: 0, error: KEY_UNREADABLE };
+  }
   if (!api || !id) {
     await saveStatus('not_connected', null);
     return { status: 'not_connected', pushed: 0, removed: 0, busy: 0 };

@@ -18,6 +18,7 @@ import {
   uuid,
   type Slot,
 } from './client';
+import { STALE_MS, hasStarted, stillAhead, whenShownAgain } from './fresh';
 import { windowLabel, whenLabel } from './format';
 import {
   AGES,
@@ -54,6 +55,9 @@ export interface BookingProps {
 }
 
 const TITLES = ['Your home', 'Your roof', 'Pick a time', 'Your details', 'Check and book'];
+const TIME_STEP = 2;
+/** Shown when a time picked earlier (on this phone, or tapped on the home page) is no longer open. */
+const GONE = "The time you picked earlier isn't open anymore. Pick a new one.";
 // One word each, under the dots at the top.
 const SHORT = ['Home', 'Roof', 'Time', 'You', 'Book'];
 const MAX_PHOTOS = 6;
@@ -195,21 +199,38 @@ export default function BookingApp(props: BookingProps) {
   const [photoStatus, setPhotoStatus] = useState('');
   const [done, setDone] = useState<DoneInfo | null>(null);
   const [linkNote, setLinkNote] = useState('');
+  const [slotNote, setSlotNote] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const heading = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
+  // The draft as of the last render, for work that finishes later (loading the open times).
+  const current = useRef(draft);
+  current.current = draft;
+  // When the open times were last loaded, so a tab left open can tell they're old.
+  const slotsAt = useRef(0);
+  // One load of the open times at a time.
+  const loadingSlots = useRef(false);
 
   // Pick up where they left off.
   useEffect(() => {
     const saved = loadSaved();
+    let d = takeSlotHandoff(takeEstimateHandoff(takeAssistantHandoff(saved ? saved.draft : draft)));
+    let at = saved ? Math.min(Math.max(saved.step, 0), 4) : 0;
     if (saved) {
-      setDraft(takeSlotHandoff(takeEstimateHandoff(takeAssistantHandoff(saved.draft))));
-      setStep(Math.min(Math.max(saved.step, 0), 4));
       setSatellite(saved.satellite);
       setRestored(saved.step > 0 || saved.draft.address.text.length > 0);
-    } else {
-      setDraft((d) => takeSlotHandoff(takeEstimateHandoff(takeAssistantHandoff(d))));
     }
+    // A time picked earlier that has already started is dropped now, not at step 3,
+    // so the note at the top and the review never show a time that's gone.
+    if (hasStarted(d.slot)) {
+      d = { ...d, slot: null };
+      at = Math.min(at, TIME_STEP);
+      setSlotNote(GONE);
+    }
+    setDraft(d);
+    setStep(at);
+    // And one that may have filled up since is checked against the open times right away.
+    if (d.slot) void loadSlots(d.slot);
     if (cameFromRequest) {
       // The request's address and details are in. Start at the top, with its picture (or none).
       cameFromRequest = false;
@@ -253,21 +274,48 @@ export default function BookingApp(props: BookingProps) {
   }, [step]);
 
   useEffect(() => {
-    if (ready && STEPS[step] === 'time' && slots === null) void loadSlots();
+    if (!ready || STEPS[step] !== 'time') return;
+    if (slots === null) void loadSlots();
+    else recheck();
   }, [step, ready]);
 
-  async function loadSlots() {
-    setSlotsError('');
+  // Back on the page after a while (a tab left open overnight): check the times again.
+  useEffect(() => {
+    if (!ready || done) return;
+    return whenShownAgain(recheck);
+  }, [ready, done]);
+
+  /** Load the open times. `quiet` is a refresh in the background: a failure there keeps the list already showing. */
+  async function loadSlots(picked = current.current.slot, quiet = false) {
+    if (loadingSlots.current) return;
+    loadingSlots.current = true;
+    if (!quiet) setSlotsError('');
     try {
-      const list = await getSlots();
+      const list = stillAhead(await getSlots());
+      slotsAt.current = Date.now();
       setSlots(list);
-      // A saved choice that has since filled up is cleared, so nobody books a gone window.
-      if (draft.slot && !list.some((s) => s.id === draft.slot!.id)) {
-        setDraft((d) => ({ ...d, slot: null }));
-      }
+      setSlotsError('');
+      // A time picked earlier that has since filled up or passed is cleared, so nobody books a gone window.
+      if (picked && !list.some((s) => s.id === picked.id)) dropPick(picked.id);
     } catch (err) {
-      setSlotsError((err as RequestFailed).body?.message ?? 'Could not load times.');
+      if (!quiet) setSlotsError((err as RequestFailed).body?.message ?? 'Could not load times.');
+    } finally {
+      loadingSlots.current = false;
     }
+  }
+
+  /** Clear a picked time that can't be booked, and send them back to pick another. */
+  function dropPick(id: string) {
+    setDraft((d) => (d.slot?.id === id ? { ...d, slot: null } : d));
+    setStep((at) => Math.min(at, TIME_STEP));
+    setSlotNote(GONE);
+  }
+
+  /** A picked time that has started goes at once; open times older than a few minutes load again. */
+  function recheck() {
+    const picked = current.current.slot;
+    if (picked && hasStarted(picked)) dropPick(picked.id);
+    if (slotsAt.current > 0 && Date.now() - slotsAt.current > STALE_MS) void loadSlots(hasStarted(picked) ? null : picked, true);
   }
 
   const update = (fn: (d: Draft) => Draft) => {
@@ -430,6 +478,12 @@ export default function BookingApp(props: BookingProps) {
             Your pick. You can change it in step 3.
           </span>
         </p>
+      )}
+
+      {slotNote && !draft.slot && step <= TIME_STEP && (
+        <div class="notice" role="status">
+          <p>{slotNote}</p>
+        </div>
       )}
 
       {linkNote && step === 0 && (

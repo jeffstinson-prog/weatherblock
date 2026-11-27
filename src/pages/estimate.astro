@@ -25,8 +25,8 @@ const props = {
 const free = inspection.free ? 'free ' : '';
 // The page says up front what happens: a call, not a price on the screen (unless the facts file turns the ballpark on).
 const lede = e.showBallpark
-  ? `Enter your address and how to reach you, and see a rough price range for a new roof with ${e.material}. Then one of us calls to set up your written estimate.`
-  : `Start with your address. We find your roof from above, then one of us calls you to set up your ${free}estimate.`;
+  ? `Enter your address and how to reach you, and see a rough price range for a new roof with ${e.material}. Then one of us calls ${d.estimateCallback} to set up your written estimate.`
+  : `Start with your address. We find your roof from above, then one of us calls you ${d.estimateCallback} to set up your ${free}estimate.`;
 const description = `${d.estimateTitle} in ${facts.serviceArea.short}. Enter your address and we call you to set up a roof inspection and a written estimate.`;
 const google = reviews.google;
 // Only what the facts file backs up.
@@ -77,7 +77,7 @@ const showReviews = has('reviews.google.url') && google.rating !== null && googl
             <ol class="steps">
               <li>Enter your address. We find your roof from above.</li>
               <li>Tell us how to reach you.</li>
-              <li>One of us calls to set up your {free}estimate: a roof inspection, then a written price.</li>
+              <li>One of us calls {d.estimateCallback} to set up your {free}estimate: a roof inspection, then a written price.</li>
             </ol>
           </div>
           <p class="talk">Your price is the one in your written estimate after {d.theInspection}.</p>

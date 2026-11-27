@@ -37,8 +37,15 @@ export function ownerRequestSms(r: RequestDetails, appUrl: string): string {
   return `Estimate request: ${r.name}, ${formatMobile(r.mobile)}. ${r.address}. ${roofSummary(r.roof)} Call them, then open: ${appUrl}`;
 }
 
+/** "They were told: a call within one business hour." Empty when the facts file promises nothing specific. */
+function promised(): string {
+  return facts.estimate.callback ? `They were told: a call ${facts.estimate.callback}.` : '';
+}
+
 export function ownerRequestReminderSms(r: RequestDetails, appUrl: string, minutesWaiting: number): string {
-  return `Still to call: ${r.name}, ${formatMobile(r.mobile)}, asked for an estimate ${waited(minutesWaiting)} ago. ${appUrl}`;
+  return [`Still to call: ${r.name}, ${formatMobile(r.mobile)}, asked for an estimate ${waited(minutesWaiting)} ago.`, promised(), appUrl]
+    .filter(Boolean)
+    .join(' ');
 }
 
 export function ownerRequestEmail(r: RequestDetails, appUrl: string, siteUrl: string): Email {
@@ -51,6 +58,7 @@ export function ownerRequestEmail(r: RequestDetails, appUrl: string, siteUrl: st
     ...(roof?.source === 'google' ? [['With waste', `Up to ${roof.squares[1]} squares`] as [string, string]] : []),
     ['Source', r.leadSource],
     ['Reference', refLabel(r.ref)],
+    ...(facts.estimate.callback ? [['Promised', `A call ${facts.estimate.callback}`] as [string, string]] : []),
   ];
   const next = 'Call them to set up the visit. Then mark the request called in the app, or book a time for them from there.';
   return {

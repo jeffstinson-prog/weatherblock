@@ -293,6 +293,120 @@ test('a time tapped on the home page is already picked in the booking form', asy
   await page.evaluate(() => localStorage.clear());
 });
 
+test.describe('a time that is gone is never offered', () => {
+  // A pick made earlier on this phone, or a tab left open, must never show a time that has passed or filled up.
+  const GONE = "The time you picked earlier isn't open anymore. Pick a new one.";
+  type Open = { timezone: string; slots: { id: string; startsAt: string; endsAt: string }[] };
+  const openNow = async (page: Page) => (await (await page.request.get('/api/slots')).json()) as Open;
+
+  async function toReview(page: Page) {
+    await page.goto('/book/');
+    await stepHome(page);
+    await stepRoof(page);
+    await stepTime(page);
+    await stepYou(page);
+    await page.waitForTimeout(400); // saved a moment after the last change
+  }
+
+  test('a time picked yesterday is dropped when the form opens again', async ({ page }) => {
+    await toReview(page);
+    await page.evaluate(() => {
+      const saved = JSON.parse(localStorage.getItem('booking-draft-v1')!);
+      const start = Date.now() - 24 * 60 * 60 * 1000;
+      saved.draft.slot.startsAt = new Date(start).toISOString();
+      saved.draft.slot.endsAt = new Date(start + 2 * 60 * 60 * 1000).toISOString();
+      localStorage.setItem('booking-draft-v1', JSON.stringify(saved));
+    });
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Pick a time' })).toBeVisible();
+    await expect(page.getByText(GONE)).toBeVisible();
+    await expect(page.locator('input[name="slot"]:checked')).toHaveCount(0);
+    await expect(page.getByText('Your pick. You can change it in step 3.')).toHaveCount(0);
+    await expectAccessible(page);
+    // Everything else they entered is still there.
+    await page.locator('input[name="slot"]').first().check();
+    await expect(page.getByText(GONE)).toHaveCount(0);
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page.getByLabel('Your name')).toHaveValue('Pat Tester');
+    await page.evaluate(() => localStorage.clear());
+  });
+
+  test('a saved time that has filled up since is dropped when the form opens again', async ({ page }) => {
+    await toReview(page);
+    const picked = await page.evaluate(() => JSON.parse(localStorage.getItem('booking-draft-v1')!).draft.slot.id as string);
+    const open = await openNow(page);
+    await page.route('**/api/slots', (route) =>
+      route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ...open, slots: open.slots.filter((s) => s.id !== picked) }) }),
+    );
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Pick a time' })).toBeVisible();
+    await expect(page.getByText(GONE)).toBeVisible();
+    await expect(page.locator(`input[name="slot"][value="${picked}"]`)).toHaveCount(0);
+    await expect(page.locator('input[name="slot"]:checked')).toHaveCount(0);
+    await page.evaluate(() => localStorage.clear());
+  });
+
+  test('a time from the home page that has filled up is not shown as picked', async ({ page }) => {
+    const open = await openNow(page);
+    const gone = open.slots[0]!;
+    await page.route('**/api/slots', (route) =>
+      route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ...open, slots: open.slots.slice(1) }) }),
+    );
+    await page.goto('/book/');
+    await page.evaluate((s) => sessionStorage.setItem('slot-handoff-v1', JSON.stringify(s)), gone);
+    await page.reload();
+    await expect(page.getByText(GONE)).toBeVisible();
+    await expect(page.getByText('Your pick. You can change it in step 3.')).toHaveCount(0);
+    await page.evaluate(() => localStorage.clear());
+  });
+
+  test('a tab left open loads the times again, and drops a pick someone else took', async ({ page }) => {
+    await page.clock.install();
+    const open = await openNow(page);
+    let taken: string | null = null;
+    let loads = 0;
+    await page.route('**/api/slots', (route) => {
+      loads += 1;
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ...open, slots: open.slots.filter((s) => s.id !== taken) }) });
+    });
+    await page.goto('/book/');
+    await stepHome(page);
+    await stepRoof(page);
+    await expect(page.getByRole('heading', { name: 'Pick a time' })).toBeFocused();
+    const first = page.locator('input[name="slot"]').first();
+    await first.check();
+    taken = await first.getAttribute('value');
+    await page.getByRole('radio', { name: 'No', exact: true }).check();
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page.getByRole('heading', { name: 'Your details' })).toBeFocused();
+    expect(loads).toBe(1);
+    // The phone goes down for six minutes; someone else books that window meanwhile.
+    await page.clock.fastForward('06:00');
+    await expect(page.getByRole('heading', { name: 'Pick a time' })).toBeVisible();
+    await expect(page.getByText(GONE)).toBeVisible();
+    await expect(page.locator(`input[name="slot"][value="${taken}"]`)).toHaveCount(0);
+    expect(loads).toBe(2);
+    await page.evaluate(() => localStorage.clear());
+  });
+
+  test('the home page loads its open times again when an old tab is shown', async ({ page }) => {
+    await page.clock.install();
+    const open = await openNow(page);
+    let loads = 0;
+    await page.route('**/api/slots', (route) => {
+      loads += 1;
+      const slots = loads === 1 ? open.slots : open.slots.slice(1);
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ...open, slots }) });
+    });
+    await page.goto('/');
+    const first = page.locator('[data-next-times] a[data-slot]').first();
+    await expect(first).toHaveAttribute('data-slot', new RegExp(open.slots[0]!.id));
+    await page.clock.fastForward('06:00');
+    await expect(first).toHaveAttribute('data-slot', new RegExp(open.slots[1]!.id));
+    expect(loads).toBe(2);
+  });
+});
+
 test.describe('dark mode', () => {
   test.beforeEach(({}, testInfo) => {
     test.skip(testInfo.project.name !== 'phone-390-dark', 'dark mode check');

@@ -1,6 +1,6 @@
 # Status
 
-Updated 2026-11-23.
+Updated 2026-11-25.
 
 ## Done
 
@@ -16,7 +16,8 @@ Updated 2026-11-23.
 - **Capacity in the database.** Booking locks the window's row, then counts. Tested with eight bookings racing for one spot (exactly one wins) and in the browser with two phones (the loser is offered the nearest open times).
 - **Texts and email.** Confirmation, a reminder the evening before (6 to 9 pm) and the morning of (from 7:30 am), changes and cancellations, owner alerts by text and email, replies to our number forwarded to the owners, STOP and START honored. Without keys everything is logged, not sent. Retries and clean-up run every 15 minutes.
 - **Owner app** at `/app/`, installable: sign in with an emailed code; Today with directions, call and text; booking details with the gate code on tap, photos, notes, status, reschedule and "on my way"; Upcoming with overbooking warnings; Availability (windows, inspectors, notice, days off); referral codes with share links; CSV export (no gate codes); your alerts.
-- **Google Calendar sync** both ways: bookings go on the calendar and come off when cancelled; anything else busy blocks those windows; events moved or deleted in Google are put back. Waits on a Google service account.
+- **Google Calendar sync** both ways: bookings go on the calendar and come off when cancelled; anything else busy blocks those windows (free events and meetings you said no to don't); events moved or deleted in Google are put back. Its key file goes into Netlify whole (November 25), and a key that can't be read, or a calendar Google won't share, shows in the owner app with what to fix. The 15-minute job that runs it is live and passing (checked November 25). Waits on a Google service account: [`GO-LIVE.md`](GO-LIVE.md), step 5.
+- **Open times never go stale** (November 25). The site never offered a past time, but a phone could still show one: a page left open since yesterday, or a time picked earlier and saved on the phone. Now the booking form drops a picked time that has passed or filled up as soon as it opens, with a note to pick another; the booking form, the change-time page and the home page load their times again when a phone comes back to them after a few minutes. Tested by putting the browser's clock forward.
 - **The assistant** at `/ask/`: Claude Opus 5.5 by default, answers only from the help center and facts, says it's automated, offers to book or call, and carries what it learned into the booking form. A code check of every house rule reads each reply before it's shown; the same check passes on every built page. Questions it couldn't answer are listed in the owner app for 30 days.
 - **After the visit, automated.** Mark the visit done and the customer is thanked. Write the estimate in the owner app (price, what's included, an optional PDF) and send it: the customer gets an email and a text with their private link, where they say yes, ask a question, or say no thanks. Follow-up emails go out on days 2, 7 and 21 until they answer, ask or text us, and wait for a mailing address on file (CAN-SPAM). A yes alerts the owners and goes to Jobs.
 - **Roof jobs and crews.** Three crews to start (rename them in the app). Put a job on a crew's day (it asks first when the crew is full); the customer hears the date, gets a reminder the evening before, hears when weather moves the day (one tap moves every job on it), and gets thanks and one review request when it's done.
@@ -41,12 +42,13 @@ Updated 2026-11-23.
 
 ## Next
 
-1. Pull requests 1 to 11 are merged into `main`. Netlify builds the test site from `main`, and each merge publishes on its own. Pull request 12 (estimate requests) waits for JT's "merge".
-2. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase: tables loaded and sign-ups off (November 19). The sign-in code email waits for Resend, since Supabase only allows template edits with custom SMTP.
-3. Supabase has the tables for estimates, crews and roof jobs (loaded November 20). The update for estimate requests has to be loaded before pull request 12 is merged: one file, pasted into the SQL Editor (LAUNCH.md, section 1). It is safe to load while the current site is running.
-4. Facts for the automation (LAUNCH.md section 3): a mailing address, the Google review link, when estimates are ready, how fast you call back an estimate request, and whether $450 per square is for the measured roof or includes waste.
-5. Estimate requests only reach your phones once email (Resend) and texts (Twilio) are set up and you two are added as owners. Until then they are saved and wait in the owner app, which also needs Resend for its sign-in code.
-6. Run the live assistant tests once there's an Anthropic key: `npm run test:assistant` (top 30 questions and 15 attempts to break the rules). Not run yet; no key in this environment.
+1. Pull requests 1 to 12 are merged into `main` (estimate requests on November 24, with its database update loaded). Netlify builds the site from `main`, and each merge publishes on its own.
+2. The domain points at this site now, with HTTPS (its DNS moved to Netlify by November 24; checked: every page, www, the roof pictures). It's still in test mode: hidden from search engines, and nobody hears about a booking until email is set up. `SITE_URL` is set (November 25). Next, in order: email, the owner app's sign-in, owners, texts, the calendar, open times, then go live: [`GO-LIVE.md`](GO-LIVE.md).
+3. Work through [`LAUNCH.md`](LAUNCH.md): accounts, 10DLC, facts, the domain move. Supabase: tables loaded and sign-ups off (November 19). The sign-in code email waits for Resend, since Supabase only allows template edits with custom SMTP.
+4. Supabase has every table, estimate requests included (loaded November 24).
+5. Facts for the automation (LAUNCH.md section 3): a mailing address, the Google review link, when estimates are ready, and whether $450 per square is for the measured roof or includes waste. The call-back promise is set: "within one business hour".
+6. Estimate requests only reach your phones once email (Resend) and texts (Twilio) are set up and you two are added as owners. Until then they are saved and wait in the owner app, which also needs Resend for its sign-in code.
+7. Run the live assistant tests once there's an Anthropic key: `npm run test:assistant` (top 30 questions and 15 attempts to break the rules). Not run yet; no key in this environment.
 
 ## Waiting on JT and Justin
 

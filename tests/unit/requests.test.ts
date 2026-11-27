@@ -77,12 +77,15 @@ describe('estimate request: what the owners hear', () => {
     expect(e.text).toContain('With waste: Up to 26 squares');
     expect(e.text).toContain('Source: google_cpc');
     expect(e.text).toContain('Reference: K7M-3QX');
+    expect(e.text).toContain('Promised: A call within one business hour');
     expect(e.text).toContain(`Open in the app: ${app}`);
     expect(e.html).toContain('Open in the app');
   });
 
   it('the reminder says how long they have waited', () => {
-    expect(ownerRequestReminderSms(r, app, 42)).toBe(`Still to call: Pat Tester, (910) 555-3001, asked for an estimate 42 minutes ago. ${app}`);
+    expect(ownerRequestReminderSms(r, app, 42)).toBe(
+      `Still to call: Pat Tester, (910) 555-3001, asked for an estimate 42 minutes ago. They were told: a call within one business hour. ${app}`,
+    );
     expect(waited(0.4)).toBe('1 minute');
     expect(waited(200)).toBe('3 hours');
     expect(waited(60 * 30)).toBe('a day');
@@ -90,16 +93,18 @@ describe('estimate request: what the owners hear', () => {
 });
 
 describe('estimate request: what the customer hears', () => {
+  const callback = facts.estimate.callback;
+  const promise = facts.derived.estimateCallback;
   afterEach(() => {
-    facts.estimate.callback = '';
-    facts.derived.estimateCallback = 'soon';
+    facts.estimate.callback = callback;
+    facts.derived.estimateCallback = promise;
   });
 
   it('a copy of the request with no price and nothing about the roof size', () => {
     const e = emailRequestReceived(r, link, site, null);
     expect(e.subject).toBe('We got your estimate request');
     expect(e.text).toContain('Hi Pat, we got your request for a free roof estimate at 101 Test Beach Dr W, Ocean Isle Beach, NC 28469.');
-    expect(e.text).toContain('One of us will call you soon at (910) 555-3001 to set it up.');
+    expect(e.text).toContain('One of us will call you within one business hour at (910) 555-3001 to set it up.');
     expect(e.text).toContain(link);
     for (const body of [e.text, e.html]) {
       expect(body).not.toMatch(/\$\s?\d/);
@@ -107,9 +112,10 @@ describe('estimate request: what the customer hears', () => {
     }
   });
 
-  it('uses the call-back promise from the facts file', () => {
-    facts.derived.estimateCallback = 'within one business hour';
-    expect(emailRequestReceived(r, link, site, null).text).toContain('One of us will call you within one business hour at (910) 555-3001');
+  it('says "soon" when the facts file promises no time', () => {
+    facts.estimate.callback = '';
+    facts.derived.estimateCallback = 'soon';
+    expect(emailRequestReceived(r, link, site, null).text).toContain('One of us will call you soon at (910) 555-3001');
   });
 
   it('carries a ballpark only when one is passed in', () => {

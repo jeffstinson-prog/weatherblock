@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import Icon from '../icons/Icon';
 import { RequestFailed, getSlots, post, type Slot } from './client';
+import { STALE_MS, stillAhead, whenShownAgain } from './fresh';
 import { downloadIcs, googleCalendarUrl } from './calendar';
 import { dateLong, longDay, money, refLabel, whenLabel } from './format';
 import { SlotPicker } from './ui';
@@ -57,6 +58,8 @@ export default function ManageApp(props: Props) {
   const [note, setNote] = useState('');
   const [fileUrl, setFileUrl] = useState('');
   const live = useRef<HTMLDivElement>(null);
+  // When the open times were last loaded, so a tab left open can tell they're old.
+  const slotsAt = useRef(0);
 
   useEffect(() => {
     const t = decodeURIComponent(location.hash.replace(/^#/, ''));
@@ -86,16 +89,32 @@ export default function ManageApp(props: Props) {
     if (message) live.current?.focus();
   }, [message]);
 
+  /** The open times, minus any that have started. A picked time no longer open is unpicked. */
+  async function loadSlots(): Promise<void> {
+    const list = stillAhead(await getSlots());
+    slotsAt.current = Date.now();
+    setSlots(list);
+    setPicked((p) => (p && list.some((s) => s.id === p.id) ? p : null));
+  }
+
   async function startReschedule() {
     setMode('reschedule');
     setMessage('');
     setError('');
     try {
-      setSlots(await getSlots());
+      await loadSlots();
     } catch (err) {
       setError((err as RequestFailed).body.message);
     }
   }
+
+  // Picking a new time in a tab left open: load the times again when they're old.
+  useEffect(() => {
+    if (mode !== 'reschedule') return;
+    return whenShownAgain(() => {
+      if (slotsAt.current > 0 && Date.now() - slotsAt.current > STALE_MS) void loadSlots().catch(() => {});
+    });
+  }, [mode]);
 
   async function confirmReschedule() {
     if (!picked) {
@@ -113,7 +132,7 @@ export default function ManageApp(props: Props) {
     } catch (err) {
       const body = (err as RequestFailed).body;
       setError(body.message);
-      if (body.error === 'slot_full') setSlots(await getSlots().catch(() => slots));
+      if (body.error === 'slot_full') await loadSlots().catch(() => {});
     } finally {
       setBusy(false);
     }

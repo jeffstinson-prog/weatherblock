@@ -112,7 +112,7 @@ estimate:
   on: true
   # What people are told about the call back. It finishes "One of us will call you ...",
   # for example "within one business hour". Blank: "soon". Only promise what you'll keep.
-  callback: ""
+  callback: within one business hour
   # false: no price anywhere on the site. true: after someone sends their name and number,
   # the page shows them a rough price range, and the page is called "Instant estimate".
   showBallpark: false

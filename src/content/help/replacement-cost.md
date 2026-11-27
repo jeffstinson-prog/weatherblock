@@ -16,4 +16,4 @@ These change the price:
 
 Ask which of these your estimate includes, and how damage found under the old roof will be priced. Our prices come in the written estimate after {{derived.theInspection}}.
 
-?{estimate.on} For a price for your roof, [ask for {{derived.anEstimate}}](/estimate/). Enter your address and one of us calls you to set it up.
+?{estimate.on} For a price for your roof, [ask for {{derived.anEstimate}}](/estimate/). Enter your address and one of us calls you {{derived.estimateCallback}} to set it up.

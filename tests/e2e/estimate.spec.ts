@@ -33,7 +33,7 @@ test('ask for an estimate, then pick a time with everything already filled in', 
   await page.route('**/api/estimate', (route) => route.fulfill({ json: { outOfArea: false, picture: PIXEL } }));
   await page.goto('/estimate/');
   await expect(page.getByRole('heading', { name: 'Free roof estimate', level: 1 })).toBeVisible();
-  await expect(page.getByText('one of us calls you to set up your free estimate')).toBeVisible();
+  await expect(page.getByText('one of us calls you within one business hour to set up your free estimate')).toBeVisible();
   // The contact fields wait for an address.
   await expect(page.getByLabel('Your name')).toHaveCount(0);
   await expectAccessible(page);
@@ -64,7 +64,7 @@ test('ask for an estimate, then pick a time with everything already filled in', 
   expect(reply.ballpark).toBeNull();
 
   await expect(page.getByRole('heading', { name: 'Thanks, Pat. Your request is in.' })).toBeVisible();
-  await expect(page.getByText(`One of us will call you soon at (910) 555-${number.slice(-4)}.`)).toBeVisible();
+  await expect(page.getByText(`One of us will call you within one business hour at (910) 555-${number.slice(-4)}.`)).toBeVisible();
   await expect(page.getByText("a few details a photo from above can't show")).toBeVisible();
   expect(await page.locator('main').innerText()).not.toMatch(noPriceOrSize);
   await expectAccessible(page);

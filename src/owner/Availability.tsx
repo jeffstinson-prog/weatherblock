@@ -12,7 +12,7 @@ interface Data {
   horizonDays: number;
   minNoticeHours: number;
   calendarId: string;
-  calendar: { status: string; error: string; syncedAt: string | null; serviceAccount: string; available: boolean };
+  calendar: { status: string; error: string; syncedAt: string | null; serviceAccount: string; available: boolean; serverId?: string };
   week: Win[][];
   daysOff: { day: string; note: string }[];
 }
@@ -154,7 +154,20 @@ export default function Availability() {
         )}
         <div class="field">
           <label for="calendarId">Calendar ID</label>
-          <input id="calendarId" type="text" autoComplete="off" value={d.calendarId} onInput={(e) => set({ calendarId: (e.currentTarget as HTMLInputElement).value })} />
+          <input
+            id="calendarId"
+            type="text"
+            autoComplete="off"
+            placeholder={d.calendar.serverId || undefined}
+            aria-describedby={d.calendar.serverId ? 'calendarId-hint' : undefined}
+            value={d.calendarId}
+            onInput={(e) => set({ calendarId: (e.currentTarget as HTMLInputElement).value })}
+          />
+          {d.calendar.serverId && (
+            <p class="hint" id="calendarId-hint">
+              Leave it empty to use the one set in Netlify: {d.calendar.serverId}
+            </p>
+          )}
         </div>
         <p class="small muted">Bookings show up on the calendar. Anything else marked busy there blocks those windows. Move or cancel bookings here in the app, since the app is what tells the customer.</p>
 

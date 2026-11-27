@@ -137,4 +137,4 @@ Netlify builds every pull request as a deploy preview and deploys `main` to prod
 | `src/assets/fonts/`, `src/icons/` | The two typefaces and the icon set |
 | `tests/unit/`, `tests/e2e/` | Tests |
 
-See [`STATUS.md`](STATUS.md) for what's done and what's next, and [`LAUNCH.md`](LAUNCH.md) for what's left before launch.
+See [`STATUS.md`](STATUS.md) for what's done and what's next, [`LAUNCH.md`](LAUNCH.md) for what's left before launch, and [`GO-LIVE.md`](GO-LIVE.md) for going live step by step: email, the owner app's sign-in, texts, the calendar and open times.

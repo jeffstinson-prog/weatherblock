@@ -109,7 +109,7 @@ describe('asking for an estimate', () => {
     expect(JSON.stringify(r)).not.toMatch(/\$|squares|pitch|10100|2250/);
     const copy = (await messages()).find((m) => m.audience === 'customer')!;
     expect(copy.subject).toBe('We got your estimate request');
-    expect(copy.body).toContain('One of us will call you soon');
+    expect(copy.body).toContain(`One of us will call you ${facts.derived.estimateCallback}`);
     expect(copy.body).toMatch(/\/estimate\/book\/#r=[A-Za-z0-9_-]{43}/);
     expect(copy.body).not.toMatch(/\$\s?\d|square|pitch|ballpark/i);
   });
