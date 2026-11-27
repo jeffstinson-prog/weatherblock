@@ -81,7 +81,7 @@ async function signIn(page: Page) {
   expect(codeRequested).toBe(true);
   await page.getByLabel('Code').fill('123456');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: 'Today', level: 1 })).toBeVisible();
+  await expect(page.locator('.home-hello h1')).toHaveText(/^Good (morning|afternoon|evening), Justin$/);
 }
 
 test('the owner API refuses anyone who is not signed in', async ({ request }) => {
@@ -146,17 +146,19 @@ test('estimate requests: who to call, the roof sheet, and booking a time for the
   });
   expect(res.status(), await res.text()).toBe(201);
 
-  // Today starts with the people to call.
+  // Home starts with the people to call, and when the call is promised by.
   await signIn(page);
-  const card = page.locator('.to-call .visit', { hasText: 'Quinn Caller' });
+  const card = page.locator('.call-card', { hasText: 'Quinn Caller' });
   await expect(card).toBeVisible();
   await expect(card.getByRole('link', { name: 'Call (910) 555-4301, Quinn Caller' })).toHaveAttribute('href', 'tel:+19105554301');
   await expect(card).toContainText('Ballpark $10,100 to $11,700.');
+  await expect(card.locator('.promise')).toHaveText(/\d+ (min|hr) (left|late)/);
+  await expect(card).toContainText(/call by \d/);
   await expectAccessible(page);
   await expectNoSideScroll(page);
 
   // One request: the roof from above, a ballpark only the owners see, and where they came from.
-  await card.locator('.visit-main').click();
+  await card.getByRole('link', { name: 'Quinn Caller', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Quinn Caller', level: 1 })).toBeVisible();
   await expect(page.locator('.roof-sheet')).toContainText('About 2,250 square feet, 22.5 squares');
   await expect(page.locator('.roof-sheet')).toContainText('$10,100 to $11,700');
@@ -192,6 +194,46 @@ test('estimate requests: who to call, the roof sheet, and booking a time for the
   await expect(page.getByRole('combobox', { name: 'Address of the home' })).toHaveValue('101 Test Beach Dr W, Ocean Isle Beach, NC 28469');
   await expect(page.getByText('Found it.')).toBeVisible();
   await page.evaluate(() => localStorage.clear());
+});
+
+test('home: the numbers, marking a call done from the card, and turning on notifications', async ({ page, request }) => {
+  const { place } = (await (await request.post('/api/places/details', { data: { placeId: 'test-oib-1', sessionToken: 's' } })).json()) as { place: object };
+  const res = await request.post('/api/estimate-requests', {
+    data: { key: crypto.randomUUID(), startedAt: Date.now() - 60_000, address: place, contact: { name: 'Morgan Lead', mobile: '910 555 4302', email: '' } },
+  });
+  expect(res.status(), await res.text()).toBe(201);
+  // A phone that hasn't been asked about notifications yet (headless browsers say "denied" outright).
+  await page.addInitScript(() => {
+    let permission: NotificationPermission = 'default';
+    Object.defineProperty(Notification, 'permission', { get: () => permission });
+    Notification.requestPermission = async () => (permission = 'granted');
+  });
+  await signIn(page);
+
+  const toCall = page.locator('.stat', { hasText: 'To call' }).locator('.stat-n');
+  const before = Number(await toCall.textContent());
+  expect(before).toBeGreaterThan(0);
+  await expect(page.getByRole('navigation', { name: 'At a glance' }).getByRole('link')).toHaveCount(4);
+
+  const card = page.locator('.call-card', { hasText: 'Morgan Lead' });
+  await card.getByRole('button', { name: 'Called' }).click();
+  await expect(page.locator('.flash')).toHaveText('Morgan Lead marked called.');
+  await expect(card).toHaveCount(0);
+  await expect(toCall).toHaveText(String(before - 1));
+
+  // Notifications: the card offers them until they're on. Without the server's keys it says so plainly.
+  const push = page.locator('.push-card');
+  await expect(push.getByRole('heading', { name: 'Get a ping for every new lead' })).toBeVisible();
+  await push.getByRole('button', { name: 'Turn on notifications' }).click();
+  await expect(push.getByRole('alert')).toHaveText("Notifications aren't set up on the server yet.");
+  await expectAccessible(page);
+  await expectNoSideScroll(page);
+
+  // The same card lives in More, with the alert settings.
+  await page.getByRole('link', { name: 'More' }).click();
+  await expect(page.locator('.push-card')).toBeVisible();
+  await page.getByRole('link', { name: 'Home' }).click();
+  await expect(page.locator('.home-hello h1')).toBeVisible();
 });
 
 test('availability: a day off, and a bad window is refused with a reason', async ({ page }) => {

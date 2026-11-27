@@ -60,3 +60,9 @@ export function money(cents: number): string {
 }
 
 export const refLabel = (ref: string) => (ref.length === 6 ? `${ref.slice(0, 3)}-${ref.slice(3)}` : ref);
+
+/** "Holden Beach" from "12 Ocean Blvd W, Holden Beach, NC 28462": the town, for short lists. */
+export function townOf(address: string): string {
+  const parts = address.split(',').map((p) => p.trim()).filter(Boolean);
+  return parts.length >= 3 ? parts[parts.length - 2]! : (parts[0] ?? address);
+}

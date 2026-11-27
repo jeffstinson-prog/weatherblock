@@ -3,6 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 import Icon from '../icons/Icon';
 import { ApiError, api, auth, download } from './api';
 import { dayKey } from '../booking/format';
+import PushCard from './PushCard';
 
 interface Me {
   name: string;
@@ -93,6 +94,7 @@ export default function More(props: { businessName: string }) {
       {me && (
         <>
           <h2>Your alerts</h2>
+          <PushCard />
           <form onSubmit={saveMe} noValidate>
             <p class="muted small">Signed in as {me.email}.</p>
             <div class="field">

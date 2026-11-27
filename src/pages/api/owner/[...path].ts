@@ -6,6 +6,8 @@ import { BadRequest, json, readJson, serverError } from '../../../server/http';
 import * as o from '../../../server/owner';
 import * as p from '../../../server/pipeline';
 import * as q from '../../../server/requests';
+import { home } from '../../../server/home';
+import * as push from '../../../server/push';
 
 export const prerender = false;
 
@@ -15,7 +17,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const today = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
-function result(r: (o.ActionResult | p.Result | q.ActionResult) & Record<string, unknown>) {
+function result(r: (o.ActionResult | p.Result | q.ActionResult | push.PushResult) & Record<string, unknown>) {
   return r.ok ? json(200, r) : json(r.status, { error: (r.code as string | undefined) ?? 'failed', message: r.message });
 }
 
@@ -28,6 +30,7 @@ async function route(owner: Owner, method: string, path: string[], url: URL, req
     if (!DATE.test(date)) return json(400, { error: 'bad_date', message: 'Pick a date.' });
     return json(200, { date, bookings: await o.day(owner, date) });
   }
+  if (method === 'GET' && head === 'home') return json(200, await home(owner));
   if (method === 'GET' && head === 'upcoming') return json(200, await o.upcoming(owner));
   if (method === 'GET' && head === 'slots') return json(200, { slots: await openSlots() });
 
@@ -115,6 +118,19 @@ async function route(owner: Owner, method: string, path: string[], url: URL, req
   }
 
   if (head === 'questions' && method === 'GET') return json(200, { questions: await o.questions(owner) });
+
+  // Phone notifications: this owner's phones.
+  if (head === 'push') {
+    if (method === 'GET') return json(200, { publicKey: await push.pushPublicKey(), devices: await push.myDevices(owner) });
+    switch (body.action) {
+      case 'subscribe':
+        return result(await push.subscribe(owner, body.subscription, body.device));
+      case 'unsubscribe':
+        return result(await push.unsubscribe(owner, body.endpoint));
+      case 'test':
+        return result(await push.testPush(owner));
+    }
+  }
 
   if (head === 'me') {
     if (method === 'GET') return json(200, await o.me(owner));

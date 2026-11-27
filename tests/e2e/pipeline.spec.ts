@@ -68,7 +68,7 @@ async function signIn(page: Page) {
   await page.getByRole('button', { name: 'Email me a code' }).click();
   await page.getByLabel('Code').fill('123456');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: 'Today', level: 1 })).toBeVisible();
+  await expect(page.locator('.home-hello h1')).toHaveText(/^Good (morning|afternoon|evening)/);
 }
 
 const localDate = (offsetDays: number) =>

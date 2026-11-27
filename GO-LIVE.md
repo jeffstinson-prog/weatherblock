@@ -109,7 +109,7 @@ Good to know:
 3. On your phone, open **weatherblockroofingnc.com/app/**. Type your email, tap **Email me a code**, and type the code from the email.
 4. In the app, tap **More** and scroll to **Your alerts**. Check your mobile, and that **Email me too** is ticked. Tap **Save alerts**.
 5. Add the app to your home screen. iPhone, in Safari: tap the Share button, then **Add to Home Screen**. Android, in Chrome: tap the menu, then **Add to Home screen**.
-6. On your phone, turn on notifications for the email account your alerts go to. Until texts are approved, that email is what pings you.
+6. In the app on your Home Screen, tap **Turn on notifications** on the home screen. Your phone then gets a ping for every new lead and booking, even before texts are approved.
 
 From here on, alerts go to each owner login's email: yours, Justin's and info@.
 

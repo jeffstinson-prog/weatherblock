@@ -14,9 +14,11 @@ import { leadSource } from './booking';
 import { asOwner, asPublic, asService, dbErrorCode } from './db';
 import { config } from './env';
 import { details, inServiceArea, roofImageUrl, satelliteByAddress, signPlace, verifyPlace, type CheckedPlace } from './maps';
-import { send, type Outcome } from './messaging/send';
+import { send } from './messaging/send';
 import * as t from './messaging/request-templates';
 import { ownerRecipients } from './notify';
+import { pushNewRequest, pushRequestReminder } from './messaging/push-templates';
+import { pushToOwners } from './push';
 import { local } from './reminders';
 import { asRoofSheet, customerBallpark, measureRoof, roofSummary, type RoofSheet } from './roofsheet';
 import { requestToken, requestUrl, tokenHash } from './tokens';
@@ -168,7 +170,7 @@ async function requestCreated(r: t.RequestDetails, link: string): Promise<void> 
   const appUrl = `${site}/app/#/request/${r.id}`;
   const email = t.ownerRequestEmail(r, appUrl, site);
   const text = t.ownerRequestSms(r, appUrl);
-  const jobs: Promise<Outcome>[] = [];
+  const jobs: Promise<unknown>[] = [pushToOwners(pushNewRequest(r))];
   for (const o of await ownerRecipients()) {
     if (o.email) jobs.push(send({ requestId: r.id, channel: 'email', audience: 'owner', kind: 'owner_request', to: o.email, ...email, dedupeKey: `request:${r.id}:${o.email}` }));
     if (o.mobile) jobs.push(send({ requestId: r.id, channel: 'sms', audience: 'owner', kind: 'owner_request', to: o.mobile, text, dedupeKey: `request:${r.id}:${o.mobile}` }));
@@ -409,12 +411,13 @@ export async function runRequestReminders(now = new Date()): Promise<number> {
     };
     const minutes = (now.getTime() - new Date(r.created_at).getTime()) / 60_000;
     const text = t.ownerRequestReminderSms(d, `${site}/app/#/request/${r.id}`, minutes);
+    const pinged = await pushToOwners(pushRequestReminder(d, minutes));
     const outcomes = await Promise.all(
       owners
         .filter((o) => o.mobile)
         .map((o) => send({ requestId: r.id, channel: 'sms', audience: 'owner', kind: 'owner_request_reminder', to: o.mobile!, text, dedupeKey: `request_reminder:${r.id}:${o.mobile}` })),
     );
-    if (outcomes.some((o) => o === 'sent' || o === 'logged')) sent++;
+    if (pinged > 0 || outcomes.some((o) => o === 'sent' || o === 'logged')) sent++;
   }
   return sent;
 }

@@ -8,6 +8,8 @@ import { asService } from './db';
 import { config } from './env';
 import { manageToken, manageUrl } from './tokens';
 import { send, type Outcome } from './messaging/send';
+import { pushBookingChanged, pushNewBooking } from './messaging/push-templates';
+import { pushToOwners } from './push';
 import {
   emailCancelled,
   emailConfirmation,
@@ -92,7 +94,9 @@ async function alertOwners(kind: 'new' | 'rescheduled' | 'cancelled', b: Booking
     if (r.email) jobs.push(send({ bookingId: b.id, channel: 'email', audience: 'owner', kind: `owner_${kind}`, to: r.email, ...email }));
     if (r.mobile) jobs.push(send({ bookingId: b.id, channel: 'sms', audience: 'owner', kind: `owner_${kind}`, to: r.mobile, text }));
   }
-  await Promise.allSettled(jobs);
+  // And a ping on their phones, through the owner app.
+  const ping = kind === 'new' ? pushNewBooking(b) : pushBookingChanged(kind, b);
+  await Promise.allSettled([...jobs, pushToOwners(ping)]);
 }
 
 export async function bookingCreated(booking: BookingSummary, link: string): Promise<Notified> {
