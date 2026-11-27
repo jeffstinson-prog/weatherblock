@@ -1,30 +1,39 @@
 ---
+// The customer's private page for their roof: booking, estimate, job, photos and
+// messages. Everything on it comes from /api/manage once the page has the token
+// (after # in the link). The facts it shows come from facts.yaml, through here.
 import Base from '../../layouts/Base.astro';
 import ManageApp from '../../booking/ManageApp';
+import type { PortalFacts } from '../../booking/portal/types';
 import '../../styles/booking.css';
-import { facts, telHref } from '../../facts';
+import '../../styles/portal.css';
+import { facts, smsHref, telHref } from '../../facts';
 
-const props = {
+const props: PortalFacts = {
   businessName: facts.business.name,
+  town: [facts.business.city, facts.business.state].filter(Boolean).join(', '),
+  team: facts.business.owners.map((o) => o.name),
   phone: facts.contact.phone,
   phoneHref: telHref(),
+  smsHref: smsHref(),
+  email: facts.contact.email,
   bookLabel: facts.derived.bookLabel,
   domain: facts.web.domain,
+  reviewUrl: facts.pipeline.reviewUrl,
+  turnaround: facts.pipeline.estimateTurnaround,
+  byDrone: facts.inspection.byDrone,
+  homeNotRequired: facts.inspection.homeNotRequired,
+  deliverables: facts.inspection.deliverables,
 };
 ---
 
-<Base title="Your inspection" description="See, change or cancel your inspection." noindex focus>
-  <div class="flow">
+<Base title="Your roof project" description="Your inspection, estimate, photos and messages, in one place." noindex focus>
+  <div class="flow portal-page">
     <div class="wrap">
-      <div class="flow-main">
-        <header class="flow-head">
-          <h1>Your inspection</h1>
-        </header>
-        <ManageApp client:load {...props} />
-        <noscript>
-          <p>This page needs JavaScript. Call or text {facts.contact.phone} to change or cancel.</p>
-        </noscript>
-      </div>
+      <ManageApp client:load {...props} />
+      <noscript>
+        <p>This page needs JavaScript. Call or text {facts.contact.phone} to change or cancel.</p>
+      </noscript>
     </div>
   </div>
 </Base>

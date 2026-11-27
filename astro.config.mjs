@@ -32,7 +32,8 @@ export default defineConfig({
     csp: {
       directives: [
         "default-src 'self'",
-        "img-src 'self' data: blob: https://maps.googleapis.com",
+        // Photos are shown from private storage through short-lived signed links (the private page, the owner app).
+        `img-src 'self' data: blob: https://maps.googleapis.com${supabaseUrl ? ` ${supabaseUrl}` : ''}`,
         `connect-src 'self'${supabaseUrl ? ` ${supabaseUrl}` : ''}`,
         "font-src 'self'",
         "object-src 'none'",
