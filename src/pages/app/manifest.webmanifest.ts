@@ -1,12 +1,13 @@
 import type { APIRoute } from 'astro';
 import { facts } from '../../facts';
 
-// Lets the owner app install to a phone's home screen. The name comes from facts.yaml.
+// Lets the owner app install to a phone's home screen. Its name comes from facts.yaml
+// (business.shortName under the icon).
 export const GET: APIRoute = () =>
   new Response(
     JSON.stringify({
-      name: `${facts.business.name} owners`,
-      short_name: 'Owners',
+      name: facts.business.name,
+      short_name: facts.business.shortName || facts.business.name,
       start_url: '/app/#/today',
       scope: '/app/',
       display: 'standalone',
