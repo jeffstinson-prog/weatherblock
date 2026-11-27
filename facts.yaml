@@ -9,6 +9,7 @@
 
 business:
   name: WeatherBlock Roofing # the one place the business name lives
+  shortName: WeatherBlock # the owner app's name under its icon on a phone. Blank: the name above.
   legalName: WeatherBlock Roofing Incorporated # NC business corporation, SOSID 2997840, formed 2025-03-02
   owners:
     - name: Justin Coffey

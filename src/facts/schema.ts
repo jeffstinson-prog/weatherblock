@@ -8,6 +8,7 @@ const isoDate = () => z.union([z.literal(''), z.string().regex(/^\d{4}-\d{2}-\d{
 export const FactsSchema = z.strictObject({
   business: z.strictObject({
     name: z.string().trim().min(1),
+    shortName: text(),
     legalName: text(),
     owners: z.array(z.strictObject({ name: z.string().trim().min(1), role: text() })).default([]),
     city: text(),

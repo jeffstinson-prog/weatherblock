@@ -128,7 +128,7 @@ export default function More(props: { businessName: string }) {
       </p>
 
       <p>
-        <button type="button" class="btn secondary" onClick={() => void auth?.signOut()}>
+        <button type="button" class="btn secondary" onClick={() => void auth?.signOut({ scope: 'local' })}>
           <Icon name="log-out" size={18} />
           Sign out
         </button>
